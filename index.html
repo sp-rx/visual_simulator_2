@@ -1,0 +1,1834 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>KIARA OPTOMETRY | Spectacle Lens Distortion</title>
+
+<style>
+
+:root {
+  --bg: #F5F1E8;
+  --panel: #FFFDF7;
+  --green: #3A6656;
+  --green-dark: #2F5547;
+  --text: #292D2A;
+  --muted: #777D77;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+h2 {
+  margin: 0 0 5px;
+  font-size: 22px;
+  color: var(--green-dark);
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.panel {
+  background: var(--panel);
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #E5E0D5;
+}
+
+/* --------------------------------
+   SCENE SELECTOR
+-------------------------------- */
+
+.scene-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.scene-control strong {
+  font-size: 14px;
+}
+
+.scene-control select {
+  padding: 9px 12px;
+  border: 1px solid #C9D1C9;
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--green-dark);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* --------------------------------
+   VIEWER
+-------------------------------- */
+
+.viewer {
+  width: 100%;
+  height: 480px;
+  overflow: hidden;
+  position: relative;
+  background: #D9D9D9;
+  border-radius: 10px;
+}
+
+canvas {
+  position: absolute;
+  width: 140%;
+  height: 140%;
+  left: -20%;
+  top: -20%;
+  display: block;
+}
+
+/* --------------------------------
+   CONTROLS
+-------------------------------- */
+
+.controls {
+  margin-top: 22px;
+}
+
+.control {
+  margin-bottom: 24px;
+}
+
+.control-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.control-heading strong {
+  font-size: 15px;
+}
+
+.value {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--green);
+  white-space: nowrap;
+}
+
+.control-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reset-button {
+  border: 1px solid #C9D1C9;
+  background: transparent;
+  color: var(--green-dark);
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.reset-button:hover {
+  background: #EAEFE9;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--green);
+  cursor: pointer;
+  margin: 8px 0;
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* --------------------------------
+   RESULT
+-------------------------------- */
+
+.result {
+  margin-top: 18px;
+  padding: 14px;
+  background: #F5F1E8;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.result-main {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--green-dark);
+}
+
+.result-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.6;
+}
+
+/* --------------------------------
+   MOBILE
+-------------------------------- */
+
+@media (max-width: 600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  .viewer {
+    height: 350px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .scene-control {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .scene-control select {
+    width: 100%;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>KIARA OPTOMETRY</h2>
+
+  <div class="subtitle">
+    Spectacle Lens Distortion Simulator
+  </div>
+
+  <div class="panel">
+
+    <!-- SCENE SELECTOR -->
+
+    <div class="scene-control">
+
+      <strong>Viewing Scene</strong>
+
+      <select id="sceneSelect">
+
+        <option value="city">City View</option>
+
+        <option value="computer">
+          Working at Computer
+        </option>
+
+        <option value="phone">
+          Looking at Phone
+        </option>
+
+      </select>
+
+    </div>
+
+    <!-- VIEWER -->
+
+    <div class="viewer">
+
+      <canvas
+        id="canvas"
+        width="1500"
+        height="800">
+      </canvas>
+
+    </div>
+
+
+    <div class="controls">
+
+
+      <!-- LENS POWER -->
+
+      <div class="control">
+
+        <div class="control-heading">
+
+          <strong>Lens Power</strong>
+
+          <div class="control-right">
+
+            <span class="value" id="powerValue">
+              0.00 D
+            </span>
+
+            <button class="reset-button" id="resetPower">
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        <input
+          type="range"
+          id="power"
+          min="-10"
+          max="10"
+          step="0.1"
+          value="0"
+        >
+
+        <div class="scale">
+
+          <span>-10.00 D Myopia</span>
+          <span>0.00 D</span>
+          <span>+10.00 D Hyperopia</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ASPHERICAL DESIGN -->
+
+      <div class="control">
+
+        <div class="control-heading">
+
+          <strong>Aspherical Design</strong>
+
+          <div class="control-right">
+
+            <span class="value" id="asphericValue">
+              0%
+            </span>
+
+            <button class="reset-button" id="resetAspheric">
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        <input
+          type="range"
+          id="aspheric"
+          min="0"
+          max="100"
+          step="1"
+          value="0"
+        >
+
+        <div class="scale">
+
+          <span>0% Reduction</span>
+          <span>100% Reduction</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- CYLINDER -->
+
+      <div class="control">
+
+        <div class="control-heading">
+
+          <strong>Cylinder</strong>
+
+          <div class="control-right">
+
+            <span class="value" id="cylinderValue">
+              0.00
+            </span>
+
+            <button class="reset-button" id="resetCylinder">
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        <input
+          type="range"
+          id="cylinder"
+          min="0"
+          max="10"
+          step="0.1"
+          value="0"
+        >
+
+        <div class="scale">
+
+          <span>0</span>
+          <span>10</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- AXIS -->
+
+      <div class="control">
+
+        <div class="control-heading">
+
+          <strong>Axis</strong>
+
+          <div class="control-right">
+
+            <span class="value" id="axisValue">
+              0°
+            </span>
+
+            <button class="reset-button" id="resetAxis">
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        <input
+          type="range"
+          id="axis"
+          min="0"
+          max="180"
+          step="1"
+          value="0"
+        >
+
+        <div class="scale">
+
+          <span>0°</span>
+          <span>90°</span>
+          <span>180°</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- LENS POSITION -->
+
+      <div class="control">
+
+        <div class="control-heading">
+
+          <strong>Lens Position</strong>
+
+          <div class="control-right">
+
+            <span class="value" id="positionValue">
+              50%
+            </span>
+
+            <button class="reset-button" id="resetPosition">
+              Reset
+            </button>
+
+          </div>
+
+        </div>
+
+        <input
+          type="range"
+          id="lensPosition"
+          min="0"
+          max="100"
+          step="1"
+          value="50"
+        >
+
+        <div class="scale">
+
+          <span>Left</span>
+          <span>Centre</span>
+          <span>Right</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- RESULT -->
+
+      <div class="result">
+
+        <div class="result-main" id="effectDisplay">
+          No distortion
+        </div>
+
+        <div class="result-sub" id="detailDisplay">
+          Original image
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* --------------------------------
+   CANVAS SETUP
+-------------------------------- */
+
+const canvas = document.getElementById("canvas");
+
+const ctx = canvas.getContext("2d", {
+  willReadFrequently: true
+});
+
+const W = canvas.width;
+const H = canvas.height;
+
+
+/* --------------------------------
+   SLIDER ELEMENTS
+-------------------------------- */
+
+const powerSlider =
+  document.getElementById("power");
+
+const asphericSlider =
+  document.getElementById("aspheric");
+
+const cylinderSlider =
+  document.getElementById("cylinder");
+
+const axisSlider =
+  document.getElementById("axis");
+
+const positionSlider =
+  document.getElementById("lensPosition");
+
+
+/* --------------------------------
+   VALUE ELEMENTS
+-------------------------------- */
+
+const powerValue =
+  document.getElementById("powerValue");
+
+const asphericValue =
+  document.getElementById("asphericValue");
+
+const cylinderValue =
+  document.getElementById("cylinderValue");
+
+const axisValue =
+  document.getElementById("axisValue");
+
+const positionValue =
+  document.getElementById("positionValue");
+
+
+const effectDisplay =
+  document.getElementById("effectDisplay");
+
+const detailDisplay =
+  document.getElementById("detailDisplay");
+
+
+/* --------------------------------
+   OFFSCREEN CANVASES
+-------------------------------- */
+
+const sourceCanvas =
+  document.createElement("canvas");
+
+sourceCanvas.width = W;
+sourceCanvas.height = H;
+
+const sourceCtx =
+  sourceCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+
+const outputCanvas =
+  document.createElement("canvas");
+
+outputCanvas.width = W;
+outputCanvas.height = H;
+
+const outputCtx =
+  outputCanvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+
+/* --------------------------------
+   LENS DIMENSIONS
+-------------------------------- */
+
+const lens = {
+
+  cx: W / 2,
+
+  cy: H / 2,
+
+  rx: 390,
+
+  ry: 230
+
+};
+
+
+/* --------------------------------
+   LENS SHAPE
+-------------------------------- */
+
+function lensPath(context) {
+
+  context.beginPath();
+
+  context.ellipse(
+    lens.cx,
+    lens.cy,
+    lens.rx,
+    lens.ry,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  context.closePath();
+
+}
+
+
+/* ================================================
+   SCENE 1: CITY VIEW
+================================================ */
+
+function drawCityScene() {
+
+  const sky =
+    sourceCtx.createLinearGradient(0, 0, 0, H);
+
+  sky.addColorStop(0, "#A8D0E5");
+  sky.addColorStop(0.55, "#D9E6E8");
+  sky.addColorStop(1, "#B7C4B8");
+
+  sourceCtx.fillStyle = sky;
+  sourceCtx.fillRect(0, 0, W, H);
+
+
+  // Clouds
+
+  sourceCtx.fillStyle =
+    "rgba(255,255,255,0.65)";
+
+  function cloud(x, y, s) {
+
+    sourceCtx.beginPath();
+
+    sourceCtx.arc(
+      x, y, 35 * s, 0, Math.PI * 2
+    );
+
+    sourceCtx.arc(
+      x + 35 * s,
+      y - 15 * s,
+      40 * s,
+      0,
+      Math.PI * 2
+    );
+
+    sourceCtx.arc(
+      x + 75 * s,
+      y,
+      32 * s,
+      0,
+      Math.PI * 2
+    );
+
+    sourceCtx.fill();
+
+  }
+
+  cloud(150, 120, 1);
+  cloud(650, 100, 0.8);
+  cloud(900, 180, 1.1);
+
+
+  // Buildings
+
+  sourceCtx.fillStyle = "#84969A";
+
+  const buildings = [
+
+    [30, 300, 130, 180],
+    [180, 260, 110, 220],
+    [340, 310, 150, 170],
+    [720, 270, 140, 210],
+    [900, 300, 130, 180]
+
+  ];
+
+  buildings.forEach(b => {
+
+    sourceCtx.fillRect(
+      b[0], b[1], b[2], b[3]
+    );
+
+    sourceCtx.fillStyle = "#D5D8D2";
+
+    for (
+      let x = b[0] + 15;
+      x < b[0] + b[2] - 10;
+      x += 30
+    ) {
+
+      for (
+        let y = b[1] + 20;
+        y < b[1] + b[3] - 10;
+        y += 35
+      ) {
+
+        sourceCtx.fillRect(x, y, 12, 15);
+
+      }
+
+    }
+
+    sourceCtx.fillStyle = "#84969A";
+
+  });
+
+
+  // Trees
+
+  function tree(x, y, s) {
+
+    sourceCtx.fillStyle = "#665B45";
+
+    sourceCtx.fillRect(
+      x - 8 * s,
+      y,
+      16 * s,
+      100 * s
+    );
+
+    sourceCtx.fillStyle = "#426C50";
+
+    sourceCtx.beginPath();
+
+    sourceCtx.arc(
+      x, y, 55 * s, 0, Math.PI * 2
+    );
+
+    sourceCtx.fill();
+
+    sourceCtx.fillStyle = "#57835C";
+
+    sourceCtx.beginPath();
+
+    sourceCtx.arc(
+      x - 20 * s,
+      y - 20 * s,
+      35 * s,
+      0,
+      Math.PI * 2
+    );
+
+    sourceCtx.fill();
+
+  }
+
+  tree(60, 370, 1.1);
+  tree(250, 380, 0.9);
+  tree(850, 380, 1.0);
+  tree(1050, 350, 1.2);
+
+
+  // Ground
+
+  sourceCtx.fillStyle = "#89947D";
+
+  sourceCtx.fillRect(
+    0, 470, W, H - 470
+  );
+
+
+  // Road
+
+  sourceCtx.fillStyle = "#555B5B";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(280, 470);
+  sourceCtx.lineTo(820, 470);
+  sourceCtx.lineTo(1100, 700);
+  sourceCtx.lineTo(0, 700);
+
+  sourceCtx.closePath();
+  sourceCtx.fill();
+
+
+  // Road markings
+
+  sourceCtx.strokeStyle = "#F5F1E8";
+  sourceCtx.lineWidth = 7;
+
+  sourceCtx.setLineDash([35, 35]);
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(550, 490);
+  sourceCtx.lineTo(550, 700);
+
+  sourceCtx.stroke();
+
+  sourceCtx.setLineDash([]);
+
+
+  // Cars
+
+  function car(x, y, s, color) {
+
+    sourceCtx.fillStyle = color;
+
+    sourceCtx.fillRect(
+      x, y, 100 * s, 35 * s
+    );
+
+    sourceCtx.fillStyle = "#343D40";
+
+    sourceCtx.beginPath();
+
+    sourceCtx.moveTo(x + 20 * s, y);
+    sourceCtx.lineTo(x + 35 * s, y - 25 * s);
+    sourceCtx.lineTo(x + 75 * s, y - 25 * s);
+    sourceCtx.lineTo(x + 90 * s, y);
+
+    sourceCtx.closePath();
+    sourceCtx.fill();
+
+    sourceCtx.fillStyle = "#222";
+
+    sourceCtx.beginPath();
+
+    sourceCtx.arc(
+      x + 22 * s,
+      y + 35 * s,
+      10 * s,
+      0,
+      Math.PI * 2
+    );
+
+    sourceCtx.arc(
+      x + 78 * s,
+      y + 35 * s,
+      10 * s,
+      0,
+      Math.PI * 2
+    );
+
+    sourceCtx.fill();
+
+  }
+
+  car(420, 550, 1.0, "#B94A3A");
+  car(680, 610, 0.65, "#E3E0D4");
+
+}
+
+
+/* ================================================
+   SCENE 2: WORKING AT COMPUTER
+================================================ */
+
+function drawComputerScene() {
+
+  // Background
+
+  sourceCtx.fillStyle = "#D8D0C2";
+  sourceCtx.fillRect(0, 0, W, H);
+
+
+  // Wall
+
+  sourceCtx.fillStyle = "#E9E3D8";
+  sourceCtx.fillRect(0, 0, W, 490);
+
+
+  // Window
+
+  sourceCtx.fillStyle = "#A9C7D0";
+  sourceCtx.fillRect(70, 60, 360, 300);
+
+  sourceCtx.fillStyle = "#F5F1E8";
+  sourceCtx.fillRect(235, 60, 12, 300);
+  sourceCtx.fillRect(70, 205, 360, 12);
+
+  // Window scenery
+
+  sourceCtx.fillStyle = "#6D927D";
+  sourceCtx.fillRect(70, 270, 360, 90);
+
+
+  // Desk
+
+  sourceCtx.fillStyle = "#916D50";
+  sourceCtx.fillRect(0, 570, W, 230);
+
+
+  // Monitor
+
+  sourceCtx.fillStyle = "#303B3B";
+  sourceCtx.fillRect(540, 130, 600, 350);
+
+  sourceCtx.fillStyle = "#A8C6C0";
+  sourceCtx.fillRect(560, 150, 560, 305);
+
+
+  // Screen content
+
+  sourceCtx.fillStyle = "#FFFDF7";
+  sourceCtx.fillRect(590, 180, 230, 240);
+
+  sourceCtx.fillStyle = "#3A6656";
+  sourceCtx.fillRect(610, 200, 190, 28);
+
+  sourceCtx.fillStyle = "#B9C8BE";
+
+  for (let i = 0; i < 6; i++) {
+
+    sourceCtx.fillRect(
+      610,
+      255 + i * 25,
+      170,
+      9
+    );
+
+  }
+
+
+  // Screen stand
+
+  sourceCtx.fillStyle = "#343D40";
+
+  sourceCtx.fillRect(800, 480, 80, 90);
+  sourceCtx.fillRect(750, 560, 180, 15);
+
+
+  // Keyboard
+
+  sourceCtx.fillStyle = "#343D40";
+  sourceCtx.fillRect(590, 585, 330, 45);
+
+  sourceCtx.fillStyle = "#AAB1A9";
+
+  for (let x = 605; x < 900; x += 25) {
+
+    for (let y = 595; y < 620; y += 15) {
+
+      sourceCtx.fillRect(x, y, 15, 7);
+
+    }
+
+  }
+
+
+  // Person's body
+
+  sourceCtx.fillStyle = "#3A6656";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(180, 800);
+  sourceCtx.lineTo(220, 550);
+  sourceCtx.lineTo(390, 470);
+  sourceCtx.lineTo(550, 570);
+  sourceCtx.lineTo(570, 800);
+
+  sourceCtx.closePath();
+  sourceCtx.fill();
+
+
+  // Neck
+
+  sourceCtx.fillStyle = "#C99472";
+  sourceCtx.fillRect(335, 390, 85, 110);
+
+
+  // Head
+
+  sourceCtx.fillStyle = "#D8A27F";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.ellipse(
+    380, 330, 105, 125, 0, 0, Math.PI * 2
+  );
+
+  sourceCtx.fill();
+
+
+  // Hair
+
+  sourceCtx.fillStyle = "#39332F";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.arc(
+    380, 275, 108, Math.PI, Math.PI * 2
+  );
+
+  sourceCtx.fill();
+
+  sourceCtx.fillRect(272, 270, 35, 100);
+
+
+  // Ear
+
+  sourceCtx.fillStyle = "#C99472";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.arc(
+    480, 340, 20, 0, Math.PI * 2
+  );
+
+  sourceCtx.fill();
+
+
+  // Arm reaching keyboard
+
+  sourceCtx.strokeStyle = "#D8A27F";
+  sourceCtx.lineWidth = 48;
+  sourceCtx.lineCap = "round";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(430, 560);
+  sourceCtx.lineTo(570, 620);
+  sourceCtx.lineTo(690, 610);
+
+  sourceCtx.stroke();
+
+
+  // Mouse
+
+  sourceCtx.fillStyle = "#E7E4DC";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.ellipse(
+    1010, 610, 30, 42, 0, 0, Math.PI * 2
+  );
+
+  sourceCtx.fill();
+
+}
+
+
+/* ================================================
+   SCENE 3: LOOKING AT PHONE
+================================================ */
+
+function drawPhoneScene() {
+
+  // Background
+
+  sourceCtx.fillStyle = "#D7D1C5";
+  sourceCtx.fillRect(0, 0, W, H);
+
+
+  // Floor
+
+  sourceCtx.fillStyle = "#C4B9A7";
+  sourceCtx.fillRect(0, 500, W, 300);
+
+
+  // Clothing / lap
+
+  sourceCtx.fillStyle = "#354E49";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(100, 800);
+  sourceCtx.lineTo(280, 430);
+  sourceCtx.lineTo(730, 430);
+  sourceCtx.lineTo(1000, 800);
+
+  sourceCtx.closePath();
+  sourceCtx.fill();
+
+
+  // Left arm
+
+  sourceCtx.fillStyle = "#D6A17E";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(100, 800);
+  sourceCtx.lineTo(300, 490);
+  sourceCtx.lineTo(450, 400);
+  sourceCtx.lineTo(520, 470);
+  sourceCtx.lineTo(340, 620);
+  sourceCtx.lineTo(260, 800);
+
+  sourceCtx.closePath();
+  sourceCtx.fill();
+
+
+  // Phone
+
+  sourceCtx.save();
+
+  sourceCtx.translate(700, 370);
+  sourceCtx.rotate(-0.12);
+
+
+  // Phone body
+
+  sourceCtx.fillStyle = "#252B2C";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.roundRect(
+    -155, -230, 310, 460, 28
+  );
+
+  sourceCtx.fill();
+
+
+  // Screen
+
+  sourceCtx.fillStyle = "#F7F5EF";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.roundRect(
+    -140, -210, 280, 420, 18
+  );
+
+  sourceCtx.fill();
+
+
+  // Screen interface
+
+  sourceCtx.fillStyle = "#3A6656";
+  sourceCtx.fillRect(-115, -175, 230, 55);
+
+  sourceCtx.fillStyle = "#D8DED5";
+
+  for (let i = 0; i < 5; i++) {
+
+    sourceCtx.fillRect(
+      -110,
+      -80 + i * 45,
+      210,
+      12
+    );
+
+  }
+
+  sourceCtx.fillStyle = "#A9BDAF";
+  sourceCtx.fillRect(-110, 150, 210, 35);
+
+  sourceCtx.restore();
+
+
+  // Right hand holding phone
+
+  sourceCtx.fillStyle = "#D9A582";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.ellipse(
+    865, 390, 95, 145, -0.3, 0, Math.PI * 2
+  );
+
+  sourceCtx.fill();
+
+
+  // Fingers
+
+  sourceCtx.strokeStyle = "#D9A582";
+  sourceCtx.lineWidth = 40;
+  sourceCtx.lineCap = "round";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(835, 210);
+  sourceCtx.lineTo(825, 100);
+
+  sourceCtx.stroke();
+
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(900, 220);
+  sourceCtx.lineTo(920, 115);
+
+  sourceCtx.stroke();
+
+
+  // Thumb across screen
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(800, 480);
+  sourceCtx.lineTo(640, 400);
+
+  sourceCtx.stroke();
+
+
+  // Sleeve
+
+  sourceCtx.fillStyle = "#3A6656";
+
+  sourceCtx.beginPath();
+
+  sourceCtx.moveTo(820, 510);
+  sourceCtx.lineTo(1000, 650);
+  sourceCtx.lineTo(1150, 800);
+  sourceCtx.lineTo(850, 800);
+
+  sourceCtx.closePath();
+  sourceCtx.fill();
+
+}
+
+
+/* ================================================
+   SCENE SWITCHING
+================================================ */
+
+function drawScene() {
+
+  sourceCtx.clearRect(0, 0, W, H);
+
+  const scene =
+    document.getElementById("sceneSelect").value;
+
+  if (scene === "city") {
+
+    drawCityScene();
+
+  }
+
+  else if (scene === "computer") {
+
+    drawComputerScene();
+
+  }
+
+  else if (scene === "phone") {
+
+    drawPhoneScene();
+
+  }
+
+}
+
+
+/* --------------------------------
+   CREATE LENS MASK
+-------------------------------- */
+
+const maskCanvas =
+  document.createElement("canvas");
+
+maskCanvas.width = W;
+maskCanvas.height = H;
+
+const maskCtx =
+  maskCanvas.getContext("2d");
+
+function createLensMask() {
+
+  maskCtx.clearRect(0, 0, W, H);
+
+  maskCtx.fillStyle = "#FFFFFF";
+
+  lensPath(maskCtx);
+
+  maskCtx.fill();
+
+  return maskCtx.getImageData(
+    0, 0, W, H
+  ).data;
+
+}
+
+let maskData;
+
+
+/* ================================================
+   RENDER DISTORTION
+================================================ */
+
+let renderPending = false;
+
+function render() {
+
+  if (renderPending) return;
+
+  renderPending = true;
+
+  requestAnimationFrame(() => {
+
+    renderPending = false;
+
+
+    // --------------------------------
+    // READ SLIDERS
+    // --------------------------------
+
+    const power =
+      Number(powerSlider.value);
+
+    const aspheric =
+      Number(asphericSlider.value);
+
+    const cylinder =
+      Number(cylinderSlider.value);
+
+    const axis =
+      Number(axisSlider.value);
+
+
+    // --------------------------------
+    // UPDATE VALUE DISPLAYS
+    // --------------------------------
+
+    powerValue.textContent =
+      (power > 0 ? "+" : "") +
+      power.toFixed(2) + " D";
+
+    asphericValue.textContent =
+      aspheric.toFixed(0) + "%";
+
+    cylinderValue.textContent =
+      cylinder.toFixed(2);
+
+    axisValue.textContent =
+      axis.toFixed(0) + "°";
+
+    positionValue.textContent =
+      positionSlider.value + "%";
+
+
+    // --------------------------------
+    // POWER / MAGNIFICATION
+    // --------------------------------
+
+    const magFactor =
+      1 + power / 25;
+
+    const rawRadialStrength =
+      power * 0.035;
+
+    const asphericFactor =
+      1 - aspheric / 100;
+
+    const radialStrength =
+      rawRadialStrength * asphericFactor;
+
+
+    // --------------------------------
+    // CYLINDER / AXIS
+    // --------------------------------
+
+    const cylinderStrength =
+      cylinder * 0.025;
+
+    const angle =
+      axis * Math.PI / 180;
+
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+
+
+    // --------------------------------
+    // DISPLAY EFFECTS
+    // --------------------------------
+
+    const effects = [];
+    const details = [];
+
+    if (power > 0) {
+
+      effects.push("Hyperopic Lens");
+
+      details.push(
+        "+" + power.toFixed(2) + " D"
+      );
+
+      details.push("Pincushion distortion");
+
+    }
+
+    else if (power < 0) {
+
+      effects.push("Myopic Lens");
+
+      details.push(
+        power.toFixed(2) + " D"
+      );
+
+      details.push("Barrel distortion");
+
+    }
+
+
+    if (aspheric > 0) {
+
+      details.push(
+        "Aspherical reduction: " +
+        aspheric.toFixed(0) + "%"
+      );
+
+    }
+
+
+    if (cylinder > 0) {
+
+      effects.push("Cylindrical Minification");
+
+      details.push(
+        "Cylinder: " + cylinder.toFixed(2)
+      );
+
+      details.push(
+        "Axis: " + axis.toFixed(0) + "°"
+      );
+
+    }
+
+
+    effectDisplay.textContent =
+      effects.length
+        ? effects.join(" + ")
+        : "No distortion";
+
+
+    detailDisplay.textContent =
+      details.length
+        ? details.join("  |  ")
+        : "Original image";
+
+
+    // --------------------------------
+    // IMAGE DATA
+    // --------------------------------
+
+    const original =
+      sourceCtx.getImageData(0, 0, W, H);
+
+    const originalData =
+      original.data;
+
+    const output =
+      outputCtx.createImageData(W, H);
+
+    const outputData =
+      output.data;
+
+
+    const cx = lens.cx;
+    const cy = lens.cy;
+
+    const rx = lens.rx;
+    const ry = lens.ry;
+
+
+    // --------------------------------
+    // PIXEL REMAPPING
+    // --------------------------------
+
+    for (let y = 0; y < H; y++) {
+
+      for (let x = 0; x < W; x++) {
+
+        const i = (y * W + x) * 4;
+
+
+        // Outside lens:
+        // Original image unchanged
+
+        const alpha = maskData[i];
+
+        if (alpha === 0) {
+
+          outputData[i] =
+            originalData[i];
+
+          outputData[i + 1] =
+            originalData[i + 1];
+
+          outputData[i + 2] =
+            originalData[i + 2];
+
+          outputData[i + 3] = 255;
+
+          continue;
+
+        }
+
+
+        // --------------------------------
+        // NORMALIZED LENS COORDINATES
+        // --------------------------------
+
+        const dx = (x - cx) / rx;
+        const dy = (y - cy) / ry;
+
+        const r2 =
+          dx * dx + dy * dy;
+
+
+        // --------------------------------
+        // RADIAL DISTORTION
+        // --------------------------------
+
+        const radialFactor =
+          1 + radialStrength * r2;
+
+        const baseX =
+          (dx / magFactor) / radialFactor;
+
+        const baseY =
+          (dy / magFactor) / radialFactor;
+
+
+        // --------------------------------
+        // CYLINDRICAL DISTORTION
+        // --------------------------------
+
+        const u =
+          dx * cosA + dy * sinA;
+
+        const v =
+          -dx * sinA + dy * cosA;
+
+
+        const sourceU = u;
+
+        const sourceV =
+          v * (1 + cylinderStrength);
+
+
+        const cylinderDX =
+          sourceU * cosA -
+          sourceV * sinA;
+
+        const cylinderDY =
+          sourceU * sinA +
+          sourceV * cosA;
+
+
+        // --------------------------------
+        // COMBINE POWER AND CYLINDER
+        // --------------------------------
+
+        const sourceDX =
+          baseX + (cylinderDX - dx);
+
+        const sourceDY =
+          baseY + (cylinderDY - dy);
+
+
+        const sourceX =
+          cx + sourceDX * rx;
+
+        const sourceY =
+          cy + sourceDY * ry;
+
+
+        // --------------------------------
+        // KEEP WITHIN CANVAS
+        // --------------------------------
+
+        const sx = Math.max(
+          0,
+          Math.min(W - 1, sourceX)
+        );
+
+        const sy = Math.max(
+          0,
+          Math.min(H - 1, sourceY)
+        );
+
+
+        // --------------------------------
+        // BILINEAR INTERPOLATION
+        // --------------------------------
+
+        const x0 = Math.floor(sx);
+        const y0 = Math.floor(sy);
+
+        const x1 = Math.min(W - 1, x0 + 1);
+        const y1 = Math.min(H - 1, y0 + 1);
+
+        const fx = sx - x0;
+        const fy = sy - y0;
+
+
+        const p00 =
+          (y0 * W + x0) * 4;
+
+        const p10 =
+          (y0 * W + x1) * 4;
+
+        const p01 =
+          (y1 * W + x0) * 4;
+
+        const p11 =
+          (y1 * W + x1) * 4;
+
+
+        const blend = alpha / 255;
+
+
+        for (let c = 0; c < 3; c++) {
+
+          const top =
+            originalData[p00 + c] * (1 - fx) +
+            originalData[p10 + c] * fx;
+
+          const bottom =
+            originalData[p01 + c] * (1 - fx) +
+            originalData[p11 + c] * fx;
+
+          const distorted =
+            top * (1 - fy) +
+            bottom * fy;
+
+
+          outputData[i + c] =
+            originalData[i + c] * (1 - blend) +
+            distorted * blend;
+
+        }
+
+        outputData[i + 3] = 255;
+
+      }
+
+    }
+
+
+    // --------------------------------
+    // DRAW FINAL IMAGE
+    // --------------------------------
+
+    outputCtx.putImageData(output, 0, 0);
+
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.drawImage(outputCanvas, 0, 0);
+
+
+    // --------------------------------
+    // LENS OUTLINE
+    // --------------------------------
+
+    lensPath(ctx);
+
+    ctx.strokeStyle = "#3A6656";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+  });
+
+}
+
+
+/* ================================================
+   LENS POSITION
+================================================ */
+
+function updateLensPosition() {
+
+  const position =
+    Number(positionSlider.value);
+
+  const minX = lens.rx;
+
+  const maxX = W - lens.rx;
+
+
+  // Move lens horizontally
+
+  lens.cx =
+    minX +
+    (position / 100) * (maxX - minX);
+
+
+  // Recreate lens mask
+
+  maskData = createLensMask();
+
+
+  // Recalculate distortion
+
+  render();
+
+}
+
+
+/* ================================================
+   SLIDER EVENTS
+================================================ */
+
+powerSlider.addEventListener(
+  "input", render
+);
+
+asphericSlider.addEventListener(
+  "input", render
+);
+
+cylinderSlider.addEventListener(
+  "input", render
+);
+
+axisSlider.addEventListener(
+  "input", render
+);
+
+positionSlider.addEventListener(
+  "input", updateLensPosition
+);
+
+
+/* ================================================
+   SCENE SWITCHING
+================================================ */
+
+document
+  .getElementById("sceneSelect")
+  .addEventListener("change", () => {
+
+    drawScene();
+
+    maskData = createLensMask();
+
+    render();
+
+  });
+
+
+/* ================================================
+   INDIVIDUAL RESET BUTTONS
+================================================ */
+
+document
+  .getElementById("resetPower")
+  .addEventListener("click", () => {
+
+    powerSlider.value = 0;
+
+    render();
+
+  });
+
+
+document
+  .getElementById("resetAspheric")
+  .addEventListener("click", () => {
+
+    asphericSlider.value = 0;
+
+    render();
+
+  });
+
+
+document
+  .getElementById("resetCylinder")
+  .addEventListener("click", () => {
+
+    cylinderSlider.value = 0;
+
+    render();
+
+  });
+
+
+document
+  .getElementById("resetAxis")
+  .addEventListener("click", () => {
+
+    axisSlider.value = 0;
+
+    render();
+
+  });
+
+
+document
+  .getElementById("resetPosition")
+  .addEventListener("click", () => {
+
+    positionSlider.value = 50;
+
+    updateLensPosition();
+
+  });
+
+
+/* ================================================
+   INITIALIZE
+================================================ */
+
+positionSlider.value = 50;
+
+lens.cx = W / 2;
+
+drawScene();
+
+maskData = createLensMask();
+
+render();
+
+</script>
+
+</body>
+</html>
