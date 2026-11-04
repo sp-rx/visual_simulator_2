@@ -24,73 +24,46 @@
 
 body {
   margin: 0;
-  padding: 20px;
+  padding: 10px;
   background: var(--bg);
   color: var(--text);
   font-family: Arial, sans-serif;
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 1300px;
   margin: auto;
 }
 
 h2 {
-  margin: 0 0 5px;
-  font-size: 22px;
+  margin: 0 0 2px;
+  font-size: 16px;
   color: var(--green-dark);
 }
 
 .subtitle {
   color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 20px;
+  font-size: 10px;
+  margin-bottom: 6px;
 }
 
 .panel {
   background: var(--panel);
-  padding: 18px;
-  border-radius: 14px;
+  padding: 8px;
+  border-radius: 10px;
   border: 1px solid #E5E0D5;
 }
 
-/* --------------------------------
-   SCENE SELECTOR
--------------------------------- */
-
-.scene-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.scene-control strong {
-  font-size: 14px;
-}
-
-.scene-control select {
-  padding: 9px 12px;
-  border: 1px solid #C9D1C9;
-  border-radius: 7px;
-  background: var(--panel);
-  color: var(--green-dark);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-/* --------------------------------
-   VIEWER
--------------------------------- */
+/* VIEWER */
 
 .viewer {
   width: 100%;
-  height: 480px;
+  height: min(72vh, 720px);
+  min-height: 420px;
   overflow: hidden;
   position: relative;
   background: #D9D9D9;
-  border-radius: 10px;
+  border-radius: 9px;
 }
 
 canvas {
@@ -102,32 +75,57 @@ canvas {
   display: block;
 }
 
-/* --------------------------------
-   CONTROLS
--------------------------------- */
+/* SCENE SELECTOR */
+
+.scene-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.scene-control strong {
+  font-size: 11px;
+}
+
+.scene-control select {
+  padding: 5px 8px;
+  border: 1px solid #C9D1C9;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--green-dark);
+  font-size: 10px;
+}
+
+/* CONTROLS */
 
 .controls {
-  margin-top: 22px;
+  margin-top: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 18px;
+  row-gap: 0;
 }
 
 .control {
-  margin-bottom: 24px;
+  margin-bottom: 5px;
 }
 
 .control-heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 7px;
+  margin-bottom: 1px;
 }
 
 .control-heading strong {
-  font-size: 15px;
+  font-size: 11px;
 }
 
 .value {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: bold;
   color: var(--green);
   white-space: nowrap;
@@ -136,16 +134,16 @@ canvas {
 .control-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .reset-button {
   border: 1px solid #C9D1C9;
   background: transparent;
   color: var(--green-dark);
-  padding: 5px 11px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 9px;
   cursor: pointer;
 }
 
@@ -155,68 +153,67 @@ canvas {
 
 input[type="range"] {
   width: 100%;
+  height: 14px;
   accent-color: var(--green);
   cursor: pointer;
-  margin: 8px 0;
+  margin: 1px 0;
 }
 
 .scale {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 8px;
   color: var(--muted);
 }
 
-/* --------------------------------
-   RESULT
--------------------------------- */
+/* RESULT */
 
 .result {
-  margin-top: 18px;
-  padding: 14px;
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  padding: 6px;
   background: #F5F1E8;
-  border-radius: 10px;
+  border-radius: 7px;
   text-align: center;
 }
 
 .result-main {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: bold;
   color: var(--green-dark);
 }
 
 .result-sub {
-  font-size: 12px;
+  font-size: 9px;
   color: var(--muted);
-  margin-top: 5px;
-  line-height: 1.6;
+  margin-top: 2px;
+  line-height: 1.3;
 }
 
-/* --------------------------------
-   MOBILE
--------------------------------- */
+/* MOBILE */
 
 @media (max-width: 600px) {
 
   body {
-    padding: 10px;
-  }
-
-  .viewer {
-    height: 350px;
+    padding: 7px;
   }
 
   .panel {
-    padding: 12px;
+    padding: 7px;
   }
 
-  .scene-control {
-    align-items: flex-start;
-    flex-direction: column;
+  .viewer {
+    height: 52vh;
+    min-height: 320px;
   }
 
-  .scene-control select {
-    width: 100%;
+  .controls {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  .control {
+    margin-bottom: 5px;
   }
 
 }
@@ -567,7 +564,7 @@ const detailDisplay =
 
 
 /* --------------------------------
-   OFFSCREEN CANVASES
+   OFFSCREEN SOURCE CANVAS
 -------------------------------- */
 
 const sourceCanvas =
@@ -581,17 +578,12 @@ const sourceCtx =
     willReadFrequently: true
   });
 
+/*
+  Cache the original scene pixels.
+  These pixels are reused while the sliders move.
+*/
 
-const outputCanvas =
-  document.createElement("canvas");
-
-outputCanvas.width = W;
-outputCanvas.height = H;
-
-const outputCtx =
-  outputCanvas.getContext("2d", {
-    willReadFrequently: true
-  });
+let sourceImageData = null;
 
 
 /* --------------------------------
@@ -1260,6 +1252,10 @@ function drawScene() {
 
   }
 
+  // Cache the newly drawn scene once
+  sourceImageData =
+    sourceCtx.getImageData(0, 0, W, H);
+
 }
 
 
@@ -1451,21 +1447,16 @@ function render() {
 
 
     // --------------------------------
-    // IMAGE DATA
+    // CACHED IMAGE DATA
     // --------------------------------
 
-    const original =
-      sourceCtx.getImageData(0, 0, W, H);
-
     const originalData =
-      original.data;
+      sourceImageData.data;
 
-    const output =
-      outputCtx.createImageData(W, H);
 
-    const outputData =
-      output.data;
-
+    // --------------------------------
+    // LENS REGION ONLY
+    // --------------------------------
 
     const cx = lens.cx;
     const cy = lens.cy;
@@ -1473,16 +1464,68 @@ function render() {
     const rx = lens.rx;
     const ry = lens.ry;
 
+    const xStart = Math.max(
+      0,
+      Math.floor(cx - rx)
+    );
+
+    const xEnd = Math.min(
+      W,
+      Math.ceil(cx + rx)
+    );
+
+    const yStart = Math.max(
+      0,
+      Math.floor(cy - ry)
+    );
+
+    const yEnd = Math.min(
+      H,
+      Math.ceil(cy + ry)
+    );
+
+    const regionWidth = xEnd - xStart;
+    const regionHeight = yEnd - yStart;
+
+
+    // Create a small image buffer for the lens area only
+
+    const output =
+      ctx.createImageData(regionWidth, regionHeight);
+
+    const outputData =
+      output.data;
+
 
     // --------------------------------
     // PIXEL REMAPPING
     // --------------------------------
 
-    for (let y = 0; y < H; y++) {
+    for (let y = yStart; y < yEnd; y++) {
 
-      for (let x = 0; x < W; x++) {
+      for (let x = xStart; x < xEnd; x++) {
 
         const i = (y * W + x) * 4;
+
+        const localI =
+          ((y - yStart) * regionWidth +
+           (x - xStart)) * 4;
+
+
+        // Copy original pixel first.
+        // This preserves pixels outside the oval
+        // within the rectangular image buffer.
+
+        outputData[localI] =
+          originalData[i];
+
+        outputData[localI + 1] =
+          originalData[i + 1];
+
+        outputData[localI + 2] =
+          originalData[i + 2];
+
+        outputData[localI + 3] = 255;
 
 
         // Outside lens:
@@ -1491,20 +1534,7 @@ function render() {
         const alpha = maskData[i];
 
         if (alpha === 0) {
-
-          outputData[i] =
-            originalData[i];
-
-          outputData[i + 1] =
-            originalData[i + 1];
-
-          outputData[i + 2] =
-            originalData[i + 2];
-
-          outputData[i + 3] = 255;
-
           continue;
-
         }
 
 
@@ -1637,13 +1667,13 @@ function render() {
             bottom * fy;
 
 
-          outputData[i + c] =
+          outputData[localI + c] =
             originalData[i + c] * (1 - blend) +
             distorted * blend;
 
         }
 
-        outputData[i + 3] = 255;
+        outputData[localI + 3] = 255;
 
       }
 
@@ -1654,11 +1684,11 @@ function render() {
     // DRAW FINAL IMAGE
     // --------------------------------
 
-    outputCtx.putImageData(output, 0, 0);
+    // Restore the cached original scene
+    ctx.putImageData(sourceImageData, 0, 0);
 
-    ctx.clearRect(0, 0, W, H);
-
-    ctx.drawImage(outputCanvas, 0, 0);
+    // Replace only the lens area
+    ctx.putImageData(output, xStart, yStart);
 
 
     // --------------------------------
@@ -1747,8 +1777,6 @@ document
   .addEventListener("change", () => {
 
     drawScene();
-
-    maskData = createLensMask();
 
     render();
 
