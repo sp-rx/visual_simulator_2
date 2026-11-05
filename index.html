@@ -12,7 +12,16 @@ body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:Ar
 h2{margin:0 0 2px;font-size:16px;color:var(--green-dark)}
 .subtitle{color:var(--muted);font-size:10px;margin-bottom:6px}
 .panel{background:var(--panel);padding:8px;border-radius:10px;border:1px solid #E5E0D5}
-.viewer{width:100%;height:min(72vh,720px);min-height:420px;overflow:hidden;position:relative;background:#D9D9D9;border-radius:9px}
+.pos-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.pos-row strong{font-size:11px;white-space:nowrap}
+.pos-row input[type=range]{flex:1;min-width:0}
+.pos-row .tick{font-size:8px;color:var(--muted)}
+.view-row{--vh:max(min(72vh,720px),420px);display:flex;gap:6px;align-items:stretch}
+.viewer{flex:1;min-width:0;height:var(--vh);overflow:hidden;position:relative;background:#D9D9D9;border-radius:9px}
+.vpos{width:46px;height:var(--vh);display:flex;flex-direction:column;align-items:center;gap:4px}
+.vpos strong{font-size:10px}
+.vtrack{position:relative;flex:1;width:20px}
+.vtrack input[type=range]{position:absolute;top:50%;left:50%;margin:0;width:calc(var(--vh) - 90px);transform:translate(-50%,-50%) rotate(90deg)}
 canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block}
 .scene-control{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .scene-control strong{font-size:11px}
@@ -32,7 +41,7 @@ input[type=range]{width:100%;height:14px;accent-color:var(--green);cursor:pointe
 .result-sub{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
 @media(max-width:600px){
   body{padding:7px}.panel{padding:7px}
-  .viewer{height:52vh;min-height:320px}
+  .view-row{--vh:max(52vh,320px)}
   .controls{grid-template-columns:1fr;column-gap:0}
 }
 </style>
@@ -42,15 +51,30 @@ input[type=range]{width:100%;height:14px;accent-color:var(--green);cursor:pointe
   <h2>KIARA OPTOMETRY</h2>
   <div class="subtitle">Spectacle Lens Distortion Simulator</div>
   <div class="panel">
-    <div class="scene-control">
-      <strong>Viewing Scene</strong>
-      <select id="sceneSelect">
-        <option value="city">City View</option>
-        <option value="computer">Working at Computer</option>
-        <option value="phone">Looking at Phone</option>
-      </select>
+    <div class="control" id="sceneControl">
+      <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
+      <input type="range" id="sceneSlider" min="0" max="4" step="1" value="0">
+      <div class="scale"><span>City View</span><span>Night Driving</span><span>Meeting Room</span><span>Computer</span><span>Phone</span></div>
     </div>
-    <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas></div>
+    <div class="pos-row">
+      <strong>Lens Position</strong>
+      <span class="tick">Left</span>
+      <input type="range" id="lensPosition" min="0" max="100" step="1" value="50">
+      <span class="tick">Right</span>
+      <span class="value" id="lensPositionValue"></span>
+      <button class="reset-button" id="lensPositionReset">Reset</button>
+    </div>
+    <div class="view-row">
+      <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas></div>
+      <div class="vpos">
+        <strong>Vertical</strong>
+        <span class="tick" style="font-size:8px;color:var(--muted)">Top</span>
+        <div class="vtrack"><input type="range" id="lensVerticalPosition" min="0" max="100" step="1" value="50"></div>
+        <span class="tick" style="font-size:8px;color:var(--muted)">Bottom</span>
+        <span class="value" id="lensVerticalPositionValue"></span>
+        <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
+      </div>
+    </div>
     <div class="controls" id="controls">
       <div class="result">
         <div class="result-main" id="effectDisplay">No distortion</div>
@@ -87,12 +111,23 @@ function lensPath(c) {
   c.closePath();
 }
 
-/* ---------- CONTROLS (generated) ---------- */
+/* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
+const AGE_TABLE = [[0.25, 65], [0.5, 60], [1, 56], [2, 50], [3, 45], [4, 40], [5, 34]];  // [diopters, age]
+function ageLabel(acc) {
+  if (acc <= AGE_TABLE[0][0]) return "65+ yrs";
+  if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return "34 yrs & below";
+  for (let i = 1; i < AGE_TABLE.length; i++) {
+    const [a0, y0] = AGE_TABLE[i - 1], [a1, y1] = AGE_TABLE[i];
+    if (acc <= a1) return "~" + Math.round(y0 + (acc - a0) / (a1 - a0) * (y1 - y0)) + " yrs";
+  }
+}
+
+/* ---------- CONTROLS (generated, in this order: left, right, left, right...) ---------- */
 const controlDefs = [
-  { id: "power", label: "Lens Power", min: -10, max: 10, step: 0.25, v: 0,
+  { id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
     f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
-  { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
-    f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] },
+  { id: "accommodation", label: "Accommodation (Age)", min: 0.25, max: 5, step: 0.25, v: 3,
+    f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: ["65+ yrs", "34 yrs & below"] },
   { id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
     f: v => v.toFixed(2), s: ["0", "4.00"] },
   { id: "axis", label: "Axis", min: 0, max: 180, step: 1, v: 0,
@@ -101,10 +136,20 @@ const controlDefs = [
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
   { id: "lensVerticalPosition", label: "Vertical Lens Position", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
-  { id: "correction", label: "Spectacle Correction", min: 0, max: 100, step: 1, v: 100,
+  { id: "cylCorrection", label: "Cylinder & Axis Correction", min: 0, max: 100, step: 1, v: 100,
     f: v => v + "%", s: ["No Correction", "Half", "Full Correction"] },
-  { id: "accommodation", label: "Accommodation", min: 1, max: 5, step: 0.25, v: 3,
-    f: v => "+" + v.toFixed(2) + " D", s: ["+1.00 D", "+3.00 D", "+5.00 D"] }
+  { id: "farCorrection", label: "Far Spectacle Correction", min: 0, max: 100, step: 1, v: 100,
+    f: v => v + "%", s: ["No Correction", "Half", "Full Correction"] },
+  { id: "intermediateAdd", label: "Intermediate ADD (computer + phone)", min: 0, max: 3, step: 0.25, v: 0,
+    f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
+  { id: "addCorrection", label: "Intermediate ADD Correction", min: 0, max: 100, step: 1, v: 100,
+    f: v => v + "%", s: ["No ADD", "Half", "Full ADD"] },
+  { id: "nearAdd", label: "Near ADD (phone only)", min: 0, max: 3, step: 0.25, v: 0,
+    f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
+  { id: "nearCorrection", label: "Near ADD Correction", min: 0, max: 100, step: 1, v: 100,
+    f: v => v + "%", s: ["No ADD", "Half", "Full ADD"] },
+  { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
+    f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] }
 ];
 
 const el = {};
@@ -112,29 +157,37 @@ const controlsBox = document.getElementById("controls");
 const resultBox = controlsBox.querySelector(".result");
 
 controlDefs.forEach(d => {
-  const div = document.createElement("div");
-  div.className = "control";
-  div.innerHTML =
-    `<div class="control-heading"><strong>${d.label}</strong>
-       <div class="control-right"><span class="value" id="${d.id}Value"></span>
-       <button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
-     <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
-     <div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`;
-  controlsBox.insertBefore(div, resultBox);
-
-  const slider = div.querySelector("input");
+  if (!d.pos) {
+    const div = document.createElement("div");
+    div.className = "control";
+    div.innerHTML =
+      `<div class="control-heading"><strong>${d.label}</strong>
+         <div class="control-right"><span class="value" id="${d.id}Value"></span>
+         <button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
+       <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
+       <div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`;
+    controlsBox.insertBefore(div, resultBox);
+  }
+  const slider = document.getElementById(d.id);
   el[d.id] = slider;
   const update = d.pos ? updateLensPosition : render;
   slider.addEventListener("input", update);
-  div.querySelector("button").addEventListener("click", () => {
+  document.getElementById(d.id + "Reset").addEventListener("click", () => {
     slider.value = d.v;
     update();
   });
 });
 
+// Move the Viewing Scene slider into the grid, after Aspherical Design
+controlsBox.insertBefore(document.getElementById("sceneControl"), resultBox);
+
 const effectDisplay = document.getElementById("effectDisplay");
 const detailDisplay = document.getElementById("detailDisplay");
-const sceneSelect = document.getElementById("sceneSelect");
+const SCENES = [["city", "City View"], ["night", "Driving at Night"], ["meeting", "Meeting Room"],
+                ["computer", "Working at Computer"], ["phone", "Looking at Phone"]];
+const sceneSlider = document.getElementById("sceneSlider");
+const sceneValue = document.getElementById("sceneValue");
+const sceneSelect = { get value() { return SCENES[Number(sceneSlider.value)][0]; } };
 
 /* ---------- DRAWING HELPERS ---------- */
 const R = (c, x, y, w, h) => { S.fillStyle = c; S.fillRect(x, y, w, h); };
@@ -316,10 +369,150 @@ function drawPhoneScene() {
   POLY("#3A6656", [[1200, 800], [1200, 650], [950, 540], [850, 625], [940, 800]]);
 }
 
+/* ---------- SCENE 4: DRIVING AT NIGHT ---------- */
+function glow(x, y, r, rgb, a) {
+  const g = S.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},${a})`);
+  g.addColorStop(1, `rgba(${rgb},0)`);
+  S.fillStyle = g; S.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+function drawNightScene() {
+  const sky = S.createLinearGradient(0, 0, 0, 360);
+  sky.addColorStop(0, "#05070F"); sky.addColorStop(1, "#1B2238");
+  S.fillStyle = sky; S.fillRect(0, 0, W, 360);
+  R("#0B0E14", 0, 360, W, H - 360);
+
+  // Buildings with lit windows
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  [[0, 250, 150], [130, 200, 120], [250, 290, 110], [350, 230, 100], [440, 310, 90],
+   [700, 300, 100], [790, 240, 130], [910, 190, 110], [1010, 270, 120], [1120, 220, 100]].forEach(([x, top, w]) => {
+    R("#141A28", x, top, w, 370 - top);
+    for (let wx = x + 10; wx < x + w - 14; wx += 22)
+      for (let wy = top + 12; wy < 350; wy += 26)
+        if (rnd() > 0.55) R(rnd() > 0.5 ? "#F3D98B" : "#9CC7E8", wx, wy, 10, 14);
+  });
+
+  // Road + edge lines + centre dashes (perspective)
+  POLY("#1A1D24", [[570, 360], [630, 360], [1150, 800], [50, 800]]);
+  S.strokeStyle = "#8A8F9A"; S.lineWidth = 3;
+  S.beginPath(); S.moveTo(570, 360); S.lineTo(50, 800); S.moveTo(630, 360); S.lineTo(1150, 800); S.stroke();
+  for (let i = 0; i < 8; i++) {
+    const t0 = i / 8, t1 = (i + 0.5) / 8;
+    const y0 = 360 + 440 * t0 * t0, y1 = 360 + 440 * t1 * t1;
+    const w0 = 1 + 9 * t0 * t0, w1 = 1 + 9 * t1 * t1;
+    POLY("#E8D27A", [[600 - w0, y0], [600 + w0, y0], [600 + w1, y1], [600 - w1, y1]]);
+  }
+
+  // Street lights (soft warm glow)
+  [0.04, 0.14, 0.3, 0.55].forEach(u => {
+    const y = 360 + 440 * u;
+    [-1, 1].forEach(sd => {
+      const ex = 600 + sd * (55 + 545 * u), top = y - (30 + 220 * u), lx = ex - sd * (10 + 30 * u);
+      R("#222", ex - 1 - 2 * u, top, 2 + 4 * u, y - top);
+      S.globalCompositeOperation = "lighter";
+      glow(lx, top, 30 + 90 * u, "255,200,110", 0.45);
+      S.globalCompositeOperation = "source-over";
+      C("#FFE9B0", lx, top, 2 + 5 * u);
+    });
+  });
+
+  // Cars: oncoming (right lane, front view) and ahead (left lane, rear view)
+  const lane = (u, side) => 600 + side * (30 + 520 * u) / 2;
+  const oval = (c, x, y, rx, ry) => { S.fillStyle = c; S.beginPath(); S.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); S.fill(); };
+
+  [[0.06, 1, true, "#2A3040"], [0.1, -1, false, "#4A2024"], [0.22, 1, true, "#3A2F44"],
+   [0.32, -1, false, "#28344A"], [0.5, 1, true, "#22303A"]].forEach(([u, side, oncoming, color]) => {
+    const yB = 360 + 440 * u, cx = lane(u, side), cw = 14 + 230 * u, ch = cw * 0.55;
+
+    RR("#06070B", cx - cw * 0.5, yB - ch * 0.08, cw, ch * 0.1, 2);                   // shadow under car
+    RR(color, cx - cw * 0.5, yB - ch * 0.62, cw, ch * 0.55, cw * 0.08);              // body
+    POLY(oncoming ? "#3B4660" : "#1E2330",                                            // windscreen / rear window
+         [[cx - cw * 0.38, yB - ch * 0.62], [cx - cw * 0.28, yB - ch], [cx + cw * 0.28, yB - ch], [cx + cw * 0.38, yB - ch * 0.62]]);
+    R("#050608", cx - cw * 0.46, yB - ch * 0.12, cw * 0.14, ch * 0.14);              // wheels
+    R("#050608", cx + cw * 0.32, yB - ch * 0.12, cw * 0.14, ch * 0.14);
+
+    if (oncoming) R("#11141B", cx - cw * 0.12, yB - ch * 0.36, cw * 0.24, ch * 0.1);  // grille
+    else R("#D9D6CC", cx - cw * 0.1, yB - ch * 0.3, cw * 0.2, ch * 0.08);             // number plate
+
+    [-1, 1].forEach(sd => {
+      const lx = cx + sd * cw * 0.32, ly = yB - ch * 0.4;
+      S.globalCompositeOperation = "lighter";
+      if (oncoming) {
+        glow(lx, ly, cw * 0.55, "255,235,190", 0.4);
+        glow(lx, yB + ch * 0.15, cw * 0.35, "255,235,190", 0.15);                      // road reflection
+      } else {
+        glow(lx, ly, cw * 0.5, "255,40,30", 0.45);
+        glow(lx, yB + ch * 0.15, cw * 0.3, "255,40,30", 0.15);
+      }
+      S.globalCompositeOperation = "source-over";
+      oval(oncoming ? "#FFF1C9" : "#FF4036", lx, ly, cw * 0.09, cw * 0.045);
+    });
+  });
+
+  // Dashboard + steering wheel
+  R("#0A0A0C", 0, 745, W, 55);
+  S.strokeStyle = "#15161A"; S.lineWidth = 26;
+  S.beginPath(); S.ellipse(600, 900, 340, 170, 0, Math.PI, 2 * Math.PI); S.stroke();
+}
+
+/* ---------- SCENE 5: MEETING ROOM ---------- */
+function drawMeetingScene() {
+  R("#E6E0D3", 0, 0, W, H);
+  R("#CFC6B6", 0, 430, W, H - 430);
+
+  // Window
+  R("#A9C7D0", 40, 90, 200, 230);
+  R("#F5F1E8", 135, 90, 10, 230);
+
+  // Projector screen
+  R("#2B3330", 370, 60, 460, 260);
+  R("#FFFDF7", 385, 75, 430, 230);
+  R("#3A6656", 385, 75, 430, 50);
+  TXT("#FFFDF7", "bold 22px Arial", "QUARTERLY REVIEW", 410, 108);
+  R("#E4EBE5", 405, 145, 220, 140);
+  [40, 70, 55, 95, 80].forEach((b, i) => R("#527A64", 425 + i * 38, 270 - b, 24, b));
+  R("#3A6656", 650, 150, 140, 12);
+  for (let i = 0; i < 5; i++) R("#B9C8BE", 650, 178 + i * 22, 140 - (i % 3) * 25, 8);
+
+  // Ceiling projector + beam
+  R("#343D40", 555, 8, 90, 30);
+  C("#1A1F20", 600, 30, 9);
+  POLY("rgba(255,255,225,0.10)", [[594, 38], [606, 38], [830, 305], [370, 305]]);
+
+  // People across the table
+  const person = (x, y, s, shirt, skin, hair) => {
+    RR(shirt, x - 55 * s, y + 35 * s, 110 * s, 170 * s, 40 * s);
+    C(skin, x, y, 32 * s);
+    S.fillStyle = hair; S.beginPath(); S.arc(x, y - 4 * s, 34 * s, Math.PI, 0); S.fill();
+  };
+  person(240, 330, 1.0, "#527A64", "#D6A17E", "#2A211C");
+  person(480, 320, 1.05, "#B94A3A", "#E0B08E", "#1D1A18");
+  person(720, 320, 1.05, "#354E49", "#C98F6B", "#3B2B22");
+  person(960, 330, 1.0, "#C9B36A", "#D9A582", "#5A3B24");
+
+  // Table + items
+  POLY("#916D50", [[100, 480], [1100, 480], [1200, 800], [0, 800]]);
+  R("#A57F60", 100, 480, 1000, 8);
+  [[220, 520], [470, 515], [700, 515], [950, 520]].forEach(([x, y]) => {
+    R("#343D40", x - 55, y, 110, 14);
+    POLY("#4A5659", [[x - 45, y], [x + 45, y], [x + 38, y - 55], [x - 38, y - 55]]);
+  });
+  C("#F5F1E8", 360, 535, 14); C("#F5F1E8", 840, 538, 14);
+  R("#FFFDF7", 560, 560, 90, 55);
+
+  // People seen from behind (near side)
+  RR("#3A6656", -30, 640, 260, 200, 80); C("#2A211C", 100, 635, 52);
+  RR("#527A64", 980, 650, 260, 200, 80); C("#3B2B22", 1100, 630, 52);
+}
+
 function drawScene() {
   S.clearRect(0, 0, W, H);
   const scene = sceneSelect.value;
   if (scene === "city") drawCityScene();
+  else if (scene === "night") drawNightScene();
+  else if (scene === "meeting") drawMeetingScene();
   else if (scene === "computer") drawComputerScene();
   else drawPhoneScene();
   sourceImageData = S.getImageData(0, 0, W, H);
@@ -337,8 +530,10 @@ function createLensMask() {
 /* ---------- DEFOCUS MODEL ---------- */
 function getSceneDemand() {
   const scene = sceneSelect.value;
-  if (scene === "computer") return -1.0;
+  if (scene === "computer") return -1.75;
+  if (scene === "meeting") return -0.75;
   if (scene === "phone") return -2.5;
+  if (scene === "night") return 0.0;
   return 0.0;
 }
 
@@ -451,21 +646,34 @@ function doRender() {
   const cylinder = val("cylinder");
   const axis = val("axis");
   const accommodation = val("accommodation");
-  const corr = val("correction") / 100;
+  const intAdd = val("intermediateAdd");
+  const nearAdd = val("nearAdd");
+  const farCorr = val("farCorrection") / 100;     // affects the far lens power only
+  const cylCorr = val("cylCorrection") / 100;     // affects cylinder + axis only
+  const addCorr = val("addCorrection") / 100;     // affects the intermediate ADD only
+  const nearCorr = val("nearCorrection") / 100;   // affects the near ADD only
 
   controlDefs.forEach(d => {
     document.getElementById(d.id + "Value").textContent = d.f(Number(el[d.id].value));
   });
 
   /* Original (uncorrected) vision: always full power + full cylinder */
-  const uncorrectedDefocus = getResidualDefocus(power, accommodation, getSceneDemand());
+  const demand = getSceneDemand();
+  const uncorrectedDefocus = getResidualDefocus(power, accommodation, demand);
   applyVisionEffects(ctx, Math.min(30, uncorrectedDefocus * 5), cylinder, axis);
 
-  /* Through the lens: correction removes blur and ghosting */
-  const lensDefocus = uncorrectedDefocus * (1 - corr);
-  const lensCylinder = cylinder * (1 - corr);
+  /* Through the lens */
+  const scene = sceneSelect.value;
+  // City / night driving = no ADD; computer + meeting room = intermediate ADD; phone = intermediate + near ADD
+  const intPart = intAdd * addCorr;
+  const nearPart = nearAdd * nearCorr;
+  const lensAdd = (scene === "computer" || scene === "meeting") ? intPart : scene === "phone" ? intPart + nearPart : 0;
+  // Lacking accommodation (after far correction), reduced by the ADD
+  const lackingAccommodation = getResidualDefocus(power * (1 - farCorr), accommodation, demand);
+  const lensDefocus = Math.max(0, lackingAccommodation - lensAdd);
+  const lensCylinder = cylinder * (1 - cylCorr);
 
-  if (corr === 0) {
+  if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
     effectDisplay.textContent = "No spectacle correction";
     detailDisplay.textContent =
       "Original vision | " + uncorrectedDefocus.toFixed(2) + " D defocus | " +
@@ -473,12 +681,17 @@ function doRender() {
     return;
   }
 
-  /* Lens distortion parameters (scale with correction) */
-  const effectivePower = power * corr;
-  const effectiveAspheric = aspheric * corr;
-  const effectiveCylinder = cylinder * corr;
+  /* Lens distortion parameters */
+  const effectivePower = power * farCorr;
+  const effectiveAspheric = aspheric * farCorr;
+  const effectiveCylinder = cylinder * cylCorr;
   const magFactor = 1 + effectivePower / 25;
   const radialStrength = effectivePower * 0.085 * (1 - effectiveAspheric / 100);
+  /* ADD distortion: separate plus-lens (hyperopic) distortion layered on top of the lens power.
+     ADD_STRENGTH scales how obvious it is (1 = same as a plus lens of that power). */
+  const ADD_STRENGTH = 1;
+  const addMag = 1 + (lensAdd * ADD_STRENGTH) / 25;
+  const addRadial = lensAdd * ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
   const cylMag = 1 + effectiveCylinder / 40;           // stretch along power meridian
   const mAngle = (axis + 90) * Math.PI / 180;
   const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
@@ -498,9 +711,13 @@ function doRender() {
     details.push("Cylinder " + effectiveCylinder.toFixed(2) + " D, axis " + axis.toFixed(0) + "°",
                  "Meridional stretch: " + ((cylMag - 1) * 100).toFixed(1) + "%");
   }
+  if (lensAdd > 0) {
+    effects.push("ADD Hyperopic Distortion");
+    details.push("ADD in use: +" + lensAdd.toFixed(2) + " D", "Pincushion from ADD");
+  }
   details.push("Original vision: " + uncorrectedDefocus.toFixed(2) + " D defocus, " + cylinder.toFixed(2) + " D cyl");
   details.push("Through lens: " + lensDefocus.toFixed(2) + " D defocus, " + lensCylinder.toFixed(2) + " D cyl");
-  details.push(el.correction.value + "% correction");
+  details.push("Far " + el.farCorrection.value + "% | Cyl " + el.cylCorrection.value + "% | Int ADD " + el.addCorrection.value + "% | Near ADD " + el.nearCorrection.value + "%");
   effectDisplay.textContent = effects.length ? effects.join(" + ") : "No lens distortion";
   detailDisplay.textContent = details.join(" | ");
 
@@ -549,11 +766,16 @@ function doRender() {
 
       const dx = (x - cx) / rx;
       const dy = (y - cy) / ry;
-      const radial = 1 + radialStrength * (dx * dx + dy * dy);
 
-      // Spherical magnification + radial distortion (pixel offsets from lens centre)
-      let bx = (dx / magFactor / radial) * rx;
-      let by = (dy / magFactor / radial) * ry;
+      // 1) ADD: plus-lens magnification + pincushion (always hyperopic)
+      const ra = 1 + addRadial * (dx * dx + dy * dy);
+      const ax = dx / addMag / ra;
+      const ay = dy / addMag / ra;
+
+      // 2) Lens power: magnification + radial distortion
+      const rp = 1 + radialStrength * (ax * ax + ay * ay);
+      let bx = (ax / magFactor / rp) * rx;
+      let by = (ay / magFactor / rp) * ry;
 
       // Cylinder: stretch the image along the power meridian
       const along = (bx * mCos + by * mSin) / cylMag;
@@ -583,8 +805,13 @@ function updateLensPosition() {
 }
 
 /* ---------- EVENTS + INIT ---------- */
-sceneSelect.addEventListener("change", () => { drawScene(); render(); });
+sceneSlider.addEventListener("input", () => {
+  sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
+  drawScene();
+  render();
+});
 
+sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
 drawScene();
 updateLensPosition();
 </script>
