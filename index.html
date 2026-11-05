@@ -8,7 +8,7 @@
 :root{--bg:#F5F1E8;--panel:#FFFDF7;--green:#3A6656;--green-dark:#2F5547;--text:#292D2A;--muted:#777D77}
 *{box-sizing:border-box}
 body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-.container{max-width:1300px;margin:auto}
+.container{max-width:1300px;margin:auto;zoom:0.8}
 h2{margin:0 0 2px;font-size:16px;color:var(--green-dark)}
 .subtitle{color:var(--muted);font-size:10px;margin-bottom:6px}
 .panel{background:var(--panel);padding:8px;border-radius:10px;border:1px solid #E5E0D5}
@@ -350,19 +350,74 @@ function getResidualDefocus(power, accommodation, demand) {
   return low - demand;
 }
 
+/* ---------- BLUR (works on Safari / iPad, which ignores ctx.filter) ---------- */
+const nativeBlur = (() => {
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 9;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    x.filter = "blur(2px)";
+    x.fillStyle = "#fff";
+    x.fillRect(4, 4, 1, 1);
+    return x.getImageData(2, 4, 1, 1).data[3] > 0;   // blurred pixel spread = filter works
+  } catch (e) { return false; }
+})();
+
+const tmpCanvases = [];
+function tmpCanvas(i, w, h) {
+  let c = tmpCanvases[i];
+  if (!c) c = tmpCanvases[i] = document.createElement("canvas");
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const x = c.getContext("2d");
+  x.imageSmoothingEnabled = true;
+  x.imageSmoothingQuality = "high";
+  x.clearRect(0, 0, w, h);
+  return c;
+}
+
+function blurInto(dst, src, r) {
+  dst.clearRect(0, 0, W, H);
+  if (r <= 0) { dst.drawImage(src, 0, 0); return; }
+
+  if (nativeBlur) {
+    dst.filter = `blur(${r}px)`;
+    dst.drawImage(src, 0, 0);
+    dst.filter = "none";
+    return;
+  }
+
+  // Fallback: shrink in halving steps, then enlarge back (smooth bilinear blur)
+  const k = Math.max(1.5, r * 1.4);
+  const chain = [];
+  let cur = src, f = 1;
+  while (f < k) {
+    f = Math.min(f * 2, k);
+    const c = tmpCanvas(chain.length, Math.max(1, Math.round(W / f)), Math.max(1, Math.round(H / f)));
+    c.getContext("2d").drawImage(cur, 0, 0, c.width, c.height);
+    chain.push(c);
+    cur = c;
+  }
+  for (let i = chain.length - 1; i >= 0; i--) {
+    if (i === 0) { dst.drawImage(chain[0], 0, 0, W, H); }
+    else {
+      const t = chain[i - 1];
+      const x = t.getContext("2d");
+      x.clearRect(0, 0, t.width, t.height);
+      x.drawImage(chain[i], 0, 0, t.width, t.height);
+    }
+  }
+}
+
 /* ---------- VISION EFFECTS (blur + cylinder ghosting) ---------- */
 function applyVisionEffects(target, blurAmount, cylinder, axis) {
   // 1. Spherical blur
-  blurCtx.clearRect(0, 0, W, H);
-  blurCtx.filter = blurAmount > 0 ? `blur(${blurAmount}px)` : "none";
-  blurCtx.drawImage(sourceCanvas, 0, 0);
-  blurCtx.filter = "none";
+  blurInto(blurCtx, sourceCanvas, blurAmount);
 
   // 2. Cylinder doubling: two copies move apart symmetrically.
   //    At zero cylinder both sit on top of each other (one image).
   ghostCtx.clearRect(0, 0, W, H);
 
-  const separation = cylinder * 16;                        // total gap between the two images
+  const separation = cylinder * 16;                       // total gap between the two images
   const secondWeight = Math.min(.5, cylinder * 0.75);    // opacity of the second image (0.5 = equal to the first)
   const angle = (axis + 90) * Math.PI / 180;
   const ox = Math.cos(angle) * separation / 2;
