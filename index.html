@@ -1,1862 +1,537 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>KIARA OPTOMETRY | Spectacle Lens Distortion</title>
-
 <style>
-
-:root {
-  --bg: #F5F1E8;
-  --panel: #FFFDF7;
-  --green: #3A6656;
-  --green-dark: #2F5547;
-  --text: #292D2A;
-  --muted: #777D77;
+:root{--bg:#F5F1E8;--panel:#FFFDF7;--green:#3A6656;--green-dark:#2F5547;--text:#292D2A;--muted:#777D77}
+*{box-sizing:border-box}
+body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+.container{max-width:1300px;margin:auto}
+h2{margin:0 0 2px;font-size:16px;color:var(--green-dark)}
+.subtitle{color:var(--muted);font-size:10px;margin-bottom:6px}
+.panel{background:var(--panel);padding:8px;border-radius:10px;border:1px solid #E5E0D5}
+.viewer{width:100%;height:min(72vh,720px);min-height:420px;overflow:hidden;position:relative;background:#D9D9D9;border-radius:9px}
+canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block}
+.scene-control{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.scene-control strong{font-size:11px}
+.scene-control select{padding:5px 8px;border:1px solid #C9D1C9;border-radius:6px;background:var(--panel);color:var(--green-dark);font-size:10px}
+.controls{margin-top:7px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px}
+.control{margin-bottom:5px}
+.control-heading{display:flex;justify-content:space-between;align-items:center;gap:7px;margin-bottom:1px}
+.control-heading strong{font-size:11px}
+.value{font-size:11px;font-weight:bold;color:var(--green);white-space:nowrap}
+.control-right{display:flex;align-items:center;gap:6px}
+.reset-button{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);padding:2px 7px;border-radius:5px;font-size:9px;cursor:pointer}
+.reset-button:hover{background:#EAEFE9}
+input[type=range]{width:100%;height:14px;accent-color:var(--green);cursor:pointer;margin:1px 0}
+.scale{display:flex;justify-content:space-between;font-size:8px;color:var(--muted)}
+.result{grid-column:1/-1;margin-top:3px;padding:6px;background:#F5F1E8;border-radius:7px;text-align:center}
+.result-main{font-size:12px;font-weight:bold;color:var(--green-dark)}
+.result-sub{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
+@media(max-width:600px){
+  body{padding:7px}.panel{padding:7px}
+  .viewer{height:52vh;min-height:320px}
+  .controls{grid-template-columns:1fr;column-gap:0}
 }
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 10px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Arial, sans-serif;
-}
-
-.container {
-  max-width: 1300px;
-  margin: auto;
-}
-
-h2 {
-  margin: 0 0 2px;
-  font-size: 16px;
-  color: var(--green-dark);
-}
-
-.subtitle {
-  color: var(--muted);
-  font-size: 10px;
-  margin-bottom: 6px;
-}
-
-.panel {
-  background: var(--panel);
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid #E5E0D5;
-}
-
-/* VIEWER */
-
-.viewer {
-  width: 100%;
-  height: min(72vh, 720px);
-  min-height: 420px;
-  overflow: hidden;
-  position: relative;
-  background: #D9D9D9;
-  border-radius: 9px;
-}
-
-canvas {
-  position: absolute;
-  width: 140%;
-  height: 140%;
-  left: -20%;
-  top: -20%;
-  display: block;
-}
-
-/* SCENE SELECTOR */
-
-.scene-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.scene-control strong {
-  font-size: 11px;
-}
-
-.scene-control select {
-  padding: 5px 8px;
-  border: 1px solid #C9D1C9;
-  border-radius: 6px;
-  background: var(--panel);
-  color: var(--green-dark);
-  font-size: 10px;
-}
-
-/* CONTROLS */
-
-.controls {
-  margin-top: 7px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 18px;
-  row-gap: 0;
-}
-
-.control {
-  margin-bottom: 5px;
-}
-
-.control-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 1px;
-}
-
-.control-heading strong {
-  font-size: 11px;
-}
-
-.value {
-  font-size: 11px;
-  font-weight: bold;
-  color: var(--green);
-  white-space: nowrap;
-}
-
-.control-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.reset-button {
-  border: 1px solid #C9D1C9;
-  background: transparent;
-  color: var(--green-dark);
-  padding: 2px 7px;
-  border-radius: 5px;
-  font-size: 9px;
-  cursor: pointer;
-}
-
-.reset-button:hover {
-  background: #EAEFE9;
-}
-
-input[type="range"] {
-  width: 100%;
-  height: 14px;
-  accent-color: var(--green);
-  cursor: pointer;
-  margin: 1px 0;
-}
-
-.scale {
-  display: flex;
-  justify-content: space-between;
-  font-size: 8px;
-  color: var(--muted);
-}
-
-/* RESULT */
-
-.result {
-  grid-column: 1 / -1;
-  margin-top: 3px;
-  padding: 6px;
-  background: #F5F1E8;
-  border-radius: 7px;
-  text-align: center;
-}
-
-.result-main {
-  font-size: 12px;
-  font-weight: bold;
-  color: var(--green-dark);
-}
-
-.result-sub {
-  font-size: 9px;
-  color: var(--muted);
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-/* MOBILE */
-
-@media (max-width: 600px) {
-
-  body {
-    padding: 7px;
-  }
-
-  .panel {
-    padding: 7px;
-  }
-
-  .viewer {
-    height: 52vh;
-    min-height: 320px;
-  }
-
-  .controls {
-    grid-template-columns: 1fr;
-    column-gap: 0;
-  }
-
-  .control {
-    margin-bottom: 5px;
-  }
-
-}
-
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
   <h2>KIARA OPTOMETRY</h2>
-
-  <div class="subtitle">
-    Spectacle Lens Distortion Simulator
-  </div>
-
+  <div class="subtitle">Spectacle Lens Distortion Simulator</div>
   <div class="panel">
-
-    <!-- SCENE SELECTOR -->
-
     <div class="scene-control">
-
       <strong>Viewing Scene</strong>
-
       <select id="sceneSelect">
-
         <option value="city">City View</option>
-
-        <option value="computer">
-          Working at Computer
-        </option>
-
-        <option value="phone">
-          Looking at Phone
-        </option>
-
+        <option value="computer">Working at Computer</option>
+        <option value="phone">Looking at Phone</option>
       </select>
-
     </div>
-
-    <!-- VIEWER -->
-
-    <div class="viewer">
-
-      <canvas
-        id="canvas"
-        width="1500"
-        height="800">
-      </canvas>
-
-    </div>
-
-
-    <div class="controls">
-
-
-      <!-- LENS POWER -->
-
-      <div class="control">
-
-        <div class="control-heading">
-
-          <strong>Lens Power</strong>
-
-          <div class="control-right">
-
-            <span class="value" id="powerValue">
-              0.00 D
-            </span>
-
-            <button class="reset-button" id="resetPower">
-              Reset
-            </button>
-
-          </div>
-
-        </div>
-
-        <input
-          type="range"
-          id="power"
-          min="-10"
-          max="10"
-          step="0.1"
-          value="0"
-        >
-
-        <div class="scale">
-
-          <span>-10.00 D Myopia</span>
-          <span>0.00 D</span>
-          <span>+10.00 D Hyperopia</span>
-
-        </div>
-
-      </div>
-
-
-      <!-- ASPHERICAL DESIGN -->
-
-      <div class="control">
-
-        <div class="control-heading">
-
-          <strong>Aspherical Design</strong>
-
-          <div class="control-right">
-
-            <span class="value" id="asphericValue">
-              0%
-            </span>
-
-            <button class="reset-button" id="resetAspheric">
-              Reset
-            </button>
-
-          </div>
-
-        </div>
-
-        <input
-          type="range"
-          id="aspheric"
-          min="0"
-          max="100"
-          step="1"
-          value="0"
-        >
-
-        <div class="scale">
-
-          <span>0% Reduction</span>
-          <span>100% Reduction</span>
-
-        </div>
-
-      </div>
-
-
-      <!-- CYLINDER -->
-
-      <div class="control">
-
-        <div class="control-heading">
-
-          <strong>Cylinder</strong>
-
-          <div class="control-right">
-
-            <span class="value" id="cylinderValue">
-              0.00
-            </span>
-
-            <button class="reset-button" id="resetCylinder">
-              Reset
-            </button>
-
-          </div>
-
-        </div>
-
-        <input
-          type="range"
-          id="cylinder"
-          min="0"
-          max="10"
-          step="0.1"
-          value="0"
-        >
-
-        <div class="scale">
-
-          <span>0</span>
-          <span>10</span>
-
-        </div>
-
-      </div>
-
-
-      <!-- AXIS -->
-
-      <div class="control">
-
-        <div class="control-heading">
-
-          <strong>Axis</strong>
-
-          <div class="control-right">
-
-            <span class="value" id="axisValue">
-              0°
-            </span>
-
-            <button class="reset-button" id="resetAxis">
-              Reset
-            </button>
-
-          </div>
-
-        </div>
-
-        <input
-          type="range"
-          id="axis"
-          min="0"
-          max="180"
-          step="1"
-          value="0"
-        >
-
-        <div class="scale">
-
-          <span>0°</span>
-          <span>90°</span>
-          <span>180°</span>
-
-        </div>
-
-      </div>
-
-
-      <!-- LENS POSITION -->
-
-      <div class="control">
-
-        <div class="control-heading">
-
-          <strong>Lens Position</strong>
-
-          <div class="control-right">
-
-            <span class="value" id="positionValue">
-              50%
-            </span>
-
-            <button class="reset-button" id="resetPosition">
-              Reset
-            </button>
-
-          </div>
-
-        </div>
-
-        <input
-          type="range"
-          id="lensPosition"
-          min="0"
-          max="100"
-          step="1"
-          value="50"
-        >
-
-        <div class="scale">
-
-          <span>Left</span>
-          <span>Centre</span>
-          <span>Right</span>
-
-        </div>
-
-      </div>
-
-
-      <!-- RESULT -->
-
+    <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas></div>
+    <div class="controls" id="controls">
       <div class="result">
-
-        <div class="result-main" id="effectDisplay">
-          No distortion
-        </div>
-
-        <div class="result-sub" id="detailDisplay">
-          Original image
-        </div>
-
+        <div class="result-main" id="effectDisplay">No distortion</div>
+        <div class="result-sub" id="detailDisplay">Original image</div>
       </div>
-
     </div>
-
   </div>
-
 </div>
 
-
 <script>
-
-/* --------------------------------
-   CANVAS SETUP
--------------------------------- */
-
+/* ---------- CANVASES ---------- */
 const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+const W = canvas.width, H = canvas.height;
 
-const ctx = canvas.getContext("2d", {
-  willReadFrequently: true
-});
-
-const W = canvas.width;
-const H = canvas.height;
-
-
-/* --------------------------------
-   SLIDER ELEMENTS
--------------------------------- */
-
-const powerSlider =
-  document.getElementById("power");
-
-const asphericSlider =
-  document.getElementById("aspheric");
-
-const cylinderSlider =
-  document.getElementById("cylinder");
-
-const axisSlider =
-  document.getElementById("axis");
-
-const positionSlider =
-  document.getElementById("lensPosition");
-
-
-/* --------------------------------
-   VALUE ELEMENTS
--------------------------------- */
-
-const powerValue =
-  document.getElementById("powerValue");
-
-const asphericValue =
-  document.getElementById("asphericValue");
-
-const cylinderValue =
-  document.getElementById("cylinderValue");
-
-const axisValue =
-  document.getElementById("axisValue");
-
-const positionValue =
-  document.getElementById("positionValue");
-
-
-const effectDisplay =
-  document.getElementById("effectDisplay");
-
-const detailDisplay =
-  document.getElementById("detailDisplay");
-
-
-/* --------------------------------
-   OFFSCREEN SOURCE CANVAS
--------------------------------- */
-
-const sourceCanvas =
-  document.createElement("canvas");
-
-sourceCanvas.width = W;
-sourceCanvas.height = H;
-
-const sourceCtx =
-  sourceCanvas.getContext("2d", {
-    willReadFrequently: true
-  });
-
-/*
-  Cache the original scene pixels.
-  These pixels are reused while the sliders move.
-*/
+function makeCanvas(willRead) {
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  return [c, c.getContext("2d", willRead ? { willReadFrequently: true } : undefined)];
+}
+const [sourceCanvas, S] = makeCanvas(true);
+const [maskCanvas, maskCtx] = makeCanvas(true);
+const [blurCanvas, blurCtx] = makeCanvas();
+const [ghostCanvas, ghostCtx] = makeCanvas();
+const [lensSrcCanvas, lensSrcCtx] = makeCanvas(true);
 
 let sourceImageData = null;
+let maskData = null;
+const lens = { cx: W / 2, cy: H / 2, rx: 390, ry: 230 };
 
-
-/* --------------------------------
-   LENS DIMENSIONS
--------------------------------- */
-
-const lens = {
-
-  cx: W / 2,
-
-  cy: H / 2,
-
-  rx: 390,
-
-  ry: 230
-
-};
-
-
-/* --------------------------------
-   LENS SHAPE
--------------------------------- */
-
-function lensPath(context) {
-
-  context.beginPath();
-
-  context.ellipse(
-    lens.cx,
-    lens.cy,
-    lens.rx,
-    lens.ry,
-    0,
-    0,
-    Math.PI * 2
-  );
-
-  context.closePath();
-
+function lensPath(c) {
+  c.beginPath();
+  c.ellipse(lens.cx, lens.cy, lens.rx, lens.ry, 0, 0, Math.PI * 2);
+  c.closePath();
 }
 
+/* ---------- CONTROLS (generated) ---------- */
+const controlDefs = [
+  { id: "power", label: "Lens Power", min: -10, max: 10, step: 0.25, v: 0,
+    f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
+  { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
+    f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] },
+  { id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
+    f: v => v.toFixed(2), s: ["0", "4.00"] },
+  { id: "axis", label: "Axis", min: 0, max: 180, step: 1, v: 0,
+    f: v => v.toFixed(0) + "°", s: ["0°", "90°", "180°"] },
+  { id: "lensPosition", label: "Lens Position", min: 0, max: 100, step: 1, v: 50,
+    f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
+  { id: "lensVerticalPosition", label: "Vertical Lens Position", min: 0, max: 100, step: 1, v: 50,
+    f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
+  { id: "correction", label: "Spectacle Correction", min: 0, max: 100, step: 1, v: 100,
+    f: v => v + "%", s: ["No Correction", "Half", "Full Correction"] },
+  { id: "accommodation", label: "Accommodation", min: 1, max: 5, step: 0.25, v: 3,
+    f: v => "+" + v.toFixed(2) + " D", s: ["+1.00 D", "+3.00 D", "+5.00 D"] }
+];
 
-/* ================================================
-   SCENE 1: CITY VIEW
-================================================ */
+const el = {};
+const controlsBox = document.getElementById("controls");
+const resultBox = controlsBox.querySelector(".result");
 
+controlDefs.forEach(d => {
+  const div = document.createElement("div");
+  div.className = "control";
+  div.innerHTML =
+    `<div class="control-heading"><strong>${d.label}</strong>
+       <div class="control-right"><span class="value" id="${d.id}Value"></span>
+       <button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
+     <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
+     <div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`;
+  controlsBox.insertBefore(div, resultBox);
+
+  const slider = div.querySelector("input");
+  el[d.id] = slider;
+  const update = d.pos ? updateLensPosition : render;
+  slider.addEventListener("input", update);
+  div.querySelector("button").addEventListener("click", () => {
+    slider.value = d.v;
+    update();
+  });
+});
+
+const effectDisplay = document.getElementById("effectDisplay");
+const detailDisplay = document.getElementById("detailDisplay");
+const sceneSelect = document.getElementById("sceneSelect");
+
+/* ---------- DRAWING HELPERS ---------- */
+const R = (c, x, y, w, h) => { S.fillStyle = c; S.fillRect(x, y, w, h); };
+const C = (c, x, y, r) => { S.fillStyle = c; S.beginPath(); S.arc(x, y, r, 0, Math.PI * 2); S.fill(); };
+const POLY = (c, pts) => {
+  S.fillStyle = c; S.beginPath(); S.moveTo(...pts[0]);
+  pts.slice(1).forEach(p => S.lineTo(...p));
+  S.closePath(); S.fill();
+};
+const TXT = (c, font, t, x, y) => { S.fillStyle = c; S.font = font; S.fillText(t, x, y); };
+const RR = (c, x, y, w, h, r) => { S.fillStyle = c; S.beginPath(); S.roundRect(x, y, w, h, r); S.fill(); };
+
+/* ---------- SCENE 1: CITY ---------- */
 function drawCityScene() {
-
-  const sky =
-    sourceCtx.createLinearGradient(0, 0, 0, H);
-
+  const sky = S.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0, "#A8D0E5");
   sky.addColorStop(0.55, "#D9E6E8");
   sky.addColorStop(1, "#B7C4B8");
+  S.fillStyle = sky; S.fillRect(0, 0, W, H);
 
-  sourceCtx.fillStyle = sky;
-  sourceCtx.fillRect(0, 0, W, H);
+  const cloud = (x, y, s) => {
+    S.fillStyle = "rgba(255,255,255,0.65)";
+    S.beginPath();
+    S.arc(x, y, 35 * s, 0, 7);
+    S.arc(x + 35 * s, y - 15 * s, 40 * s, 0, 7);
+    S.arc(x + 75 * s, y, 32 * s, 0, 7);
+    S.fill();
+  };
+  cloud(150, 120, 1); cloud(650, 100, 0.8); cloud(900, 180, 1.1);
 
-
-  // Clouds
-
-  sourceCtx.fillStyle =
-    "rgba(255,255,255,0.65)";
-
-  function cloud(x, y, s) {
-
-    sourceCtx.beginPath();
-
-    sourceCtx.arc(
-      x, y, 35 * s, 0, Math.PI * 2
-    );
-
-    sourceCtx.arc(
-      x + 35 * s,
-      y - 15 * s,
-      40 * s,
-      0,
-      Math.PI * 2
-    );
-
-    sourceCtx.arc(
-      x + 75 * s,
-      y,
-      32 * s,
-      0,
-      Math.PI * 2
-    );
-
-    sourceCtx.fill();
-
-  }
-
-  cloud(150, 120, 1);
-  cloud(650, 100, 0.8);
-  cloud(900, 180, 1.1);
-
-
-  // Buildings
-
-  sourceCtx.fillStyle = "#84969A";
-
-  const buildings = [
-
-    [30, 300, 130, 180],
-    [180, 260, 110, 220],
-    [340, 310, 150, 170],
-    [720, 270, 140, 210],
-    [900, 300, 130, 180]
-
-  ];
-
-  buildings.forEach(b => {
-
-    sourceCtx.fillRect(
-      b[0], b[1], b[2], b[3]
-    );
-
-    sourceCtx.fillStyle = "#D5D8D2";
-
-    for (
-      let x = b[0] + 15;
-      x < b[0] + b[2] - 10;
-      x += 30
-    ) {
-
-      for (
-        let y = b[1] + 20;
-        y < b[1] + b[3] - 10;
-        y += 35
-      ) {
-
-        sourceCtx.fillRect(x, y, 12, 15);
-
-      }
-
-    }
-
-    sourceCtx.fillStyle = "#84969A";
-
+  [[30, 300, 130, 180], [180, 260, 110, 220], [340, 210, 165, 470],
+   [520, 130, 165, 510], [720, 270, 140, 210], [900, 300, 300, 180]].forEach(b => {
+    R("#84969A", b[0], b[1], b[2], b[3]);
+    for (let x = b[0] + 15; x < b[0] + b[2] - 10; x += 30)
+      for (let y = b[1] + 20; y < b[1] + b[3] - 10; y += 35)
+        R("#D5D8D2", x, y, 12, 15);
   });
 
+  const tree = (x, y, s) => {
+    R("#665B45", x - 8 * s, y, 16 * s, 100 * s);
+    C("#426C50", x, y, 55 * s);
+    C("#57835C", x - 10 * s, y - 20 * s, 35 * s);
+  };
+  tree(100, 370, 1.1); tree(250, 380, 0.9); tree(850, 380, 1.0); tree(1050, 350, 1.2);
 
-  // Trees
+  R("#89947D", 0, 470, W, H - 470);
+  POLY("#555B5B", [[280, 470], [820, 470], [1100, 700], [0, 700]]);
 
-  function tree(x, y, s) {
+  S.strokeStyle = "#F5F1E8"; S.lineWidth = 7; S.setLineDash([35, 35]);
+  S.beginPath(); S.moveTo(550, 490); S.lineTo(550, 700); S.stroke();
+  S.setLineDash([]);
 
-    sourceCtx.fillStyle = "#665B45";
-
-    sourceCtx.fillRect(
-      x - 8 * s,
-      y,
-      16 * s,
-      100 * s
-    );
-
-    sourceCtx.fillStyle = "#426C50";
-
-    sourceCtx.beginPath();
-
-    sourceCtx.arc(
-      x, y, 55 * s, 0, Math.PI * 2
-    );
-
-    sourceCtx.fill();
-
-    sourceCtx.fillStyle = "#57835C";
-
-    sourceCtx.beginPath();
-
-    sourceCtx.arc(
-      x - 20 * s,
-      y - 20 * s,
-      35 * s,
-      0,
-      Math.PI * 2
-    );
-
-    sourceCtx.fill();
-
-  }
-
-  tree(60, 370, 1.1);
-  tree(250, 380, 0.9);
-  tree(850, 380, 1.0);
-  tree(1050, 350, 1.2);
-
-
-  // Ground
-
-  sourceCtx.fillStyle = "#89947D";
-
-  sourceCtx.fillRect(
-    0, 470, W, H - 470
-  );
-
-
-  // Road
-
-  sourceCtx.fillStyle = "#555B5B";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(280, 470);
-  sourceCtx.lineTo(820, 470);
-  sourceCtx.lineTo(1100, 700);
-  sourceCtx.lineTo(0, 700);
-
-  sourceCtx.closePath();
-  sourceCtx.fill();
-
-
-  // Road markings
-
-  sourceCtx.strokeStyle = "#F5F1E8";
-  sourceCtx.lineWidth = 7;
-
-  sourceCtx.setLineDash([35, 35]);
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(550, 490);
-  sourceCtx.lineTo(550, 700);
-
-  sourceCtx.stroke();
-
-  sourceCtx.setLineDash([]);
-
-
-  // Cars
-
-  function car(x, y, s, color) {
-
-    sourceCtx.fillStyle = color;
-
-    sourceCtx.fillRect(
-      x, y, 100 * s, 35 * s
-    );
-
-    sourceCtx.fillStyle = "#343D40";
-
-    sourceCtx.beginPath();
-
-    sourceCtx.moveTo(x + 20 * s, y);
-    sourceCtx.lineTo(x + 35 * s, y - 25 * s);
-    sourceCtx.lineTo(x + 75 * s, y - 25 * s);
-    sourceCtx.lineTo(x + 90 * s, y);
-
-    sourceCtx.closePath();
-    sourceCtx.fill();
-
-    sourceCtx.fillStyle = "#222";
-
-    sourceCtx.beginPath();
-
-    sourceCtx.arc(
-      x + 22 * s,
-      y + 35 * s,
-      10 * s,
-      0,
-      Math.PI * 2
-    );
-
-    sourceCtx.arc(
-      x + 78 * s,
-      y + 35 * s,
-      10 * s,
-      0,
-      Math.PI * 2
-    );
-
-    sourceCtx.fill();
-
-  }
-
-  car(420, 550, 1.0, "#B94A3A");
-  car(680, 610, 0.65, "#E3E0D4");
-
+  const car = (x, y, s, color) => {
+    R(color, x, y, 100 * s, 35 * s);
+    POLY("#343D40", [[x + 20 * s, y], [x + 35 * s, y - 25 * s], [x + 75 * s, y - 25 * s], [x + 90 * s, y]]);
+    C("#222", x + 22 * s, y + 35 * s, 10 * s);
+    C("#222", x + 78 * s, y + 35 * s, 10 * s);
+  };
+  car(420, 550, 1.0, "#B94A3A"); car(680, 610, 0.65, "#E3E0D4"); car(580, 510, 0.65, "#E3E0D4");
 }
 
-
-/* ================================================
-   SCENE 2: WORKING AT COMPUTER
-================================================ */
-
+/* ---------- SCENE 2: COMPUTER ---------- */
 function drawComputerScene() {
-
-  // Background
-
-  sourceCtx.fillStyle = "#D8D0C2";
-  sourceCtx.fillRect(0, 0, W, H);
-
-
-  // Wall
-
-  sourceCtx.fillStyle = "#E9E3D8";
-  sourceCtx.fillRect(0, 0, W, 490);
-
-
-  // Window
-
-  sourceCtx.fillStyle = "#A9C7D0";
-  sourceCtx.fillRect(70, 60, 360, 300);
-
-  sourceCtx.fillStyle = "#F5F1E8";
-  sourceCtx.fillRect(235, 60, 12, 300);
-  sourceCtx.fillRect(70, 205, 360, 12);
-
-  // Window scenery
-
-  sourceCtx.fillStyle = "#6D927D";
-  sourceCtx.fillRect(70, 270, 360, 90);
-
-
-  // Desk
-
-  sourceCtx.fillStyle = "#916D50";
-  sourceCtx.fillRect(0, 570, W, 230);
-
-
-  // Monitor
-
-  sourceCtx.fillStyle = "#303B3B";
-  sourceCtx.fillRect(540, 130, 600, 350);
-
-  sourceCtx.fillStyle = "#A8C6C0";
-  sourceCtx.fillRect(560, 150, 560, 305);
-
-
-  // Screen content
-
-  sourceCtx.fillStyle = "#FFFDF7";
-  sourceCtx.fillRect(590, 180, 230, 240);
-
-  sourceCtx.fillStyle = "#3A6656";
-  sourceCtx.fillRect(610, 200, 190, 28);
-
-  sourceCtx.fillStyle = "#B9C8BE";
-
-  for (let i = 0; i < 6; i++) {
-
-    sourceCtx.fillRect(
-      610,
-      255 + i * 25,
-      170,
-      9
-    );
-
-  }
-
-
-  // Screen stand
-
-  sourceCtx.fillStyle = "#343D40";
-
-  sourceCtx.fillRect(800, 480, 80, 90);
-  sourceCtx.fillRect(750, 560, 180, 15);
-
-
-  // Keyboard
-
-  sourceCtx.fillStyle = "#343D40";
-  sourceCtx.fillRect(590, 585, 330, 45);
-
-  sourceCtx.fillStyle = "#AAB1A9";
-
-  for (let x = 605; x < 900; x += 25) {
-
-    for (let y = 595; y < 620; y += 15) {
-
-      sourceCtx.fillRect(x, y, 15, 7);
-
-    }
-
-  }
-
-
-  // Person's body
-
-  sourceCtx.fillStyle = "#3A6656";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(180, 800);
-  sourceCtx.lineTo(220, 550);
-  sourceCtx.lineTo(390, 470);
-  sourceCtx.lineTo(550, 570);
-  sourceCtx.lineTo(570, 800);
-
-  sourceCtx.closePath();
-  sourceCtx.fill();
-
-
-  // Neck
-
-  sourceCtx.fillStyle = "#C99472";
-  sourceCtx.fillRect(335, 390, 85, 110);
-
-
-  // Head
-
-  sourceCtx.fillStyle = "#D8A27F";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.ellipse(
-    380, 330, 105, 125, 0, 0, Math.PI * 2
-  );
-
-  sourceCtx.fill();
-
-
-  // Hair
-
-  sourceCtx.fillStyle = "#39332F";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.arc(
-    380, 275, 108, Math.PI, Math.PI * 2
-  );
-
-  sourceCtx.fill();
-
-  sourceCtx.fillRect(272, 270, 35, 100);
-
-
-  // Ear
-
-  sourceCtx.fillStyle = "#C99472";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.arc(
-    480, 340, 20, 0, Math.PI * 2
-  );
-
-  sourceCtx.fill();
-
-
-  // Arm reaching keyboard
-
-  sourceCtx.strokeStyle = "#D8A27F";
-  sourceCtx.lineWidth = 48;
-  sourceCtx.lineCap = "round";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(430, 560);
-  sourceCtx.lineTo(570, 620);
-  sourceCtx.lineTo(690, 610);
-
-  sourceCtx.stroke();
-
-
-  // Mouse
-
-  sourceCtx.fillStyle = "#E7E4DC";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.ellipse(
-    1010, 610, 30, 42, 0, 0, Math.PI * 2
-  );
-
-  sourceCtx.fill();
-
+  R("#D8D0C2", 0, 0, W, H);
+  R("#E9E3D8", 0, 0, W, 490);
+
+  R("#A9C7D0", 70, 60, 360, 300);
+  R("#F5F1E8", 235, 60, 12, 300);
+  R("#F5F1E8", 70, 205, 360, 12);
+  R("#6D927D", 70, 270, 360, 90);
+
+  R("#916D50", 0, 570, W, 230);
+
+  R("#303B3B", 300, 130, 600, 350);
+  R("#A8C6C0", 320, 150, 560, 305);
+
+  // Screen 1: dashboard
+  R("#FFFDF7", 350, 180, 230, 240);
+  R("#3A6656", 350, 180, 230, 42);
+  TXT("#FFFDF7", "bold 13px Arial", "DASHBOARD", 367, 206);
+  C("#B9C8BE", 380, 255, 18);
+  R("#3A6656", 410, 245, 115, 9);
+  R("#B9C8BE", 410, 261, 80, 6);
+  R("#E4EBE5", 370, 290, 85, 48);
+  R("#E4EBE5", 470, 290, 85, 48);
+  R("#3A6656", 380, 302, 45, 7);
+  R("#3A6656", 480, 302, 45, 7);
+  R("#B9C8BE", 380, 318, 60, 6);
+  R("#B9C8BE", 480, 318, 60, 6);
+  for (let i = 0; i < 3; i++) R("#B9C8BE", 370, 355 + i * 18, 170 - i * 15, 7);
+
+  // Screen 2: activity
+  R("#FFFDF7", 610, 180, 230, 240);
+  R("#3A6656", 610, 180, 230, 42);
+  TXT("#FFFDF7", "bold 13px Arial", "ACTIVITY", 627, 206);
+  TXT("#3A6656", "bold 11px Arial", "WEEKLY PERFORMANCE", 630, 248);
+  R("#E4EBE5", 630, 260, 190, 85);
+  for (let i = 0; i < 3; i++) R("#D0DBD2", 640, 278 + i * 24, 170, 1);
+  const bars = [25, 42, 32, 60, 48, 70, 55];
+  bars.forEach((b, i) => R("#527A64", 647 + i * 23, 338 - b, 12, b));
+  ["M", "T", "W", "T", "F", "S", "S"].forEach((d, i) => TXT("#7C8E82", "8px Arial", d, 649 + i * 23, 357));
+  TXT("#3A6656", "bold 10px Arial", "TOTAL ACTIVITY", 630, 380);
+  TXT("#527A64", "bold 17px Arial", "86%", 630, 401);
+  R("#E4EBE5", 685, 389, 125, 8);
+  R("#527A64", 685, 389, 107, 8);
+
+  // Stand, keyboard, mouse
+  R("#343D40", 560, 480, 80, 90);
+  R("#343D40", 510, 560, 180, 15);
+  R("#343D40", 350, 585, 330, 75);
+  for (let x = 365; x < 660; x += 25)
+    for (let y = 595; y < 650; y += 15) R("#AAB1A9", x, y, 15, 7);
+  S.fillStyle = "#E7E4DC"; S.beginPath(); S.ellipse(770, 610, 30, 42, 0, 0, Math.PI * 2); S.fill();
 }
 
-
-/* ================================================
-   SCENE 3: LOOKING AT PHONE
-================================================ */
-
+/* ---------- SCENE 3: PHONE ---------- */
 function drawPhoneScene() {
+  R("#C4B9A7", 0, 0, W, H);
 
-  // Background
+  // Lap
+  S.fillStyle = "#354E49"; S.beginPath();
+  S.moveTo(0, 800); S.lineTo(100, 490);
+  S.quadraticCurveTo(350, 420, 600, 450);
+  S.quadraticCurveTo(850, 420, 1100, 490);
+  S.lineTo(1200, 800); S.closePath(); S.fill();
 
-  sourceCtx.fillStyle = "#D7D1C5";
-  sourceCtx.fillRect(0, 0, W, H);
-
-
-  // Floor
-
-  sourceCtx.fillStyle = "#C4B9A7";
-  sourceCtx.fillRect(0, 500, W, 300);
-
-
-  // Clothing / lap
-
-  sourceCtx.fillStyle = "#354E49";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(100, 800);
-  sourceCtx.lineTo(280, 430);
-  sourceCtx.lineTo(730, 430);
-  sourceCtx.lineTo(1000, 800);
-
-  sourceCtx.closePath();
-  sourceCtx.fill();
-
-
-  // Left arm
-
-  sourceCtx.fillStyle = "#D6A17E";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(100, 800);
-  sourceCtx.lineTo(300, 490);
-  sourceCtx.lineTo(450, 400);
-  sourceCtx.lineTo(520, 470);
-  sourceCtx.lineTo(340, 620);
-  sourceCtx.lineTo(260, 800);
-
-  sourceCtx.closePath();
-  sourceCtx.fill();
-
+  // Forearms
+  POLY("#D6A17E", [[0, 800], [0, 640], [300, 350], [480, 360], [510, 510], [340, 620], [250, 800]]);
+  POLY("#D9A582", [[1200, 800], [1200, 640], [900, 350], [720, 360], [690, 510], [860, 620], [950, 800]]);
 
   // Phone
-
-  sourceCtx.save();
-
-  sourceCtx.translate(700, 370);
-  sourceCtx.rotate(-0.12);
-
-
-  // Phone body
-
-  sourceCtx.fillStyle = "#252B2C";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.roundRect(
-    -155, -230, 310, 460, 28
-  );
-
-  sourceCtx.fill();
-
-
-  // Screen
-
-  sourceCtx.fillStyle = "#F7F5EF";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.roundRect(
-    -140, -210, 280, 420, 18
-  );
-
-  sourceCtx.fill();
-
-
-  // Screen interface
-
-  sourceCtx.fillStyle = "#3A6656";
-  sourceCtx.fillRect(-115, -175, 230, 55);
-
-  sourceCtx.fillStyle = "#D8DED5";
-
-  for (let i = 0; i < 5; i++) {
-
-    sourceCtx.fillRect(
-      -110,
-      -80 + i * 45,
-      210,
-      12
-    );
-
+  S.save();
+  S.translate(600, 355); S.rotate(-0.06);
+  RR("#252B2C", -190, -275, 380, 550, 32);
+  RR("#F7F5EF", -174, -259, 348, 518, 23);
+  R("#3A6656", -174, -220, 348, 85);
+  TXT("#FFFDF7", "bold 20px Arial", "MY DASHBOARD", -145, -170);
+  RR("#E4EBE5", -145, -110, 290, 100, 12);
+  R("#3A6656", -120, -85, 130, 11);
+  R("#B9C8BE", -120, -60, 220, 8);
+  R("#B9C8BE", -120, -40, 160, 8);
+  for (let i = 0; i < 3; i++) {
+    RR("#E4EBE5", -145, 15 + i * 85, 290, 68, 10);
+    R("#527A64", -120, 35 + i * 85, 130, 9);
+    R("#B9C8BE", -120, 55 + i * 85, 200, 6);
   }
+  R("#DCE5DD", -174, 220, 348, 39);
+  for (let i = 0; i < 4; i++) C("#3A6656", -105 + i * 70, 239, 9);
+  RR("#252B2C", -35, -269, 70, 6, 4);
+  S.restore();
 
-  sourceCtx.fillStyle = "#A9BDAF";
-  sourceCtx.fillRect(-110, 150, 210, 35);
+  // Hands: side = 1 (left) or -1 (right, mirrored about x = 600)
+  const hand = (color, m) => {
+    const X = x => m === 1 ? x : 1200 - x;
+    S.fillStyle = color; S.beginPath();
+    S.moveTo(X(300), 350);
+    S.bezierCurveTo(X(260), 295, X(280), 220, X(345), 195);
+    S.bezierCurveTo(X(405), 165, X(465), 205, X(480), 275);
+    S.lineTo(X(490), 455);
+    S.bezierCurveTo(X(450), 520, X(345), 475, X(300), 350);
+    S.fill();
 
-  sourceCtx.restore();
+    S.strokeStyle = color; S.lineCap = "round"; S.lineWidth = 42;
+    [[330, 255, 275, 225, 280, 290], [305, 320, 255, 305, 275, 365], [315, 390, 270, 390, 295, 435]]
+      .forEach(f => {
+        S.beginPath(); S.moveTo(X(f[0]), f[1]);
+        S.quadraticCurveTo(X(f[2]), f[3], X(f[4]), f[5]); S.stroke();
+      });
 
+    S.lineWidth = 48;
+    S.beginPath(); S.moveTo(X(420), 440);
+    S.bezierCurveTo(X(445), 405, X(475), 400, X(510), 420); S.stroke();
+  };
+  hand("#D6A17E", 1);
+  hand("#D9A582", -1);
 
-  // Right hand holding phone
-
-  sourceCtx.fillStyle = "#D9A582";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.ellipse(
-    865, 390, 95, 145, -0.3, 0, Math.PI * 2
-  );
-
-  sourceCtx.fill();
-
-
-  // Fingers
-
-  sourceCtx.strokeStyle = "#D9A582";
-  sourceCtx.lineWidth = 40;
-  sourceCtx.lineCap = "round";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(835, 210);
-  sourceCtx.lineTo(825, 100);
-
-  sourceCtx.stroke();
-
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(900, 220);
-  sourceCtx.lineTo(920, 115);
-
-  sourceCtx.stroke();
-
-
-  // Thumb across screen
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(800, 480);
-  sourceCtx.lineTo(640, 400);
-
-  sourceCtx.stroke();
-
-
-  // Sleeve
-
-  sourceCtx.fillStyle = "#3A6656";
-
-  sourceCtx.beginPath();
-
-  sourceCtx.moveTo(820, 510);
-  sourceCtx.lineTo(1000, 650);
-  sourceCtx.lineTo(1150, 800);
-  sourceCtx.lineTo(850, 800);
-
-  sourceCtx.closePath();
-  sourceCtx.fill();
-
+  // Sleeves
+  POLY("#3A6656", [[0, 800], [0, 650], [250, 540], [350, 625], [260, 800]]);
+  POLY("#3A6656", [[1200, 800], [1200, 650], [950, 540], [850, 625], [940, 800]]);
 }
-
-
-/* ================================================
-   SCENE SWITCHING
-================================================ */
 
 function drawScene() {
-
-  sourceCtx.clearRect(0, 0, W, H);
-
-  const scene =
-    document.getElementById("sceneSelect").value;
-
-  if (scene === "city") {
-
-    drawCityScene();
-
-  }
-
-  else if (scene === "computer") {
-
-    drawComputerScene();
-
-  }
-
-  else if (scene === "phone") {
-
-    drawPhoneScene();
-
-  }
-
-  // Cache the newly drawn scene once
-  sourceImageData =
-    sourceCtx.getImageData(0, 0, W, H);
-
+  S.clearRect(0, 0, W, H);
+  const scene = sceneSelect.value;
+  if (scene === "city") drawCityScene();
+  else if (scene === "computer") drawComputerScene();
+  else drawPhoneScene();
+  sourceImageData = S.getImageData(0, 0, W, H);
 }
 
-
-/* --------------------------------
-   CREATE LENS MASK
--------------------------------- */
-
-const maskCanvas =
-  document.createElement("canvas");
-
-maskCanvas.width = W;
-maskCanvas.height = H;
-
-const maskCtx =
-  maskCanvas.getContext("2d");
-
+/* ---------- LENS MASK ---------- */
 function createLensMask() {
-
   maskCtx.clearRect(0, 0, W, H);
-
   maskCtx.fillStyle = "#FFFFFF";
-
   lensPath(maskCtx);
-
   maskCtx.fill();
-
-  return maskCtx.getImageData(
-    0, 0, W, H
-  ).data;
-
+  return maskCtx.getImageData(0, 0, W, H).data;
 }
 
-let maskData;
+/* ---------- DEFOCUS MODEL ---------- */
+function getSceneDemand() {
+  const scene = sceneSelect.value;
+  if (scene === "computer") return -1.0;
+  if (scene === "phone") return -2.5;
+  return 0.0;
+}
 
+function getResidualDefocus(power, accommodation, demand) {
+  const high = power;
+  const low = power - accommodation;
+  if (demand <= high && demand >= low) return 0;
+  if (demand > high) return demand - high;
+  return low - demand;
+}
 
-/* ================================================
-   RENDER DISTORTION
-================================================ */
+/* ---------- VISION EFFECTS (blur + cylinder ghosting) ---------- */
+function applyVisionEffects(target, blurAmount, cylinder, axis) {
+  // 1. Spherical blur
+  blurCtx.clearRect(0, 0, W, H);
+  blurCtx.filter = blurAmount > 0 ? `blur(${blurAmount}px)` : "none";
+  blurCtx.drawImage(sourceCanvas, 0, 0);
+  blurCtx.filter = "none";
 
+  // 2. Cylinder doubling: two copies move apart symmetrically.
+  //    At zero cylinder both sit on top of each other (one image).
+  ghostCtx.clearRect(0, 0, W, H);
+
+  const separation = cylinder * 16;                        // total gap between the two images
+  const secondWeight = Math.min(.5, cylinder * 0.75);    // opacity of the second image (0.5 = equal to the first)
+  const angle = (axis + 90) * Math.PI / 180;
+  const ox = Math.cos(angle) * separation / 2;
+  const oy = Math.sin(angle) * separation / 2;
+
+  ghostCtx.globalAlpha = 1;
+  ghostCtx.drawImage(blurCanvas, -ox, -oy);               // image 1
+  ghostCtx.globalAlpha = secondWeight;
+  ghostCtx.drawImage(blurCanvas, ox, oy);                 // image 2
+  ghostCtx.globalAlpha = 1;
+
+  target.clearRect(0, 0, W, H);
+  target.drawImage(ghostCanvas, 0, 0);
+}
+
+/* ---------- RENDER ---------- */
 let renderPending = false;
 
 function render() {
-
   if (renderPending) return;
-
   renderPending = true;
+  requestAnimationFrame(doRender);
+}
 
-  requestAnimationFrame(() => {
+function doRender() {
+  renderPending = false;
 
-    renderPending = false;
+  const val = id => Number(el[id].value);
+  const power = val("power");
+  const aspheric = val("aspheric");
+  const cylinder = val("cylinder");
+  const axis = val("axis");
+  const accommodation = val("accommodation");
+  const corr = val("correction") / 100;
 
+  controlDefs.forEach(d => {
+    document.getElementById(d.id + "Value").textContent = d.f(Number(el[d.id].value));
+  });
 
-    // --------------------------------
-    // READ SLIDERS
-    // --------------------------------
+  /* Original (uncorrected) vision: always full power + full cylinder */
+  const uncorrectedDefocus = getResidualDefocus(power, accommodation, getSceneDemand());
+  applyVisionEffects(ctx, Math.min(30, uncorrectedDefocus * 5), cylinder, axis);
 
-    const power =
-      Number(powerSlider.value);
+  /* Through the lens: correction removes blur and ghosting */
+  const lensDefocus = uncorrectedDefocus * (1 - corr);
+  const lensCylinder = cylinder * (1 - corr);
 
-    const aspheric =
-      Number(asphericSlider.value);
-
-    const cylinder =
-      Number(cylinderSlider.value);
-
-    const axis =
-      Number(axisSlider.value);
-
-
-    // --------------------------------
-    // UPDATE VALUE DISPLAYS
-    // --------------------------------
-
-    powerValue.textContent =
-      (power > 0 ? "+" : "") +
-      power.toFixed(2) + " D";
-
-    asphericValue.textContent =
-      aspheric.toFixed(0) + "%";
-
-    cylinderValue.textContent =
-      cylinder.toFixed(2);
-
-    axisValue.textContent =
-      axis.toFixed(0) + "°";
-
-    positionValue.textContent =
-      positionSlider.value + "%";
-
-
-    // --------------------------------
-    // POWER / MAGNIFICATION
-    // --------------------------------
-
-    const magFactor =
-      1 + power / 25;
-
-    const rawRadialStrength =
-      power * 0.035;
-
-    const asphericFactor =
-      1 - aspheric / 100;
-
-    const radialStrength =
-      rawRadialStrength * asphericFactor;
-
-
-    // --------------------------------
-    // CYLINDER / AXIS
-    // --------------------------------
-
-    const cylinderStrength =
-      cylinder * 0.025;
-
-    const angle =
-      axis * Math.PI / 180;
-
-    const cosA = Math.cos(angle);
-    const sinA = Math.sin(angle);
-
-
-    // --------------------------------
-    // DISPLAY EFFECTS
-    // --------------------------------
-
-    const effects = [];
-    const details = [];
-
-    if (power > 0) {
-
-      effects.push("Hyperopic Lens");
-
-      details.push(
-        "+" + power.toFixed(2) + " D"
-      );
-
-      details.push("Pincushion distortion");
-
-    }
-
-    else if (power < 0) {
-
-      effects.push("Myopic Lens");
-
-      details.push(
-        power.toFixed(2) + " D"
-      );
-
-      details.push("Barrel distortion");
-
-    }
-
-
-    if (aspheric > 0) {
-
-      details.push(
-        "Aspherical reduction: " +
-        aspheric.toFixed(0) + "%"
-      );
-
-    }
-
-
-    if (cylinder > 0) {
-
-      effects.push("Cylindrical Minification");
-
-      details.push(
-        "Cylinder: " + cylinder.toFixed(2)
-      );
-
-      details.push(
-        "Axis: " + axis.toFixed(0) + "°"
-      );
-
-    }
-
-
-    effectDisplay.textContent =
-      effects.length
-        ? effects.join(" + ")
-        : "No distortion";
-
-
+  if (corr === 0) {
+    effectDisplay.textContent = "No spectacle correction";
     detailDisplay.textContent =
-      details.length
-        ? details.join("  |  ")
-        : "Original image";
-
-
-    // --------------------------------
-    // CACHED IMAGE DATA
-    // --------------------------------
-
-    const originalData =
-      sourceImageData.data;
-
-
-    // --------------------------------
-    // LENS REGION ONLY
-    // --------------------------------
-
-    const cx = lens.cx;
-    const cy = lens.cy;
-
-    const rx = lens.rx;
-    const ry = lens.ry;
-
-    const xStart = Math.max(
-      0,
-      Math.floor(cx - rx)
-    );
-
-    const xEnd = Math.min(
-      W,
-      Math.ceil(cx + rx)
-    );
-
-    const yStart = Math.max(
-      0,
-      Math.floor(cy - ry)
-    );
-
-    const yEnd = Math.min(
-      H,
-      Math.ceil(cy + ry)
-    );
-
-    const regionWidth = xEnd - xStart;
-    const regionHeight = yEnd - yStart;
-
-
-    // Create a small image buffer for the lens area only
-
-    const output =
-      ctx.createImageData(regionWidth, regionHeight);
-
-    const outputData =
-      output.data;
-
-
-    // --------------------------------
-    // PIXEL REMAPPING
-    // --------------------------------
-
-    for (let y = yStart; y < yEnd; y++) {
-
-      for (let x = xStart; x < xEnd; x++) {
-
-        const i = (y * W + x) * 4;
-
-        const localI =
-          ((y - yStart) * regionWidth +
-           (x - xStart)) * 4;
-
-
-        // Copy original pixel first.
-        // This preserves pixels outside the oval
-        // within the rectangular image buffer.
-
-        outputData[localI] =
-          originalData[i];
-
-        outputData[localI + 1] =
-          originalData[i + 1];
-
-        outputData[localI + 2] =
-          originalData[i + 2];
-
-        outputData[localI + 3] = 255;
-
-
-        // Outside lens:
-        // Original image unchanged
-
-        const alpha = maskData[i];
-
-        if (alpha === 0) {
-          continue;
-        }
-
-
-        // --------------------------------
-        // NORMALIZED LENS COORDINATES
-        // --------------------------------
-
-        const dx = (x - cx) / rx;
-        const dy = (y - cy) / ry;
-
-        const r2 =
-          dx * dx + dy * dy;
-
-
-        // --------------------------------
-        // RADIAL DISTORTION
-        // --------------------------------
-
-        const radialFactor =
-          1 + radialStrength * r2;
-
-        const baseX =
-          (dx / magFactor) / radialFactor;
-
-        const baseY =
-          (dy / magFactor) / radialFactor;
-
-
-        // --------------------------------
-        // CYLINDRICAL DISTORTION
-        // --------------------------------
-
-        const u =
-          dx * cosA + dy * sinA;
-
-        const v =
-          -dx * sinA + dy * cosA;
-
-
-        const sourceU = u;
-
-        const sourceV =
-          v * (1 + cylinderStrength);
-
-
-        const cylinderDX =
-          sourceU * cosA -
-          sourceV * sinA;
-
-        const cylinderDY =
-          sourceU * sinA +
-          sourceV * cosA;
-
-
-        // --------------------------------
-        // COMBINE POWER AND CYLINDER
-        // --------------------------------
-
-        const sourceDX =
-          baseX + (cylinderDX - dx);
-
-        const sourceDY =
-          baseY + (cylinderDY - dy);
-
-
-        const sourceX =
-          cx + sourceDX * rx;
-
-        const sourceY =
-          cy + sourceDY * ry;
-
-
-        // --------------------------------
-        // KEEP WITHIN CANVAS
-        // --------------------------------
-
-        const sx = Math.max(
-          0,
-          Math.min(W - 1, sourceX)
-        );
-
-        const sy = Math.max(
-          0,
-          Math.min(H - 1, sourceY)
-        );
-
-
-        // --------------------------------
-        // BILINEAR INTERPOLATION
-        // --------------------------------
-
-        const x0 = Math.floor(sx);
-        const y0 = Math.floor(sy);
-
-        const x1 = Math.min(W - 1, x0 + 1);
-        const y1 = Math.min(H - 1, y0 + 1);
-
-        const fx = sx - x0;
-        const fy = sy - y0;
-
-
-        const p00 =
-          (y0 * W + x0) * 4;
-
-        const p10 =
-          (y0 * W + x1) * 4;
-
-        const p01 =
-          (y1 * W + x0) * 4;
-
-        const p11 =
-          (y1 * W + x1) * 4;
-
-
-        const blend = alpha / 255;
-
-
-        for (let c = 0; c < 3; c++) {
-
-          const top =
-            originalData[p00 + c] * (1 - fx) +
-            originalData[p10 + c] * fx;
-
-          const bottom =
-            originalData[p01 + c] * (1 - fx) +
-            originalData[p11 + c] * fx;
-
-          const distorted =
-            top * (1 - fy) +
-            bottom * fy;
-
-
-          outputData[localI + c] =
-            originalData[i + c] * (1 - blend) +
-            distorted * blend;
-
-        }
-
-        outputData[localI + 3] = 255;
-
-      }
-
+      "Original vision | " + uncorrectedDefocus.toFixed(2) + " D defocus | " +
+      cylinder.toFixed(2) + " D cylinder, axis " + axis.toFixed(0) + "°";
+    return;
+  }
+
+  /* Lens distortion parameters (scale with correction) */
+  const effectivePower = power * corr;
+  const effectiveAspheric = aspheric * corr;
+  const effectiveCylinder = cylinder * corr;
+  const magFactor = 1 + effectivePower / 25;
+  const radialStrength = effectivePower * 0.085 * (1 - effectiveAspheric / 100);
+  const cylMag = 1 + effectiveCylinder / 40;           // stretch along power meridian
+  const mAngle = (axis + 90) * Math.PI / 180;
+  const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
+
+  /* Description */
+  const effects = [], details = [];
+  if (effectivePower > 0) {
+    effects.push("Hyperopic Lens");
+    details.push("+" + effectivePower.toFixed(2) + " D", "Pincushion distortion");
+  } else if (effectivePower < 0) {
+    effects.push("Myopic Lens");
+    details.push(effectivePower.toFixed(2) + " D", "Barrel distortion");
+  }
+  if (effectiveAspheric > 0) details.push("Aspherical reduction: " + effectiveAspheric.toFixed(0) + "%");
+  if (effectiveCylinder > 0) {
+    effects.push("Cylinder Distortion");
+    details.push("Cylinder " + effectiveCylinder.toFixed(2) + " D, axis " + axis.toFixed(0) + "°",
+                 "Meridional stretch: " + ((cylMag - 1) * 100).toFixed(1) + "%");
+  }
+  details.push("Original vision: " + uncorrectedDefocus.toFixed(2) + " D defocus, " + cylinder.toFixed(2) + " D cyl");
+  details.push("Through lens: " + lensDefocus.toFixed(2) + " D defocus, " + lensCylinder.toFixed(2) + " D cyl");
+  details.push(el.correction.value + "% correction");
+  effectDisplay.textContent = effects.length ? effects.join(" + ") : "No lens distortion";
+  detailDisplay.textContent = details.join(" | ");
+
+  /* Lens source = scene with only the residual blur/ghosting */
+  applyVisionEffects(lensSrcCtx, Math.min(30, lensDefocus * 5), lensCylinder, axis);
+  const lensData = lensSrcCtx.getImageData(0, 0, W, H).data;
+  const backgroundData = ctx.getImageData(0, 0, W, H).data;
+
+  const { cx, cy, rx, ry } = lens;
+  const xStart = Math.max(0, Math.floor(cx - rx));
+  const xEnd = Math.min(W, Math.ceil(cx + rx));
+  const yStart = Math.max(0, Math.floor(cy - ry));
+  const yEnd = Math.min(H, Math.ceil(cy + ry));
+  const rw = xEnd - xStart, rh = yEnd - yStart;
+
+  const output = ctx.createImageData(rw, rh);
+  const out = output.data;
+
+  function sample(px, py, o) {
+    const sx = Math.max(0, Math.min(W - 1, px));
+    const sy = Math.max(0, Math.min(H - 1, py));
+    const x0 = Math.floor(sx), y0 = Math.floor(sy);
+    const x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1);
+    const fx = sx - x0, fy = sy - y0;
+    const p00 = (y0 * W + x0) * 4, p10 = (y0 * W + x1) * 4;
+    const p01 = (y1 * W + x0) * 4, p11 = (y1 * W + x1) * 4;
+    for (let c = 0; c < 3; c++) {
+      const top = lensData[p00 + c] * (1 - fx) + lensData[p10 + c] * fx;
+      const bot = lensData[p01 + c] * (1 - fx) + lensData[p11 + c] * fx;
+      out[o + c] = top * (1 - fy) + bot * fy;
     }
+    out[o + 3] = 255;
+  }
 
+  for (let y = yStart; y < yEnd; y++) {
+    for (let x = xStart; x < xEnd; x++) {
+      const i = (y * W + x) * 4;
+      const o = ((y - yStart) * rw + (x - xStart)) * 4;
 
-    // --------------------------------
-    // DRAW FINAL IMAGE
-    // --------------------------------
+      out[o] = backgroundData[i];
+      out[o + 1] = backgroundData[i + 1];
+      out[o + 2] = backgroundData[i + 2];
+      out[o + 3] = backgroundData[i + 3];
 
-    // Restore the cached original scene
-    ctx.putImageData(sourceImageData, 0, 0);
+      if (maskData[i] === 0) continue;
 
-    // Replace only the lens area
-    ctx.putImageData(output, xStart, yStart);
+      const dx = (x - cx) / rx;
+      const dy = (y - cy) / ry;
+      const radial = 1 + radialStrength * (dx * dx + dy * dy);
 
+      // Spherical magnification + radial distortion (pixel offsets from lens centre)
+      let bx = (dx / magFactor / radial) * rx;
+      let by = (dy / magFactor / radial) * ry;
 
-    // --------------------------------
-    // LENS OUTLINE
-    // --------------------------------
+      // Cylinder: stretch the image along the power meridian
+      const along = (bx * mCos + by * mSin) / cylMag;
+      const perp = -bx * mSin + by * mCos;
+      bx = along * mCos - perp * mSin;
+      by = along * mSin + perp * mCos;
 
-    lensPath(ctx);
+      sample(cx + bx, cy + by, o);
+    }
+  }
 
-    ctx.strokeStyle = "#3A6656";
-    ctx.lineWidth = 5;
-    ctx.stroke();
+  ctx.putImageData(output, xStart, yStart);
 
-    ctx.strokeStyle = "rgba(255,255,255,0.8)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-  });
-
+  lensPath(ctx);
+  ctx.strokeStyle = "#3A6656"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
 }
 
-
-/* ================================================
-   LENS POSITION
-================================================ */
-
+/* ---------- LENS POSITION ---------- */
 function updateLensPosition() {
-
-  const position =
-    Number(positionSlider.value);
-
-  const minX = lens.rx;
-
-  const maxX = W - lens.rx;
-
-
-  // Move lens horizontally
-
-  lens.cx =
-    minX +
-    (position / 100) * (maxX - minX);
-
-
-  // Recreate lens mask
-
+  const h = Number(el.lensPosition.value);
+  const v = Number(el.lensVerticalPosition.value);
+  lens.cx = lens.rx + (h / 100) * (W - 2 * lens.rx);
+  lens.cy = lens.ry + (v / 100) * (H - 2 * lens.ry);
   maskData = createLensMask();
-
-
-  // Recalculate distortion
-
   render();
-
 }
 
-
-/* ================================================
-   SLIDER EVENTS
-================================================ */
-
-powerSlider.addEventListener(
-  "input", render
-);
-
-asphericSlider.addEventListener(
-  "input", render
-);
-
-cylinderSlider.addEventListener(
-  "input", render
-);
-
-axisSlider.addEventListener(
-  "input", render
-);
-
-positionSlider.addEventListener(
-  "input", updateLensPosition
-);
-
-
-/* ================================================
-   SCENE SWITCHING
-================================================ */
-
-document
-  .getElementById("sceneSelect")
-  .addEventListener("change", () => {
-
-    drawScene();
-
-    render();
-
-  });
-
-
-/* ================================================
-   INDIVIDUAL RESET BUTTONS
-================================================ */
-
-document
-  .getElementById("resetPower")
-  .addEventListener("click", () => {
-
-    powerSlider.value = 0;
-
-    render();
-
-  });
-
-
-document
-  .getElementById("resetAspheric")
-  .addEventListener("click", () => {
-
-    asphericSlider.value = 0;
-
-    render();
-
-  });
-
-
-document
-  .getElementById("resetCylinder")
-  .addEventListener("click", () => {
-
-    cylinderSlider.value = 0;
-
-    render();
-
-  });
-
-
-document
-  .getElementById("resetAxis")
-  .addEventListener("click", () => {
-
-    axisSlider.value = 0;
-
-    render();
-
-  });
-
-
-document
-  .getElementById("resetPosition")
-  .addEventListener("click", () => {
-
-    positionSlider.value = 50;
-
-    updateLensPosition();
-
-  });
-
-
-/* ================================================
-   INITIALIZE
-================================================ */
-
-positionSlider.value = 50;
-
-lens.cx = W / 2;
+/* ---------- EVENTS + INIT ---------- */
+sceneSelect.addEventListener("change", () => { drawScene(); render(); });
 
 drawScene();
-
-maskData = createLensMask();
-
-render();
-
+updateLensPosition();
 </script>
-
 </body>
 </html>
