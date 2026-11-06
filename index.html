@@ -47,6 +47,30 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block}
 .reset-button:hover,.reset-button:active{background:#EAEFE9}
 .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 
+/* Correction sliders switched Off: red scheme */
+.control.off input[type=range]::-webkit-slider-thumb{background:#C0392B}
+.control.off input[type=range]::-webkit-slider-runnable-track{background:#EBC3BE}
+.control.off input[type=range]::-moz-range-thumb{background:#C0392B}
+.control.off input[type=range]::-moz-range-track{background:#EBC3BE}
+.control.off .value{color:#C0392B}
+.control.off .off-button{background:#C0392B;border-color:#C0392B;color:#fff}
+
+.reset-all{grid-column:1/-1;width:100%;height:30px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;font-size:11px;font-weight:bold;cursor:pointer}
+.reset-all:active{background:var(--green-dark)}
+
+.lens-switch{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;background:rgba(255,253,247,.85);border:1px solid #D8D2C4;border-radius:999px;z-index:2}
+.lens-switch button{border:0;background:transparent;color:var(--green-dark);font-family:inherit;font-size:10px;font-weight:bold;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.lens-switch button.active{background:var(--green);color:#fff}
+input[type=range]:disabled{opacity:.45;cursor:not-allowed}
+
+/* Collapsible prescription panel */
+.group{grid-column:1/-1;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:0 12px}
+.group-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:none;border:0;padding:10px 0;font-family:inherit;font-size:10px;font-weight:bold;color:var(--green-dark);cursor:pointer;text-align:left}
+.group-toggle .chev{font-size:12px;transition:transform .2s}
+.group.closed .chev{transform:rotate(-90deg)}
+.group-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:6px;padding-bottom:8px}
+.group.closed .group-body{display:none}
+
 /* Touch-friendly sliders */
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin:0;cursor:pointer;touch-action:pan-y}
 input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#CBD6CD}
@@ -58,17 +82,103 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 @media (min-width:1000px) and (orientation:landscape){
   .layout{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}
   .stage{position:sticky;top:8px}
-  .controls{grid-template-columns:minmax(0,1fr)}
+  .controls,.group-body{grid-template-columns:minmax(0,1fr)}
 }
 /* Phones */
 @media (max-width:600px){
   body{padding:7px}.panel{padding:8px}
-  .controls{grid-template-columns:minmax(0,1fr)}
+  .controls,.group-body{grid-template-columns:minmax(0,1fr)}
 }
 .scale-wrapper {
   width: 100%;
   transform: scale(0.9);
   transform-origin: top center;
+}
+/* Multifocal boundary controls */
+.boundary-controls {
+  position:absolute;
+  left:50%;
+  top:53px;
+  transform:translateX(-50%);
+  display:none;
+  gap:4px;
+  padding:4px;
+  background:rgba(255,253,247,.92);
+  border:1px solid #D8D2C4;
+  border-radius:9px;
+  z-index:3;
+  white-space:nowrap;
+}
+
+.boundary-controls button {
+  border:1px solid #C9D1C9;
+  background:transparent;
+  color:var(--green-dark);
+  padding:5px 8px;
+  border-radius:6px;
+  font-family:inherit;
+  font-size:9px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.boundary-controls button.active {
+  background:var(--green);
+  color:white;
+  border-color:var(--green);
+}
+
+.boundary-controls button:not(.active) {
+  opacity:.55;
+}
+
+/* Canvas zoom */
+.zoom-controls {
+  position:absolute;
+  right:10px;
+  bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:5px;
+  background:rgba(255,253,247,.92);
+  border:1px solid #D8D2C4;
+  border-radius:9px;
+  z-index:4;
+}
+
+.zoom-controls button {
+  height:27px;
+  min-width:27px;
+  border:1px solid #C9D1C9;
+  border-radius:6px;
+  background:var(--green);
+  color:white;
+  font-size:13px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.zoom-controls button:last-child {
+  background:transparent;
+  color:var(--green-dark);
+  font-size:9px;
+  padding:0 7px;
+}
+
+#zoomValue {
+  min-width:35px;
+  text-align:center;
+  font-size:9px;
+  font-weight:bold;
+  color:var(--green-dark);
+}
+
+/* Canvas zoom transformation */
+#canvas {
+  transform:scale(1);
+  transform-origin:center center;
+  transition:transform .2s ease;
 }
 </style>
 </head>
@@ -83,17 +193,39 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="pos-row">
         <strong>Lens Position</strong>
         <span class="tick">Left</span>
-        <input type="range" id="lensPosition" min="0" max="100" step="1" value="50">
+        <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
         <span class="tick">Right</span>
         <span class="value" id="lensPositionValue"></span>
         <button class="reset-button" id="lensPositionReset">Reset</button>
       </div>
       <div class="view-row">
-        <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas></div>
+        <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas>
+<div class="lens-switch" id="lensSwitch">
+  <button type="button" data-type="far" class="active">Far Lens</button>
+  <button type="button" data-type="near">Near Lens</button>
+  <button type="button" data-type="multi">Multifocal Lens</button>
+</div>
+
+<!-- Multifocal boundary controls -->
+<div class="boundary-controls" id="boundaryControls">
+  <button type="button" data-boundary="far" class="active">Far</button>
+  <button type="button" data-boundary="intermediate" class="active">Intermediate</button>
+  <button type="button" data-boundary="near" class="active">Near</button>
+  <button type="button" data-boundary="distortion" class="active">Distortion</button>
+</div>
+
+<!-- Canvas zoom controls -->
+<div class="zoom-controls">
+  <button type="button" id="zoomOut">−</button>
+  <span id="zoomValue">100%</span>
+  <button type="button" id="zoomIn">+</button>
+  <button type="button" id="zoomReset">Reset</button>
+</div>
+        </div>
         <div class="vpos">
           <strong>Vertical</strong>
           <span class="tick">Top</span>
-          <div class="vtrack"><input type="range" id="lensVerticalPosition" min="0" max="100" step="1" value="50"></div>
+          <div class="vtrack"><input type="range" id="lensVerticalPosition" min="-100" max="200" step="1" value="50"></div>
           <span class="tick">Bottom</span>
           <span class="value" id="lensVerticalPositionValue"></span>
           <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
@@ -106,12 +238,21 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
 
     <div class="controls" id="controls">
+      <div class="group" id="rxGroup">
+        <button class="group-toggle" id="rxToggle" type="button" aria-expanded="true">
+          <span>Prescription: Far Lens Power, Accommodation, Cylinder, Axis, Intermediate ADD, Near ADD</span>
+          <span class="chev">&#9662;</span>
+        </button>
+        <div class="group-body" id="rxBody"></div>
+      </div>
       <div class="control" id="sceneControl">
         <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
         <input type="range" id="sceneSlider" min="0" max="4" step="1" value="0">
         <div class="scale"><span>City View</span><span>Night Driving</span><span>Meeting Room</span><span>Computer</span><span>Phone</span></div>
       </div>
     </div>
+
+    <button class="reset-all" id="resetAll" type="button">Reset All</button>
 
   </div>
 </div>
@@ -122,6 +263,31 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const W = canvas.width, H = canvas.height;
+/* ---------- CANVAS ZOOM ---------- */
+
+let canvasZoom = 1;
+
+function updateZoom() {
+  canvas.style.transform = `scale(${canvasZoom})`;
+
+  document.getElementById("zoomValue").textContent =
+    Math.round(canvasZoom * 100) + "%";
+}
+
+document.getElementById("zoomIn").addEventListener("click", () => {
+  canvasZoom = Math.min(2.5, canvasZoom + 0.25);
+  updateZoom();
+});
+
+document.getElementById("zoomOut").addEventListener("click", () => {
+  canvasZoom = Math.max(1, canvasZoom - 0.25);
+  updateZoom();
+});
+
+document.getElementById("zoomReset").addEventListener("click", () => {
+  canvasZoom = 1;
+  updateZoom();
+});
 
 function makeCanvas(willRead) {
   const c = document.createElement("canvas");
@@ -144,6 +310,108 @@ function lensPath(c) {
   c.closePath();
 }
 
+/* ---------- MULTIFOCAL BOUNDARY DRAWING ---------- */
+
+function drawLensGuides() {
+
+  if (lensType !== "multi") return;
+
+  const {cx, cy, rx, ry} = lens;
+
+  ctx.save();
+
+  // Keep every guide inside the spectacle lens
+  lensPath(ctx);
+  ctx.clip();
+
+  ctx.lineWidth = 3;
+  ctx.setLineDash([12, 8]);
+
+  // FAR ZONE BOUNDARY
+  if (boundaryVisibility.far) {
+
+    const y = cy + ry * (2 * 0.30 - 1);
+
+    ctx.strokeStyle = "#E2B84B";
+    ctx.beginPath();
+
+    ctx.moveTo(cx - rx, y);
+    ctx.lineTo(cx + rx, y);
+
+    ctx.stroke();
+  }
+
+  // INTERMEDIATE ZONE BOUNDARIES
+  if (boundaryVisibility.intermediate) {
+
+    ctx.strokeStyle = "#4B9B80";
+
+    [0.55, 0.80].forEach(t => {
+
+      const y = cy + ry * (2 * t - 1);
+
+      ctx.beginPath();
+      ctx.moveTo(cx - rx, y);
+      ctx.lineTo(cx + rx, y);
+      ctx.stroke();
+
+    });
+  }
+
+  // NEAR ZONE BOUNDARY
+  if (boundaryVisibility.near) {
+
+    const y = cy + ry * (2 * 0.80 - 1);
+
+    ctx.strokeStyle = "#D77C55";
+    ctx.beginPath();
+
+    ctx.moveTo(cx - rx, y);
+    ctx.lineTo(cx + rx, y);
+
+    ctx.stroke();
+  }
+
+  // DISTORTION AREA BOUNDARIES
+  // Follows the same side-region threshold used
+  // by the multifocal distortion calculation.
+
+  if (boundaryVisibility.distortion) {
+
+    ctx.setLineDash([7, 6]);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#C0392B";
+
+    [-1, 1].forEach(side => {
+
+      ctx.beginPath();
+
+      for (let i = 0; i <= 100; i++) {
+
+        const t = i / 100;
+
+        const threshold = 0.55 - 0.3 * t;
+
+        const x = cx + side * rx * threshold;
+        const y = cy + ry * (2 * t - 1);
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+
+      ctx.stroke();
+    });
+  }
+
+  ctx.restore();
+  ctx.setLineDash([]);
+}
+
+
+
 /* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
 const AGE_TABLE = [[0.25, 65], [0.5, 60], [1, 56], [2, 50], [3, 45], [4, 40], [5, 34]];  // [diopters, age]
 function ageLabel(acc) {
@@ -157,30 +425,30 @@ function ageLabel(acc) {
 
 /* ---------- CONTROLS (generated, in this order: left, right, left, right...) ---------- */
 const controlDefs = [
-  { id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
+  { rx: true, id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
     f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
-  { id: "accommodation", label: "Accommodation (Age)", min: 0.25, max: 5, step: 0.25, v: 3,
+  { rx: true, id: "accommodation", label: "Accommodation (Age)", min: 0.25, max: 5, step: 0.25, v: 3,
     f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: ["65+ yrs", "34 yrs & below"] },
-  { id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
+  { rx: true, id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
     f: v => v.toFixed(2), s: ["0", "4.00"] },
-  { id: "axis", label: "Axis", min: 0, max: 180, step: 1, v: 0,
+  { rx: true, id: "axis", label: "Axis", min: 0, max: 180, step: 1, v: 0,
     f: v => v.toFixed(0) + "°", s: ["0°", "90°", "180°"] },
   { id: "lensPosition", label: "Lens Position", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
   { id: "lensVerticalPosition", label: "Vertical Lens Position", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
-  { id: "cylCorrection", label: "Cylinder & Axis Correction", min: 0, max: 100, step: 1, v: 0,
-    f: v => v + "%", s: ["No Correction", "Half", "Full Correction"] },
-  { id: "farCorrection", label: "Far Spectacle Correction", min: 0, max: 100, step: 1, v: 0,
-    f: v => v + "%", s: ["No Correction", "Half", "Full Correction"] },
-  { id: "intermediateAdd", label: "Intermediate ADD (computer + phone)", min: 0, max: 3, step: 0.25, v: 0,
+  { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0,
+    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0,
+    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { rx: true, id: "intermediateAdd", label: "Intermediate ADD (computer + phone)", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
-  { id: "addCorrection", label: "Intermediate ADD Correction", min: 0, max: 100, step: 1, v: 0,
-    f: v => v + "%", s: ["No ADD", "Half", "Full ADD"] },
-  { id: "nearAdd", label: "Near ADD (phone only)", min: 0, max: 3, step: 0.25, v: 0,
+  { id: "addCorrection", label: "Intermediate ADD Correction", corr: true, base: "intermediateAdd", min: 0, max: 1, step: 0.25, v: 0,
+    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { rx: true, id: "nearAdd", label: "Near ADD (phone only)", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
-  { id: "nearCorrection", label: "Near ADD Correction", min: 0, max: 100, step: 1, v: 0,
-    f: v => v + "%", s: ["No ADD", "Half", "Full ADD"] },
+  { id: "nearCorrection", label: "Near ADD Correction", corr: true, base: "nearAdd", min: 0, max: 1, step: 0.25, v: 0,
+    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
   { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
     f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] }
 ];
@@ -188,26 +456,117 @@ const controlDefs = [
 const el = {};
 const controlsBox = document.getElementById("controls");
 
+const isOff = {};       // correction manually switched Off (= 0). Only the Off button / Reset change this.
+const lastVal = {};     // lens value (D) to restore when switched back on
+const userSet = {};     // true once the slider has been moved by hand (otherwise it follows the base at 100%)
+const controlDivs = {};
+const defById = {};
+controlDefs.forEach(d => { defById[d.id] = d; });
+const q25 = x => Math.round(x / 0.25) * 0.25;
+
+/* A correction slider is the lens actually worn, in 0.25 D steps.
+   Its range follows its base slider: 50% to 150% of the base value. */
+function corrRange(d) {
+  const base = Number(el[d.base].value), B = Math.abs(base);
+  if (B === 0) return { base, B, lo: 0, hi: 0 };
+  const lo = Math.max(0.25, q25(0.5 * B));
+  const hi = Math.max(lo + 0.25, q25(1.5 * B));
+  return { base, B, lo, hi };
+}
+const corrSign = r => (r.base < 0 ? "-" : "+");
+
+function syncCorrection(d) {
+  const slider = el[d.id], r = corrRange(d);
+  const lo$ = document.getElementById(d.id + "Lo"), mid$ = document.getElementById(d.id + "Mid"), hi$ = document.getElementById(d.id + "Hi");
+
+  if (r.B === 0) {                                   // nothing to correct: slider sits at 0
+    slider.min = 0; slider.max = 0; slider.value = 0;
+    lo$.textContent = mid$.textContent = hi$.textContent = "-";
+    return;
+  }
+  const clamp = v => Math.min(r.hi, Math.max(r.lo, v));
+  const prev = Number(slider.value);
+  if (Number(slider.min) !== r.lo) slider.min = r.lo;
+  if (Number(slider.max) !== r.hi) slider.max = r.hi;
+  slider.step = 0.25;
+
+  if (isOff[d.id]) slider.value = r.lo;                         // parked at the left while Off
+  else if (!userSet[d.id]) slider.value = clamp(q25(r.B));      // default: 100% of the base
+  else slider.value = clamp(prev);                              // keep the lens the user chose
+
+  const sg = corrSign(r);
+  lo$.textContent = sg + r.lo.toFixed(2) + " D";
+  mid$.textContent = sg + r.B.toFixed(2) + " D (100%)";
+  hi$.textContent = sg + r.hi.toFixed(2) + " D";
+}
+
+function corrFraction(d) {                              // lens value as a fraction of the base (1 = full correction)
+  if (isOff[d.id]) return 0;
+  const r = corrRange(d);
+  return r.B === 0 ? 1 : Number(el[d.id].value) / r.B;
+}
+
+function corrLabel(d) {
+  if (isOff[d.id]) return "OFF · 0.00 D";
+  const r = corrRange(d), m = Number(el[d.id].value);
+  if (r.B === 0) return "0.00 D";
+  return corrSign(r) + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
+}
+
 controlDefs.forEach(d => {
+  let div = null;
   if (!d.pos) {
-    const div = document.createElement("div");
+    div = document.createElement("div");
     div.className = "control";
     div.innerHTML =
       `<div class="control-heading"><strong>${d.label}</strong>
          <div class="control-right"><span class="value" id="${d.id}Value"></span>
-         <button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
+         <button class="reset-button" id="${d.id}Reset">Reset</button>
+         ${d.corr ? `<button class="reset-button off-button" id="${d.id}Off">Off</button>` : ""}</div></div>
        <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
-       <div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`;
-    controlsBox.appendChild(div);
+       ${d.corr
+         ? `<div class="scale"><span id="${d.id}Lo"></span><span id="${d.id}Mid"></span><span id="${d.id}Hi"></span></div>`
+         : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
+    (d.rx ? document.getElementById("rxBody") : controlsBox).appendChild(div);
   }
   const slider = document.getElementById(d.id);
   el[d.id] = slider;
   const update = d.pos ? updateLensPosition : render;
+
+  if (d.corr) {
+    controlDivs[d.id] = div;
+    isOff[d.id] = false;                       // default: on, at 100%
+    userSet[d.id] = false;
+    lastVal[d.id] = 0;
+
+    slider.addEventListener("input", () => {   // sliding by hand switches the correction on
+      userSet[d.id] = true;
+      if (isOff[d.id]) { isOff[d.id] = false; div.classList.remove("off"); }
+    });
+    document.getElementById(d.id + "Off").addEventListener("click", () => {
+      if (isOff[d.id]) {                       // back on at the previous lens value
+        isOff[d.id] = false; div.classList.remove("off");
+        if (lastVal[d.id]) slider.value = lastVal[d.id];
+      } else {                                 // manually switch off
+        lastVal[d.id] = Number(slider.value); isOff[d.id] = true; div.classList.add("off");
+      }
+      update();
+    });
+    document.getElementById(d.id + "Reset").addEventListener("click", () => {
+      isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0; div.classList.remove("off"); update();
+    });
+  } else {
+    document.getElementById(d.id + "Reset").addEventListener("click", () => { slider.value = d.v; update(); });
+  }
   slider.addEventListener("input", update);
-  document.getElementById(d.id + "Reset").addEventListener("click", () => {
-    slider.value = d.v;
-    update();
-  });
+});
+
+// Open / close the prescription panel
+const rxGroup = document.getElementById("rxGroup");
+const rxToggle = document.getElementById("rxToggle");
+rxToggle.addEventListener("click", () => {
+  const closed = rxGroup.classList.toggle("closed");
+  rxToggle.setAttribute("aria-expanded", String(!closed));
 });
 
 // Move the Viewing Scene slider into the grid, after Aspherical Design
@@ -660,6 +1019,42 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
   target.drawImage(ghostCanvas, 0, 0);
 }
 
+let lensType = "far";     // "far" | "near" | "multi"
+/* ---------- MULTIFOCAL BOUNDARY SETTINGS ---------- */
+
+const boundaryVisibility = {
+  far: true,
+  intermediate: true,
+  near: true,
+  distortion: true
+};
+
+const boundaryButtons =
+  document.querySelectorAll("[data-boundary]");
+
+boundaryButtons.forEach(button => {
+  button.addEventListener("click", () => {
+
+    const type = button.dataset.boundary;
+
+    boundaryVisibility[type] = !boundaryVisibility[type];
+
+    button.classList.toggle(
+      "active",
+      boundaryVisibility[type]
+    );
+
+    render();
+  });
+});
+
+function updateBoundaryControls() {
+  document.getElementById("boundaryControls").style.display =
+    lensType === "multi" ? "flex" : "none";
+}
+const levelPool = [], smearPool = [];
+const sstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+
 /* ---------- RENDER ---------- */
 let renderPending = false;
 
@@ -673,6 +1068,7 @@ function doRender() {
   renderPending = false;
 
   const val = id => Number(el[id].value);
+  controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });   // ranges follow the base sliders
   const power = val("power");
   const aspheric = val("aspheric");
   const cylinder = val("cylinder");
@@ -680,13 +1076,13 @@ function doRender() {
   const accommodation = val("accommodation");
   const intAdd = val("intermediateAdd");
   const nearAdd = val("nearAdd");
-  const farCorr = val("farCorrection") / 100;     // affects the far lens power only
-  const cylCorr = val("cylCorrection") / 100;     // affects cylinder + axis only
-  const addCorr = val("addCorrection") / 100;     // affects the intermediate ADD only
-  const nearCorr = val("nearCorrection") / 100;   // affects the near ADD only
+  const farCorr = corrFraction(defById.farCorrection);    // affects the far lens power only
+  const cylCorr = corrFraction(defById.cylCorrection);    // affects cylinder + axis only
+  const addCorr = corrFraction(defById.addCorrection);    // affects the intermediate ADD only
+  const nearCorr = corrFraction(defById.nearCorrection);  // affects the near ADD only
 
   controlDefs.forEach(d => {
-    document.getElementById(d.id + "Value").textContent = d.f(Number(el[d.id].value));
+    document.getElementById(d.id + "Value").textContent = d.corr ? corrLabel(d) : d.f(Number(el[d.id].value));
   });
 
   /* Original (uncorrected) vision: always full power + full cylinder */
@@ -695,93 +1091,113 @@ function doRender() {
   applyVisionEffects(ctx, Math.min(30, uncorrectedDefocus * 5), cylinder, axis);
 
   /* Through the lens */
-  const scene = sceneSelect.value;
-  // City / night driving = no ADD; computer + meeting room = intermediate ADD; phone = intermediate + near ADD
   const intPart = intAdd * addCorr;
   const nearPart = nearAdd * nearCorr;
-  const lensAdd = (scene === "computer" || scene === "meeting") ? intPart : scene === "phone" ? intPart + nearPart : 0;
-  // Lacking accommodation (after far correction), reduced by the ADD
+  const addTotal = intPart + nearPart;                            // full near power of the ADD
+  const isMulti = lensType === "multi";
+  const lensAdd = lensType === "far" ? 0 : addTotal;              // "Near Lens Rx"
   const lackingAccommodation = getResidualDefocus(power * (1 - farCorr), accommodation, demand);
-  const lensDefocus = Math.max(0, lackingAccommodation - lensAdd);
   const lensCylinder = cylinder * (1 - cylCorr);
 
-  if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
-    effectDisplay.textContent = "No spectacle correction";
-    detailDisplay.textContent =
-      "Original vision | " + uncorrectedDefocus.toFixed(2) + " D defocus | " +
-      cylinder.toFixed(2) + " D cylinder, axis " + axis.toFixed(0) + "°";
-    return;
-  }
+  // ADD at a height in the lens (t: 0 = top, 1 = bottom)
+  const addAt = t => {
+    if (lensType === "far") return 0;
+    if (lensType === "near") return addTotal;
+    const stops = [[0, 0], [0.3, 0], [0.55, intPart], [0.8, addTotal], [1, addTotal]];   // far -> intermediate -> near
+    for (let i = 1; i < stops.length; i++) {
+      if (t <= stops[i][0]) {
+        const [t0, a0] = stops[i - 1], [t1, a1] = stops[i];
+        return a0 + (a1 - a0) * (t - t0) / (t1 - t0);
+      }
+    }
+    return addTotal;
+  };
+
+  /* Title + details */
+  const effectivePower = power * farCorr;
+  const effectiveCylinder = cylinder * cylCorr;
+  const presbyopiaRx = getResidualDefocus(0, accommodation, demand);   // accommodation deficit for this scene
+  const rxText = v => (v > 0 ? "+" : "") + v.toFixed(2) + " D";
+
+  const effects = [];
+  if (effectivePower < 0) effects.push("Myopic Lens");
+  else if (effectivePower > 0) effects.push("Hyperopic Lens");
+  if (effectiveCylinder > 0) effects.push("Cylinder Lens");
+  if (presbyopiaRx > 0) effects.push("Presbyopia");
+  effectDisplay.textContent = effects.length ? effects.join(" + ") : "No Rx";
+  detailDisplay.textContent =
+    "Far Lens Rx: " + rxText(effectivePower) + " | Eye Rx: " + rxText(power) +
+    " | Near Lens Rx: " + rxText(lensAdd) + " | Presbyopia Rx: " + rxText(presbyopiaRx);
+
+if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
+  drawLensGuides();
+  return;
+}
 
   /* Lens distortion parameters */
-  const effectivePower = power * farCorr;
-  const effectiveAspheric = aspheric * farCorr;
-  const effectiveCylinder = cylinder * cylCorr;
+  const effectiveAspheric = aspheric * Math.min(farCorr, 1);
   const magFactor = 1 + effectivePower / 25;
   const radialStrength = effectivePower * 0.085 * (1 - effectiveAspheric / 100);
-  /* ADD distortion: separate plus-lens (hyperopic) distortion layered on top of the lens power.
-     ADD_STRENGTH scales how obvious it is (1 = same as a plus lens of that power). */
-  const ADD_STRENGTH = 1;
-  const addMag = 1 + (lensAdd * ADD_STRENGTH) / 25;
-  const addRadial = lensAdd * ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
-  const cylMag = 1 + effectiveCylinder / 40;           // stretch along power meridian
+  const ADD_STRENGTH = 1;                                        // how obvious the plus-lens (ADD) distortion is
+  const addRadK = ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
+  const cylMag = 1 + effectiveCylinder / 40;                     // stretch along power meridian
   const mAngle = (axis + 90) * Math.PI / 180;
   const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
 
-  /* Description */
-  const effects = [], details = [];
-  if (effectivePower > 0) {
-    effects.push("Hyperopic Lens");
-    details.push("+" + effectivePower.toFixed(2) + " D", "Pincushion distortion");
-  } else if (effectivePower < 0) {
-    effects.push("Myopic Lens");
-    details.push(effectivePower.toFixed(2) + " D", "Barrel distortion");
-  }
-  if (effectiveAspheric > 0) details.push("Aspherical reduction: " + effectiveAspheric.toFixed(0) + "%");
-  if (effectiveCylinder > 0) {
-    effects.push("Cylinder Distortion");
-    details.push("Cylinder " + effectiveCylinder.toFixed(2) + " D, axis " + axis.toFixed(0) + "°",
-                 "Meridional stretch: " + ((cylMag - 1) * 100).toFixed(1) + "%");
-  }
-  if (lensAdd > 0) {
-    effects.push("ADD Hyperopic Distortion");
-    details.push("ADD in use: +" + lensAdd.toFixed(2) + " D", "Pincushion from ADD");
-  }
-  details.push("Original vision: " + uncorrectedDefocus.toFixed(2) + " D defocus, " + cylinder.toFixed(2) + " D cyl");
-  details.push("Through lens: " + lensDefocus.toFixed(2) + " D defocus, " + lensCylinder.toFixed(2) + " D cyl");
-  details.push("Far " + el.farCorrection.value + "% | Cyl " + el.cylCorrection.value + "% | Int ADD " + el.addCorrection.value + "% | Near ADD " + el.nearCorrection.value + "%");
-  effectDisplay.textContent = effects.length ? effects.join(" + ") : "No lens distortion";
-  detailDisplay.textContent = details.join(" | ");
-
-  /* Lens source = scene with only the residual blur/ghosting */
-  applyVisionEffects(lensSrcCtx, Math.min(30, lensDefocus * 5), lensCylinder, axis);
-  const lensData = lensSrcCtx.getImageData(0, 0, W, H).data;
-  const backgroundData = ctx.getImageData(0, 0, W, H).data;
-
+  /* Lens region (+ padding for sampling) */
   const { cx, cy, rx, ry } = lens;
-  const xStart = Math.max(0, Math.floor(cx - rx));
-  const xEnd = Math.min(W, Math.ceil(cx + rx));
-  const yStart = Math.max(0, Math.floor(cy - ry));
-  const yEnd = Math.min(H, Math.ceil(cy + ry));
+  const xStart = Math.max(0, Math.floor(cx - rx)), xEnd = Math.min(W, Math.ceil(cx + rx));
+  const yStart = Math.max(0, Math.floor(cy - ry)), yEnd = Math.min(H, Math.ceil(cy + ry));
   const rw = xEnd - xStart, rh = yEnd - yStart;
+  const gx = Math.max(0, xStart - 70), gy = Math.max(0, yStart - 70);
+  const gw = Math.min(W, xEnd + 70) - gx, gh = Math.min(H, yEnd + 70) - gy;
 
+  /* Blur levels: sphere blur + residual cylinder ghosting. Multifocal uses 5 levels (blended per pixel). */
+  const SIDE_BLUR = 6;                                           // extra sphere blur at the sides of a multifocal
+  let maxDef = 0;
+  for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, Math.abs(lackingAccommodation - addAt(k / 20)));
+  const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0));
+  const nLev = isMulti ? 5 : 1;
+  const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;
+
+  const levelData = [];
+  for (let i = 0; i < nLev; i++) {
+    const lv = levelPool[i] || (levelPool[i] = makeCanvas(true));
+    applyVisionEffects(lv[1], nLev === 1 ? rMax : i * rMax / (nLev - 1), cylAmt, cylAxis);
+    levelData.push(lv[1].getImageData(gx, gy, gw, gh).data);
+  }
+
+  /* Multifocal sides: directional (cylindrical) smear, tilted opposite ways left / right */
+  const smearData = [];
+  if (isMulti) {
+    [0.45, -0.45].forEach((ang, k) => {
+      const sc = smearPool[k] || (smearPool[k] = makeCanvas(true)), d2 = sc[1];
+      d2.clearRect(0, 0, W, H);
+      for (let n = 0; n < 9; n++) {
+        d2.globalAlpha = 1 / (n + 1);
+        const o = (n - 4) * 2.4;
+        d2.drawImage(levelPool[0][0], Math.cos(ang) * o, Math.sin(ang) * o);
+      }
+      d2.globalAlpha = 1;
+      smearData.push(d2.getImageData(gx, gy, gw, gh).data);
+    });
+  }
+
+  const backgroundData = ctx.getImageData(0, 0, W, H).data;
   const output = ctx.createImageData(rw, rh);
   const out = output.data;
 
-  function sample(px, py, o) {
-    const sx = Math.max(0, Math.min(W - 1, px));
-    const sy = Math.max(0, Math.min(H - 1, py));
+  const s3 = [0, 0, 0];
+  function samp(arr, px, py) {
+    const sx = Math.max(0, Math.min(gw - 1, px - gx));
+    const sy = Math.max(0, Math.min(gh - 1, py - gy));
     const x0 = Math.floor(sx), y0 = Math.floor(sy);
-    const x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1);
+    const x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1);
     const fx = sx - x0, fy = sy - y0;
-    const p00 = (y0 * W + x0) * 4, p10 = (y0 * W + x1) * 4;
-    const p01 = (y1 * W + x0) * 4, p11 = (y1 * W + x1) * 4;
+    const p00 = (y0 * gw + x0) * 4, p10 = (y0 * gw + x1) * 4, p01 = (y1 * gw + x0) * 4, p11 = (y1 * gw + x1) * 4;
     for (let c = 0; c < 3; c++) {
-      const top = lensData[p00 + c] * (1 - fx) + lensData[p10 + c] * fx;
-      const bot = lensData[p01 + c] * (1 - fx) + lensData[p11 + c] * fx;
-      out[o + c] = top * (1 - fy) + bot * fy;
+      s3[c] = (arr[p00 + c] * (1 - fx) + arr[p10 + c] * fx) * (1 - fy) + (arr[p01 + c] * (1 - fx) + arr[p11 + c] * fx) * fy;
     }
-    out[o + 3] = 255;
   }
 
   for (let y = yStart; y < yEnd; y++) {
@@ -798,9 +1214,12 @@ function doRender() {
 
       const dx = (x - cx) / rx;
       const dy = (y - cy) / ry;
+      const t = (dy + 1) / 2;
+      const a = addAt(t);                                        // ADD at this height of the lens
 
       // 1) ADD: plus-lens magnification + pincushion (always hyperopic)
-      const ra = 1 + addRadial * (dx * dx + dy * dy);
+      const addMag = 1 + (a * ADD_STRENGTH) / 25;
+      const ra = 1 + a * addRadK * (dx * dx + dy * dy);
       const ax = dx / addMag / ra;
       const ay = dy / addMag / ra;
 
@@ -809,21 +1228,50 @@ function doRender() {
       let bx = (ax / magFactor / rp) * rx;
       let by = (ay / magFactor / rp) * ry;
 
-      // Cylinder: stretch the image along the power meridian
+      // 3) Cylinder: stretch the image along the power meridian
       const along = (bx * mCos + by * mSin) / cylMag;
       const perp = -bx * mSin + by * mCos;
       bx = along * mCos - perp * mSin;
       by = along * mSin + perp * mCos;
 
-      sample(cx + bx, cy + by, o);
+      const spx = cx + bx, spy = cy + by;
+
+      // Blur here: leftover defocus at this height + (multifocal) side aberration
+      let side = 0;
+      if (isMulti) side = sstep(0.55 - 0.3 * t, 1.0, Math.abs(dx)) * Math.min(1, a);
+      const r = Math.abs(lackingAccommodation - a) * 5 + side * SIDE_BLUR;
+      const L = (nLev === 1 || rMax <= 0) ? 0 : Math.min(nLev - 1, r / rMax * (nLev - 1));
+      const i0 = Math.floor(L), i1 = Math.min(nLev - 1, i0 + 1), f = L - i0;
+
+      samp(levelData[i0], spx, spy);
+      let R0 = s3[0], G0 = s3[1], B0 = s3[2];
+      if (f > 0.001 && i1 !== i0) {
+        samp(levelData[i1], spx, spy);
+        R0 += (s3[0] - R0) * f; G0 += (s3[1] - G0) * f; B0 += (s3[2] - B0) * f;
+      }
+      if (side > 0.02) {                                         // mix in cylindrical (directional) blur
+        samp(smearData[dx < 0 ? 0 : 1], spx, spy);
+        const m = side * 0.65;
+        R0 += (s3[0] - R0) * m; G0 += (s3[1] - G0) * m; B0 += (s3[2] - B0) * m;
+      }
+      out[o] = R0; out[o + 1] = G0; out[o + 2] = B0; out[o + 3] = 255;
     }
   }
 
   ctx.putImageData(output, xStart, yStart);
 
-  lensPath(ctx);
-  ctx.strokeStyle = "#3A6656"; ctx.lineWidth = 5; ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+lensPath(ctx);
+ctx.strokeStyle = "#3A6656";
+ctx.lineWidth = 5;
+ctx.stroke();
+
+ctx.strokeStyle = "rgba(255,255,255,0.8)";
+ctx.lineWidth = 1.5;
+ctx.stroke();
+
+// Draw optional multifocal guides
+drawLensGuides();
+
 }
 
 /* ---------- LENS POSITION ---------- */
@@ -838,7 +1286,36 @@ function updateLensPosition() {
 
 /* ---------- EVENTS + INIT ---------- */
 sceneSlider.addEventListener("input", () => {
-  sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
+sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
+
+updateBoundaryControls();
+updateZoom();
+
+drawScene();
+updateLensPosition();
+});
+
+// Far / Near / Multifocal lens buttons
+const lensButtons = document.querySelectorAll("#lensSwitch button");
+lensButtons.forEach(b => b.addEventListener("click", () => {
+
+  lensType = b.dataset.type;
+
+  lensButtons.forEach(x =>
+    x.classList.toggle("active", x === b)
+  );
+
+  updateBoundaryControls();
+
+  render();
+}));
+
+// Reset All: every slider back to its default, scene back to City View, lens back to Far
+document.getElementById("resetAll").addEventListener("click", () => {
+  controlDefs.forEach(d => document.getElementById(d.id + "Reset").click());
+  sceneSlider.value = 0;
+  sceneValue.textContent = SCENES[0][1];
+  document.querySelector('#lensSwitch [data-type="far"]').click();
   drawScene();
   render();
 });
@@ -846,6 +1323,7 @@ sceneSlider.addEventListener("input", () => {
 sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
 drawScene();
 updateLensPosition();
+
 </script>
 </body>
 </html>
