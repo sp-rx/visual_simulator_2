@@ -25,16 +25,25 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 
 .view-row{--vh:min(60vw,60vh);display:flex;gap:6px;align-items:stretch}
 @supports (width:1cqw){.view-row{--vh:calc((100cqw - 68px) * 2 / 3)}}
-.viewer{flex:1;min-width:0;height:var(--vh);overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px}
-canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block}
+.viewer{flex:1;min-width:0;height:var(--vh);overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px;display:flex;gap:4px}
+.cv{position:relative;flex:1;min-width:0;overflow:hidden;background:#D9D9D9}
+.cv-tag{position:absolute;left:8px;top:8px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(41,45,42,.72);color:#fff;font-size:9px;font-weight:bold}
+#tagB{left:auto;right:8px}
+/* Dual mode: the panel keeps its size; the two pictures shrink to fit side by side inside it */
+.viewer.dual{align-items:center}
+.viewer.dual .cv{flex:1;aspect-ratio:3/2}
+[hidden]{display:none!important}
+.stress-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;transform-origin:center;transition:transform .2s ease}
 .vpos{width:62px;height:var(--vh);display:flex;flex-direction:column;align-items:center;gap:5px}
 .vpos strong{font-size:9px}
 .vpos .reset-button{padding:1px 4px}
 .vtrack{position:relative;flex:1;width:30px}
 .vtrack input[type=range]{position:absolute;top:50%;left:50%;margin:0;width:calc(var(--vh) - 130px);transform:translate(-50%,-50%) rotate(90deg);touch-action:pan-x}
 
-.result{height:70px; margin-top:10px;padding:10px;background:#F5F1E8;border-radius:10px;text-align:center}
+.result{height:112px;overflow:auto;margin-top:10px;padding:10px;background:#F5F1E8;border-radius:10px;text-align:center}
 .result-main{font-size:11px;font-weight:bold;color:var(--green-dark)}
+.result-main,.result-sub{white-space:pre-line}
 .result-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
 
 .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:6px;align-content:start}
@@ -58,10 +67,34 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block}
 .reset-all{grid-column:1/-1;width:100%;height:30px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;font-size:11px;font-weight:bold;cursor:pointer}
 .reset-all:active{background:var(--green-dark)}
 
-.lens-switch{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;background:rgba(255,253,247,.85);border:1px solid #D8D2C4;border-radius:999px;z-index:2}
+.lens-switch{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:999px;z-index:2}
 .lens-switch button{border:0;background:transparent;color:var(--green-dark);font-family:inherit;font-size:10px;font-weight:bold;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .lens-switch button.active{background:var(--green);color:#fff}
-input[type=range]:disabled{opacity:.45;cursor:not-allowed}
+
+/* Floating canvas controls */
+.boundary-controls{position:absolute;left:50%;top:50px;transform:translateX(-50%);display:none;gap:4px;padding:4px;border-radius:9px;z-index:3;white-space:nowrap}
+.boundary-controls button{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);padding:5px 8px;border-radius:6px;font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;opacity:.55}
+.boundary-controls button.active{background:var(--green);color:#fff;border-color:var(--green);opacity:1}
+.zoom-controls{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:5px;padding:5px;border-radius:9px;z-index:4}
+.zoom-controls button{height:27px;min-width:27px;border:1px solid #C9D1C9;border-radius:6px;background:var(--green);color:#fff;font-size:13px;font-weight:bold;cursor:pointer}
+.zoom-controls #zoomReset{background:transparent;color:var(--green-dark);font-size:9px;padding:0 7px}
+#zoomValue{min-width:35px;text-align:center;font-size:9px;font-weight:bold;color:var(--green-dark)}
+.scene-float{position:absolute;left:10px;bottom:10px;z-index:4;width:200px;padding:6px 10px 4px;border-radius:9px;display:flex;flex-direction:column;gap:1px}
+.sf-top{display:flex;justify-content:space-between;align-items:center}
+.sf-top strong,.sf-name{font-size:9px;color:var(--green-dark)}
+.sf-name{font-weight:bold}
+.sf-top button{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);font-family:inherit;font-size:9px;font-weight:bold;padding:2px 9px;border-radius:999px;cursor:pointer}
+.sf-top button.active{background:var(--green);color:#fff;border-color:var(--green)}
+.sf-block input{height:24px}
+
+/* Polish */
+.panel{box-shadow:0 6px 24px rgba(41,45,42,.08)}
+.viewer{box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 2px 10px rgba(41,45,42,.12)}
+.lens-switch,.boundary-controls,.zoom-controls,.scene-float{background:rgba(255,253,247,.88);border:1px solid #D8D2C4;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(41,45,42,.15)}
+.lens-switch button,.boundary-controls button,.sf-top button{transition:background .15s,color .15s}
+.control{padding:6px 0;border-bottom:1px solid #F0EBDF}
+.result{background:linear-gradient(#F8F4EA,#F3EEE2);border:1px solid #EAE3D3}
+input[type=range]::-webkit-slider-thumb{box-shadow:0 1px 5px rgba(0,0,0,.35),0 0 0 1px rgba(58,102,86,.25)}
 
 /* Collapsible prescription panel */
 .group{grid-column:1/-1;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:0 12px}
@@ -94,92 +127,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   transform: scale(0.9);
   transform-origin: top center;
 }
-/* Multifocal boundary controls */
-.boundary-controls {
-  position:absolute;
-  left:50%;
-  top:53px;
-  transform:translateX(-50%);
-  display:none;
-  gap:4px;
-  padding:4px;
-  background:rgba(255,253,247,.92);
-  border:1px solid #D8D2C4;
-  border-radius:9px;
-  z-index:3;
-  white-space:nowrap;
-}
-
-.boundary-controls button {
-  border:1px solid #C9D1C9;
-  background:transparent;
-  color:var(--green-dark);
-  padding:5px 8px;
-  border-radius:6px;
-  font-family:inherit;
-  font-size:9px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.boundary-controls button.active {
-  background:var(--green);
-  color:white;
-  border-color:var(--green);
-}
-
-.boundary-controls button:not(.active) {
-  opacity:.55;
-}
-
-/* Canvas zoom */
-.zoom-controls {
-  position:absolute;
-  right:10px;
-  bottom:10px;
-  display:flex;
-  align-items:center;
-  gap:5px;
-  padding:5px;
-  background:rgba(255,253,247,.92);
-  border:1px solid #D8D2C4;
-  border-radius:9px;
-  z-index:4;
-}
-
-.zoom-controls button {
-  height:27px;
-  min-width:27px;
-  border:1px solid #C9D1C9;
-  border-radius:6px;
-  background:var(--green);
-  color:white;
-  font-size:13px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.zoom-controls button:last-child {
-  background:transparent;
-  color:var(--green-dark);
-  font-size:9px;
-  padding:0 7px;
-}
-
-#zoomValue {
-  min-width:35px;
-  text-align:center;
-  font-size:9px;
-  font-weight:bold;
-  color:var(--green-dark);
-}
-
-/* Canvas zoom transformation */
-#canvas {
-  transform:scale(1);
-  transform-origin:center center;
-  transition:transform .2s ease;
-}
+.result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px;align-items:center;height:76px;margin-top:8px;padding:6px 10px}
+.result-main{font-size:10px}
+.result-sub{font-size:9px;line-height:1.35;margin-top:2px}
 </style>
 </head>
 <body>
@@ -199,28 +149,30 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <button class="reset-button" id="lensPositionReset">Reset</button>
       </div>
       <div class="view-row">
-        <div class="viewer"><canvas id="canvas" width="1200" height="800"></canvas>
-<div class="lens-switch" id="lensSwitch">
-  <button type="button" data-type="far" class="active">Far Lens</button>
-  <button type="button" data-type="near">Near Lens</button>
-  <button type="button" data-type="multi">Multifocal Lens</button>
-</div>
+        <div class="viewer">
+          <div class="cv"><canvas id="canvas" width="1200" height="800"></canvas><span class="cv-tag" id="tagA" hidden></span></div>
+          <div class="cv" id="cvB" hidden><canvas id="canvasB" width="1200" height="800"></canvas><span class="cv-tag" id="tagB"></span></div>
 
-<!-- Multifocal boundary controls -->
-<div class="boundary-controls" id="boundaryControls">
-  <button type="button" data-boundary="far" class="active">Far</button>
-  <button type="button" data-boundary="intermediate" class="active">Intermediate</button>
-  <button type="button" data-boundary="near" class="active">Near</button>
-  <button type="button" data-boundary="distortion" class="active">Distortion</button>
-</div>
-
-<!-- Canvas zoom controls -->
-<div class="zoom-controls">
-  <button type="button" id="zoomOut">−</button>
-  <span id="zoomValue">100%</span>
-  <button type="button" id="zoomIn">+</button>
-  <button type="button" id="zoomReset">Reset</button>
-</div>
+          <div class="lens-switch" id="lensSwitch">
+            <button type="button" data-type="far" class="active">Far Lens</button>
+            <button type="button" data-type="near">Near Lens</button>
+            <button type="button" data-type="multi">Multifocal Lens</button>
+            <button type="button" data-type="office">Office Lens</button>
+          </div>
+          <div class="boundary-controls" id="boundaryControls">
+            <button type="button" data-boundary="far" class="active">Far</button>
+            <button type="button" data-boundary="intermediate" class="active">Intermediate</button>
+            <button type="button" data-boundary="near" class="active">Near</button>
+            <button type="button" data-boundary="distortion" class="active">Distortion</button>
+          </div>
+          <div class="scene-float">
+            <div class="sf-top"><strong>Scene</strong><button type="button" id="dualToggle">Dual</button></div>
+            <div class="sf-block"><div class="sf-name" id="sceneValue"></div><input type="range" id="sceneSlider" min="0" max="6" step="1" value="0"></div>
+            <div class="sf-block" id="blockB" hidden><div class="sf-name" id="sceneValueB"></div><input type="range" id="sceneSliderB" min="0" max="6" step="1" value="4"></div>
+          </div>
+          <div class="zoom-controls">
+            <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
+          </div>
         </div>
         <div class="vpos">
           <strong>Vertical</strong>
@@ -231,10 +183,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
         </div>
       </div>
-      <div class="result">
-        <div class="result-main" id="effectDisplay">No distortion</div>
-        <div class="result-sub" id="detailDisplay">Original image</div>
-      </div>
+      <div class="result" id="resultBox"></div>
     </div>
 
     <div class="controls" id="controls">
@@ -244,11 +193,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           <span class="chev">&#9662;</span>
         </button>
         <div class="group-body" id="rxBody"></div>
-      </div>
-      <div class="control" id="sceneControl">
-        <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
-        <input type="range" id="sceneSlider" min="0" max="4" step="1" value="0">
-        <div class="scale"><span>City View</span><span>Night Driving</span><span>Meeting Room</span><span>Computer</span><span>Phone</span></div>
       </div>
     </div>
 
@@ -260,47 +204,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
 <script>
 /* ---------- CANVASES ---------- */
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d", { willReadFrequently: true });
-const W = canvas.width, H = canvas.height;
-/* ---------- CANVAS ZOOM ---------- */
-
-let canvasZoom = 1;
-
-function updateZoom() {
-  canvas.style.transform = `scale(${canvasZoom})`;
-
-  document.getElementById("zoomValue").textContent =
-    Math.round(canvasZoom * 100) + "%";
-}
-
-document.getElementById("zoomIn").addEventListener("click", () => {
-  canvasZoom = Math.min(2.5, canvasZoom + 0.25);
-  updateZoom();
-});
-
-document.getElementById("zoomOut").addEventListener("click", () => {
-  canvasZoom = Math.max(1, canvasZoom - 0.25);
-  updateZoom();
-});
-
-document.getElementById("zoomReset").addEventListener("click", () => {
-  canvasZoom = 1;
-  updateZoom();
-});
+const W = 1200, H = 800;
+let canvas, ctx, sourceCanvas, S, curScene = "city";   // swapped per view by useView()
 
 function makeCanvas(willRead) {
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   return [c, c.getContext("2d", willRead ? { willReadFrequently: true } : undefined)];
 }
-const [sourceCanvas, S] = makeCanvas(true);
 const [maskCanvas, maskCtx] = makeCanvas(true);
 const [blurCanvas, blurCtx] = makeCanvas();
 const [ghostCanvas, ghostCtx] = makeCanvas();
-const [lensSrcCanvas, lensSrcCtx] = makeCanvas(true);
-
-let sourceImageData = null;
 let maskData = null;
 const lens = { cx: W / 2, cy: H / 2, rx: 390, ry: 230 };
 
@@ -309,108 +223,6 @@ function lensPath(c) {
   c.ellipse(lens.cx, lens.cy, lens.rx, lens.ry, 0, 0, Math.PI * 2);
   c.closePath();
 }
-
-/* ---------- MULTIFOCAL BOUNDARY DRAWING ---------- */
-
-function drawLensGuides() {
-
-  if (lensType !== "multi") return;
-
-  const {cx, cy, rx, ry} = lens;
-
-  ctx.save();
-
-  // Keep every guide inside the spectacle lens
-  lensPath(ctx);
-  ctx.clip();
-
-  ctx.lineWidth = 3;
-  ctx.setLineDash([12, 8]);
-
-  // FAR ZONE BOUNDARY
-  if (boundaryVisibility.far) {
-
-    const y = cy + ry * (2 * 0.30 - 1);
-
-    ctx.strokeStyle = "#E2B84B";
-    ctx.beginPath();
-
-    ctx.moveTo(cx - rx, y);
-    ctx.lineTo(cx + rx, y);
-
-    ctx.stroke();
-  }
-
-  // INTERMEDIATE ZONE BOUNDARIES
-  if (boundaryVisibility.intermediate) {
-
-    ctx.strokeStyle = "#4B9B80";
-
-    [0.55, 0.80].forEach(t => {
-
-      const y = cy + ry * (2 * t - 1);
-
-      ctx.beginPath();
-      ctx.moveTo(cx - rx, y);
-      ctx.lineTo(cx + rx, y);
-      ctx.stroke();
-
-    });
-  }
-
-  // NEAR ZONE BOUNDARY
-  if (boundaryVisibility.near) {
-
-    const y = cy + ry * (2 * 0.80 - 1);
-
-    ctx.strokeStyle = "#D77C55";
-    ctx.beginPath();
-
-    ctx.moveTo(cx - rx, y);
-    ctx.lineTo(cx + rx, y);
-
-    ctx.stroke();
-  }
-
-  // DISTORTION AREA BOUNDARIES
-  // Follows the same side-region threshold used
-  // by the multifocal distortion calculation.
-
-  if (boundaryVisibility.distortion) {
-
-    ctx.setLineDash([7, 6]);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "#C0392B";
-
-    [-1, 1].forEach(side => {
-
-      ctx.beginPath();
-
-      for (let i = 0; i <= 100; i++) {
-
-        const t = i / 100;
-
-        const threshold = 0.55 - 0.3 * t;
-
-        const x = cx + side * rx * threshold;
-        const y = cy + ry * (2 * t - 1);
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-
-      ctx.stroke();
-    });
-  }
-
-  ctx.restore();
-  ctx.setLineDash([]);
-}
-
-
 
 /* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
 const AGE_TABLE = [[0.25, 65], [0.5, 60], [1, 56], [2, 50], [3, 45], [4, 40], [5, 34]];  // [diopters, age]
@@ -437,20 +249,18 @@ const controlDefs = [
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
   { id: "lensVerticalPosition", label: "Vertical Lens Position", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
-  { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0,
-    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
-  { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0,
-    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0 },
+  { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0 },
   { rx: true, id: "intermediateAdd", label: "Intermediate ADD (computer + phone)", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
-  { id: "addCorrection", label: "Intermediate ADD Correction", corr: true, base: "intermediateAdd", min: 0, max: 1, step: 0.25, v: 0,
-    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { id: "addCorrection", label: "Intermediate ADD Correction", corr: true, base: "intermediateAdd", min: 0, max: 1, step: 0.25, v: 0 },
   { rx: true, id: "nearAdd", label: "Near ADD (phone only)", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
-  { id: "nearCorrection", label: "Near ADD Correction", corr: true, base: "nearAdd", min: 0, max: 1, step: 0.25, v: 0,
-    f: v => v + "%", s: ["50%", "100% Full", "150% Over"] },
+  { id: "nearCorrection", label: "Near ADD Correction", corr: true, base: "nearAdd", min: 0, max: 1, step: 0.25, v: 0 },
   { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
-    f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] }
+    f: v => v.toFixed(0) + "%", s: ["Normal", "Semi-Custom", "Fully Custom"] },
+  { id: "enhance", label: "Multifocal Enhancement", min: 0, max: 100, step: 5, v: 0,
+    f: v => v + "%", s: ["Standard", "Half", "Clearest"] }
 ];
 
 const el = {};
@@ -569,16 +379,29 @@ rxToggle.addEventListener("click", () => {
   rxToggle.setAttribute("aria-expanded", String(!closed));
 });
 
-// Move the Viewing Scene slider into the grid, after Aspherical Design
-controlsBox.appendChild(document.getElementById("sceneControl"));
 
-const effectDisplay = document.getElementById("effectDisplay");
-const detailDisplay = document.getElementById("detailDisplay");
+const resultBox = document.getElementById("resultBox");
 const SCENES = [["city", "City View"], ["night", "Driving at Night"], ["meeting", "Meeting Room"],
-                ["computer", "Working at Computer"], ["phone", "Looking at Phone"]];
-const sceneSlider = document.getElementById("sceneSlider");
-const sceneValue = document.getElementById("sceneValue");
-const sceneSelect = { get value() { return SCENES[Number(sceneSlider.value)][0]; } };
+                ["computer", "Working at Computer"], ["phone", "Looking at Phone"],
+                ["duo", "Duochrome (Red / Blue)"], ["fan", "Astigmatic Fan Chart"]];
+const sceneName = k => SCENES.find(x => x[0] === k)[1];
+const sliders = [document.getElementById("sceneSlider"), document.getElementById("sceneSliderB")];
+let dual = false;
+
+// Two views (A, B): each has its own canvas + scene; the lens, eye and sliders are shared.
+const views = [0, 1].map(i => {
+  const cv = document.getElementById(i ? "canvasB" : "canvas"), [sc, sctx] = makeCanvas(true);
+  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, S: sctx, scene: "city", title: "", detail: "" };
+});
+function useView(v) { canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.S; curScene = v.scene; }
+
+function setScene(i) {
+  const v = views[i], idx = Number(sliders[i].value);
+  v.scene = SCENES[idx][0];
+  document.getElementById(i ? "sceneValueB" : "sceneValue").textContent = (dual ? (i ? "B: " : "A: ") : "") + SCENES[idx][1];
+  document.getElementById(i ? "tagB" : "tagA").textContent = (i ? "B · " : "A · ") + SCENES[idx][1];
+  useView(v); drawScene(); render();
+}
 
 /* ---------- DRAWING HELPERS ---------- */
 const R = (c, x, y, w, h) => { S.fillStyle = c; S.fillRect(x, y, w, h); };
@@ -898,15 +721,52 @@ function drawMeetingScene() {
   RR("#527A64", 980, 650, 260, 200, 80); C("#3B2B22", 1100, 630, 52);
 }
 
+/* ---------- SCENE 6: DUOCHROME (red / blue) ---------- */
+function drawDuoScene() {
+  R("#E4DFD3", 0, 0, W, H);                                   // neutral surround
+  R("#B9B2A3", 336, 226, 528, 348);                           // chart frame
+  R("#C8443A", 340, 230, 260, 340);                           // red half
+  R("#2F62C9", 600, 230, 260, 340);                           // blue half
+  R("rgba(0,0,0,.35)", 598, 230, 4, 340);
+  S.textAlign = "center"; S.textBaseline = "middle";
+  [["E", "H", 72, 285], ["F P", "C D", 50, 355], ["T O Z", "N V K", 36, 415], ["L P E D", "Z O S R", 26, 462]].forEach(([a, b, sz, y]) => {
+    TXT("#000", `bold ${sz}px Arial`, a, 470, y);
+    TXT("#000", `bold ${sz}px Arial`, b, 730, y);
+  });
+  TXT("rgba(255,255,255,.85)", "bold 20px Arial", "RED", 470, 540);
+  TXT("rgba(255,255,255,.85)", "bold 20px Arial", "BLUE", 730, 540);
+  S.textAlign = "left"; S.textBaseline = "alphabetic";
+}
+
+/* ---------- SCENE 7: ASTIGMATIC FAN CHART ---------- */
+function drawFanScene() {
+  R("#FBFAF6", 0, 0, W, H);
+  const cx = 600, cy = 405, r0 = 32, r1 = 160;
+  S.textAlign = "center"; S.textBaseline = "middle";
+  TXT("#222", "bold 20px Arial", "ASTIGMATIC FAN", cx, 205);
+  S.strokeStyle = "#111"; S.lineWidth = 5; S.lineCap = "butt";
+  for (let k = 0; k < 12; k++) {
+    const a = k * Math.PI / 12, ux = Math.sin(a), uy = -Math.cos(a);   // k = 0 is vertical, then clockwise
+    [-1, 1].forEach(sg => {
+      S.beginPath(); S.moveTo(cx + sg * ux * r0, cy + sg * uy * r0); S.lineTo(cx + sg * ux * r1, cy + sg * uy * r1); S.stroke();
+    });
+    TXT("#444", "bold 17px Arial", String(k + 1), cx + ux * (r1 + 24), cy + uy * (r1 + 24));
+    TXT("#444", "bold 17px Arial", String(k + 7 > 12 ? k - 5 : k + 7), cx - ux * (r1 + 24), cy - uy * (r1 + 24));
+  }
+  C("#111", cx, cy, 8);
+  S.textAlign = "left"; S.textBaseline = "alphabetic";
+}
+
 function drawScene() {
   S.clearRect(0, 0, W, H);
-  const scene = sceneSelect.value;
+  const scene = curScene;
   if (scene === "city") drawCityScene();
   else if (scene === "night") drawNightScene();
   else if (scene === "meeting") drawMeetingScene();
   else if (scene === "computer") drawComputerScene();
+  else if (scene === "duo") drawDuoScene();
+  else if (scene === "fan") drawFanScene();
   else drawPhoneScene();
-  sourceImageData = S.getImageData(0, 0, W, H);
 }
 
 /* ---------- LENS MASK ---------- */
@@ -920,20 +780,22 @@ function createLensMask() {
 
 /* ---------- DEFOCUS MODEL ---------- */
 function getSceneDemand() {
-  const scene = sceneSelect.value;
-  if (scene === "computer") return -1.75;
-  if (scene === "meeting") return -0.75;
-  if (scene === "phone") return -2.5;
-  if (scene === "night") return 0.0;
-  return 0.0;
+  return { computer: -1.75, meeting: -0.75, phone: -2.5 }[curScene] || 0;
 }
 
-function getResidualDefocus(power, accommodation, demand) {
-  const high = power;
-  const low = power - accommodation;
-  if (demand <= high && demand >= low) return 0;
-  if (demand > high) return demand - high;
-  return low - demand;
+/* Eye with far point `power` and `accommodation` sees clearly when the demand reaching it lies in [power - accommodation, power].
+   Signed result: + = focus falls in front (myopic type), - = focus falls behind (accommodation / hyperopic type), 0 = clear. */
+function signedDefocus(power, accommodation, demand) {
+  const high = power, low = power - accommodation;
+  return demand > high ? demand - high : demand < low ? demand - low : 0;
+}
+const getResidualDefocus = (power, accommodation, demand) => Math.abs(signedDefocus(power, accommodation, demand));
+
+// Duochrome: red focuses further back than blue. Myopic defocus -> red side clearer; hyperopic -> blue side clearer.
+function duoDef(sd, side) {
+  const m = Math.abs(sd);
+  if (m === 0) return 0;
+  return side === (sd > 0 ? "red" : "blue") ? Math.max(0, m - 0.5) : m + 0.5;
 }
 
 /* ---------- BLUR (works on Safari / iPad, which ignores ctx.filter) ---------- */
@@ -1020,40 +882,46 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
 }
 
 let lensType = "far";     // "far" | "near" | "multi"
-/* ---------- MULTIFOCAL BOUNDARY SETTINGS ---------- */
-
-const boundaryVisibility = {
-  far: true,
-  intermediate: true,
-  near: true,
-  distortion: true
-};
-
-const boundaryButtons =
-  document.querySelectorAll("[data-boundary]");
-
-boundaryButtons.forEach(button => {
-  button.addEventListener("click", () => {
-
-    const type = button.dataset.boundary;
-
-    boundaryVisibility[type] = !boundaryVisibility[type];
-
-    button.classList.toggle(
-      "active",
-      boundaryVisibility[type]
-    );
-
-    render();
-  });
-});
-
-function updateBoundaryControls() {
-  document.getElementById("boundaryControls").style.display =
-    lensType === "multi" ? "flex" : "none";
-}
+let enhFrac = 0;          // Multifocal Enhancement 0..1
 const levelPool = [], smearPool = [];
+const boundaryVisibility = { far: true, intermediate: true, near: true, distortion: true };
+// Edge of the clear corridor (fraction of lens half-width) at height t; Enhancement pushes it toward the sides
+const ZONES = {                                   // zone boundaries (fraction of lens height) + width of the clear corridor
+  multi:  { far: 0.5, mid: 0.65, near: 0.8, edge: t => 0.55 - 0.3 * t },
+  office: { far: 0.2, mid: 0.5,  near: 0.8, edge: t => 0.75 - 0.25 * t }
+};
+const sideEdge = t => { const th = ZONES[lensType].edge(t); return th + (0.98 - th) * enhFrac; };
+
+function drawLensGuides() {
+  const Z = ZONES[lensType];
+  if (!Z) return;
+  const { cx, cy, rx, ry } = lens, yAt = t => cy + ry * (2 * t - 1);
+  const hline = (t, color) => { ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(cx - rx, yAt(t)); ctx.lineTo(cx + rx, yAt(t)); ctx.stroke(); };
+  ctx.save(); lensPath(ctx); ctx.clip(); ctx.lineWidth = 3; ctx.setLineDash([12, 8]);
+  if (boundaryVisibility.far) hline(Z.far, "#E2B84B");
+  if (boundaryVisibility.intermediate) hline(Z.mid, "#4B9B80");
+  if (boundaryVisibility.near) hline(Z.near, "#D77C55");
+  if (boundaryVisibility.distortion) {
+    ctx.setLineDash([7, 6]); ctx.strokeStyle = "#C0392B";
+    [-1, 1].forEach(side => {
+      ctx.beginPath();
+      for (let i = 0; i <= 100; i++) { const t = i / 100, x = cx + side * rx * sideEdge(t), y = yAt(t); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
 const sstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+
+// Blur with a different radius on the left (red) and right (blue) half of the picture
+let halfPool = null;
+function applyVisionHalves(target, rl, rr, cylinder, axis) {
+  applyVisionEffects(target, rl, cylinder, axis);
+  if (rl === rr) return;
+  halfPool = halfPool || makeCanvas(true);
+  applyVisionEffects(halfPool[1], rr, cylinder, axis);
+  target.drawImage(halfPool[0], W / 2, 0, W / 2, H, W / 2, 0, W / 2, H);
+}
 
 /* ---------- RENDER ---------- */
 let renderPending = false;
@@ -1064,10 +932,9 @@ function render() {
   requestAnimationFrame(doRender);
 }
 
-function doRender() {
-  renderPending = false;
-
+function renderView(v) {
   const val = id => Number(el[id].value);
+  enhFrac = val("enhance") / 100;
   controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });   // ranges follow the base sliders
   const power = val("power");
   const aspheric = val("aspheric");
@@ -1087,23 +954,29 @@ function doRender() {
 
   /* Original (uncorrected) vision: always full power + full cylinder */
   const demand = getSceneDemand();
-  const uncorrectedDefocus = getResidualDefocus(power, accommodation, demand);
-  applyVisionEffects(ctx, Math.min(30, uncorrectedDefocus * 5), cylinder, axis);
+  const isDuo = curScene === "duo";
+  const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue")] : [Math.abs(sd), Math.abs(sd)];   // [left, right] defocus
+  const [bgL, bgR] = sideDef(signedDefocus(power, accommodation, demand));
+  applyVisionHalves(ctx, Math.min(30, bgL * 5), Math.min(30, bgR * 5), cylinder, axis);
 
   /* Through the lens */
   const intPart = intAdd * addCorr;
   const nearPart = nearAdd * nearCorr;
   const addTotal = intPart + nearPart;                            // full near power of the ADD
-  const isMulti = lensType === "multi";
+  const isMulti = !!ZONES[lensType];
   const lensAdd = lensType === "far" ? 0 : addTotal;              // "Near Lens Rx"
-  const lackingAccommodation = getResidualDefocus(power * (1 - farCorr), accommodation, demand);
   const lensCylinder = cylinder * (1 - cylCorr);
+
+  // The eye sees the scene through lens power L = far correction + local ADD; accommodation only works when L is not enough
+  const defsAt = a => sideDef(signedDefocus(power, accommodation, demand + power * farCorr + a));
 
   // ADD at a height in the lens (t: 0 = top, 1 = bottom)
   const addAt = t => {
     if (lensType === "far") return 0;
     if (lensType === "near") return addTotal;
-    const stops = [[0, 0], [0.3, 0], [0.55, intPart], [0.8, addTotal], [1, addTotal]];   // far -> intermediate -> near
+    const stops = lensType === "office"
+      ? [[0, 0], [0.2, 0], [0.3, intPart], [0.7, intPart], [0.8, addTotal], [1, addTotal]]   // office: far 20% | intermediate 60% | near 20%
+      : [[0, 0], [0.5, 0], [0.65, intPart], [0.8, addTotal], [1, addTotal]];                 // multifocal: far 50% | intermediate 30% | near 20%
     for (let i = 1; i < stops.length; i++) {
       if (t <= stops[i][0]) {
         const [t0, a0] = stops[i - 1], [t1, a1] = stops[i];
@@ -1124,15 +997,18 @@ function doRender() {
   else if (effectivePower > 0) effects.push("Hyperopic Lens");
   if (effectiveCylinder > 0) effects.push("Cylinder Lens");
   if (presbyopiaRx > 0) effects.push("Presbyopia");
-  effectDisplay.textContent = effects.length ? effects.join(" + ") : "No Rx";
-  detailDisplay.textContent =
+  v.title = effects.length ? effects.join(" + ") : "No Rx";
+  v.detail =
     "Far Lens Rx: " + rxText(effectivePower) + " | Eye Rx: " + rxText(power) +
     " | Near Lens Rx: " + rxText(lensAdd) + " | Presbyopia Rx: " + rxText(presbyopiaRx);
 
-if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
-  drawLensGuides();
-  return;
-}
+  // Vision stress: over-correcting the far lens (> 100%) forces extra accommodation.
+  // 100% stress = the eye having to use 50% of its accommodation.
+  const stress = Math.round(Math.max(0, farCorr - 1) * Math.abs(power) / (0.5 * accommodation) * 100);
+  const stressColor = stress <= 50 ? "#2E9B5F" : stress <= 75 ? "#E0A800" : "#C0392B";
+  v.detail += '\n<span class="stress-dot" style="background:' + stressColor + '"></span>Vision Stress: ' + stress + "%";
+
+  if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) { drawLensGuides(); return; }   // lens changes nothing
 
   /* Lens distortion parameters */
   const effectiveAspheric = aspheric * Math.min(farCorr, 1);
@@ -1153,11 +1029,12 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
   const gw = Math.min(W, xEnd + 70) - gx, gh = Math.min(H, yEnd + 70) - gy;
 
   /* Blur levels: sphere blur + residual cylinder ghosting. Multifocal uses 5 levels (blended per pixel). */
-  const SIDE_BLUR = 6;                                           // extra sphere blur at the sides of a multifocal
+  const SIDE_BLUR = 9;                                           // extra sphere blur at the sides of a multifocal
+  const perPixel = isMulti || isDuo;                             // blur varies across the lens
   let maxDef = 0;
-  for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, Math.abs(lackingAccommodation - addAt(k / 20)));
+  for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20)));
   const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0));
-  const nLev = isMulti ? 5 : 1;
+  const nLev = perPixel ? 5 : 1;
   const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;
 
   const levelData = [];
@@ -1175,13 +1052,20 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
       d2.clearRect(0, 0, W, H);
       for (let n = 0; n < 9; n++) {
         d2.globalAlpha = 1 / (n + 1);
-        const o = (n - 4) * 2.4;
+        const o = (n - 4) * 3;
         d2.drawImage(levelPool[0][0], Math.cos(ang) * o, Math.sin(ang) * o);
       }
       d2.globalAlpha = 1;
       smearData.push(d2.getImageData(gx, gy, gw, gh).data);
     });
   }
+
+  const rowCache = [];                                           // ADD + defocus per lens height
+  const rowInfo = t => {
+    const k = Math.round(t * 200);
+    if (!rowCache[k]) { const a = addAt(k / 200), [dl, dr] = defsAt(a); rowCache[k] = { a, dl, dr }; }
+    return rowCache[k];
+  };
 
   const backgroundData = ctx.getImageData(0, 0, W, H).data;
   const output = ctx.createImageData(rw, rh);
@@ -1215,7 +1099,7 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
       const dx = (x - cx) / rx;
       const dy = (y - cy) / ry;
       const t = (dy + 1) / 2;
-      const a = addAt(t);                                        // ADD at this height of the lens
+      const { a, dl, dr } = rowInfo(t);                          // ADD + defocus at this height of the lens
 
       // 1) ADD: plus-lens magnification + pincushion (always hyperopic)
       const addMag = 1 + (a * ADD_STRENGTH) / 25;
@@ -1234,12 +1118,16 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
       bx = along * mCos - perp * mSin;
       by = along * mSin + perp * mCos;
 
-      const spx = cx + bx, spy = cy + by;
+      let spx = cx + bx, spy = cy + by;
 
-      // Blur here: leftover defocus at this height + (multifocal) side aberration
+      // Multifocal side aberration: blur + astigmatic "swim" (slanting + sideways stretch), weakened by Enhancement
       let side = 0;
-      if (isMulti) side = sstep(0.55 - 0.3 * t, 1.0, Math.abs(dx)) * Math.min(1, a);
-      const r = Math.abs(lackingAccommodation - a) * 5 + side * SIDE_BLUR;
+      if (isMulti) {
+        side = sstep(sideEdge(t), 1.0, Math.abs(dx)) * Math.min(1, a) * (1 - 0.85 * enhFrac);
+        spy += dx * 80 * side;      // horizontal lines slant
+        spx -= dx * 60 * side;      // image stretches sideways
+      }
+      const r = (spx < W / 2 ? dl : dr) * 5 + side * SIDE_BLUR;
       const L = (nLev === 1 || rMax <= 0) ? 0 : Math.min(nLev - 1, r / rMax * (nLev - 1));
       const i0 = Math.floor(L), i1 = Math.min(nLev - 1, i0 + 1), f = L - i0;
 
@@ -1251,7 +1139,7 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
       }
       if (side > 0.02) {                                         // mix in cylindrical (directional) blur
         samp(smearData[dx < 0 ? 0 : 1], spx, spy);
-        const m = side * 0.65;
+        const m = side * 0.8;
         R0 += (s3[0] - R0) * m; G0 += (s3[1] - G0) * m; B0 += (s3[2] - B0) * m;
       }
       out[o] = R0; out[o + 1] = G0; out[o + 2] = B0; out[o + 3] = 255;
@@ -1260,18 +1148,18 @@ if (farCorr === 0 && cylCorr === 0 && lensAdd === 0) {
 
   ctx.putImageData(output, xStart, yStart);
 
-lensPath(ctx);
-ctx.strokeStyle = "#3A6656";
-ctx.lineWidth = 5;
-ctx.stroke();
+  lensPath(ctx);
+  ctx.strokeStyle = "#3A6656"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+  drawLensGuides();
+}
 
-ctx.strokeStyle = "rgba(255,255,255,0.8)";
-ctx.lineWidth = 1.5;
-ctx.stroke();
-
-// Draw optional multifocal guides
-drawLensGuides();
-
+function doRender() {
+  renderPending = false;
+  const list = dual ? views : [views[0]];
+  list.forEach(v => { useView(v); renderView(v); });
+  resultBox.innerHTML = list.map((v, i) =>
+    `<div><div class="result-main">${dual ? "AB"[i] + " · " : ""}${v.title}</div><div class="result-sub">${v.detail}</div></div>`).join("");
 }
 
 /* ---------- LENS POSITION ---------- */
@@ -1285,45 +1173,59 @@ function updateLensPosition() {
 }
 
 /* ---------- EVENTS + INIT ---------- */
-sceneSlider.addEventListener("input", () => {
-sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
+const $ = id => document.getElementById(id);
 
-updateBoundaryControls();
-updateZoom();
+sliders.forEach((sl, i) => sl.addEventListener("input", () => setScene(i)));
 
-drawScene();
-updateLensPosition();
+$("dualToggle").addEventListener("click", e => {
+  dual = !dual;
+  e.currentTarget.classList.toggle("active", dual);
+  ["cvB", "blockB", "tagA"].forEach(id => $(id).hidden = !dual);
+  document.querySelector(".viewer").classList.toggle("dual", dual);
+  setScene(0);
+  if (dual) setScene(1);
 });
 
-// Far / Near / Multifocal lens buttons
-const lensButtons = document.querySelectorAll("#lensSwitch button");
-lensButtons.forEach(b => b.addEventListener("click", () => {
-
-  lensType = b.dataset.type;
-
-  lensButtons.forEach(x =>
-    x.classList.toggle("active", x === b)
-  );
-
-  updateBoundaryControls();
-
+const updateBoundaryControls = () => { $("boundaryControls").style.display = ZONES[lensType] ? "flex" : "none"; };
+document.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
+  const k = b.dataset.boundary;
+  boundaryVisibility[k] = !boundaryVisibility[k];
+  b.classList.toggle("active", boundaryVisibility[k]);
   render();
 }));
 
-// Reset All: every slider back to its default, scene back to City View, lens back to Far
-document.getElementById("resetAll").addEventListener("click", () => {
-  controlDefs.forEach(d => document.getElementById(d.id + "Reset").click());
-  sceneSlider.value = 0;
-  sceneValue.textContent = SCENES[0][1];
-  document.querySelector('#lensSwitch [data-type="far"]').click();
-  drawScene();
+const lensButtons = document.querySelectorAll("#lensSwitch button");
+lensButtons.forEach(b => b.addEventListener("click", () => {
+  lensType = b.dataset.type;
+  lensButtons.forEach(x => x.classList.toggle("active", x === b));
+  updateBoundaryControls();
   render();
+}));
+
+let canvasZoom = 1;                       // shown as 100% = real 150%
+const ZOOM_BASE = 1.5;
+const updateZoom = () => {
+  views.forEach(v => v.cv.style.transform = `scale(${canvasZoom * ZOOM_BASE})`);
+  $("zoomValue").textContent = Math.round(canvasZoom * 100) + "%";
+};
+$("zoomIn").addEventListener("click", () => { canvasZoom = Math.min(1.5, canvasZoom + 0.25); updateZoom(); });
+$("zoomOut").addEventListener("click", () => { canvasZoom = Math.max(0.5, canvasZoom - 0.25); updateZoom(); });
+$("zoomReset").addEventListener("click", () => { canvasZoom = 1; updateZoom(); });
+
+// Reset All: sliders, scenes, dual mode, lens type and zoom back to defaults
+$("resetAll").addEventListener("click", () => {
+  controlDefs.forEach(d => $(d.id + "Reset").click());
+  sliders[0].value = 0; sliders[1].value = 4;
+  if (dual) $("dualToggle").click();
+  document.querySelector('#lensSwitch [data-type="far"]').click();
+  canvasZoom = 1; updateZoom();
+  setScene(0);
 });
 
-sceneValue.textContent = SCENES[Number(sceneSlider.value)][1];
-drawScene();
+setScene(0);
 updateLensPosition();
-
+updateBoundaryControls();
+updateZoom();
 </script>
 </body>
 </html>
