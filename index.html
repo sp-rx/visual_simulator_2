@@ -18,7 +18,9 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .stage{container-type:inline-size;min-width:0}
 
-.pos-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pos-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.scene-row{display:grid;grid-template-columns:minmax(0,1fr);column-gap:14px;margin-bottom:6px}
+.scene-row.dual{grid-template-columns:1fr 1fr}
 .pos-row strong{font-size:9px;white-space:nowrap}
 .pos-row input[type=range]{flex:1;min-width:0}
 .tick{font-size:9px;color:var(--muted)}
@@ -56,6 +58,15 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .reset-button:hover,.reset-button:active{background:#EAEFE9}
 .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 
+/* Correction sliders: compact grid, 100-125% shaded red (not recommended) */
+.corr-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));column-gap:14px}
+.control.corr .control-heading{flex-wrap:wrap;row-gap:2px}
+.control.corr .control-heading strong{flex:1 1 100%}
+.control.corr .control-right{width:100%;justify-content:space-between}
+.control.corr .scale{font-size:9px}
+.control input.corr-slider::-webkit-slider-runnable-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
+.control input.corr-slider::-moz-range-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
+
 /* Correction sliders switched Off: red scheme */
 .control.off input[type=range]::-webkit-slider-thumb{background:#C0392B}
 .control.off input[type=range]::-webkit-slider-runnable-track{background:#EBC3BE}
@@ -67,31 +78,31 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .reset-all{grid-column:1/-1;width:100%;height:30px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;font-size:11px;font-weight:bold;cursor:pointer}
 .reset-all:active{background:var(--green-dark)}
 
-.lens-switch{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:999px;z-index:2}
-.lens-switch button{border:0;background:transparent;color:var(--green-dark);font-family:inherit;font-size:10px;font-weight:bold;padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .lens-switch button.active{background:var(--green);color:#fff}
 
-/* Floating canvas controls */
-.boundary-controls{position:absolute;left:50%;top:50px;transform:translateX(-50%);display:none;gap:4px;padding:4px;border-radius:9px;z-index:3;white-space:nowrap}
-.boundary-controls button{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);padding:5px 8px;border-radius:6px;font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;opacity:.55}
-.boundary-controls button.active{background:var(--green);color:#fff;border-color:var(--green);opacity:1}
+/* Floating canvas controls: one toolbar row */
+.toolbar{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:calc(100% - 16px);z-index:3}
+.lens-switch,.boundary-controls{display:flex;align-items:center;gap:4px;padding:4px;height:34px;border-radius:999px;white-space:nowrap}
+.boundary-controls{display:none}
+.lens-switch button{border:0;background:transparent;color:var(--green-dark);font-family:inherit;font-size:10px;font-weight:bold;height:26px;padding:0 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.boundary-controls button{--c:#3A6656;height:26px;padding:0 10px;border:1.5px solid var(--c);border-radius:999px;background:transparent;color:var(--c);font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;opacity:.6}
+.boundary-controls button.active{background:var(--c);color:#fff;opacity:1}
+.boundary-controls [data-boundary=far]{--c:#4B9B80}
+.boundary-controls [data-boundary=intermediate]{--c:#E2B84B}
+.boundary-controls [data-boundary=intermediate].active{color:#3a3000}
+.boundary-controls [data-boundary=near]{--c:#D77C55}
+.boundary-controls [data-boundary=distortion]{--c:#C0392B}
 .zoom-controls{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:5px;padding:5px;border-radius:9px;z-index:4}
 .zoom-controls button{height:27px;min-width:27px;border:1px solid #C9D1C9;border-radius:6px;background:var(--green);color:#fff;font-size:13px;font-weight:bold;cursor:pointer}
 .zoom-controls #zoomReset{background:transparent;color:var(--green-dark);font-size:9px;padding:0 7px}
 #zoomValue{min-width:35px;text-align:center;font-size:9px;font-weight:bold;color:var(--green-dark)}
-.scene-float{position:absolute;left:10px;bottom:10px;z-index:4;width:200px;padding:6px 10px 4px;border-radius:9px;display:flex;flex-direction:column;gap:1px}
-.sf-top{display:flex;justify-content:space-between;align-items:center}
-.sf-top strong,.sf-name{font-size:9px;color:var(--green-dark)}
-.sf-name{font-weight:bold}
-.sf-top button{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);font-family:inherit;font-size:9px;font-weight:bold;padding:2px 9px;border-radius:999px;cursor:pointer}
-.sf-top button.active{background:var(--green);color:#fff;border-color:var(--green)}
-.sf-block input{height:24px}
+#dualToggle.active{background:var(--green);color:#fff;border-color:var(--green)}
 
 /* Polish */
 .panel{box-shadow:0 6px 24px rgba(41,45,42,.08)}
 .viewer{box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 2px 10px rgba(41,45,42,.12)}
-.lens-switch,.boundary-controls,.zoom-controls,.scene-float{background:rgba(255,253,247,.88);border:1px solid #D8D2C4;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(41,45,42,.15)}
-.lens-switch button,.boundary-controls button,.sf-top button{transition:background .15s,color .15s}
+.lens-switch,.boundary-controls,.zoom-controls{background:rgba(255,253,247,.88);border:1px solid #D8D2C4;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(41,45,42,.15)}
+.lens-switch button,.boundary-controls button{transition:background .15s,color .15s}
 .control{padding:6px 0;border-bottom:1px solid #F0EBDF}
 .result{background:linear-gradient(#F8F4EA,#F3EEE2);border:1px solid #EAE3D3}
 input[type=range]::-webkit-slider-thumb{box-shadow:0 1px 5px rgba(0,0,0,.35),0 0 0 1px rgba(58,102,86,.25)}
@@ -130,6 +141,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px;align-items:center;height:76px;margin-top:8px;padding:6px 10px}
 .result-main{font-size:10px}
 .result-sub{font-size:9px;line-height:1.35;margin-top:2px}
+.result{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -140,19 +152,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <div class="panel layout">
 
     <div class="stage">
-      <div class="pos-row">
-        <strong>Lens Position</strong>
-        <span class="tick">Left</span>
-        <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
-        <span class="tick">Right</span>
-        <span class="value" id="lensPositionValue"></span>
-        <button class="reset-button" id="lensPositionReset">Reset</button>
-      </div>
+
       <div class="view-row">
         <div class="viewer">
           <div class="cv"><canvas id="canvas" width="1200" height="800"></canvas><span class="cv-tag" id="tagA" hidden></span></div>
           <div class="cv" id="cvB" hidden><canvas id="canvasB" width="1200" height="800"></canvas><span class="cv-tag" id="tagB"></span></div>
 
+          <div class="toolbar">
           <div class="lens-switch" id="lensSwitch">
             <button type="button" data-type="far" class="active">Far Lens</button>
             <button type="button" data-type="near">Near Lens</button>
@@ -165,10 +171,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
             <button type="button" data-boundary="near" class="active">Near</button>
             <button type="button" data-boundary="distortion" class="active">Distortion</button>
           </div>
-          <div class="scene-float">
-            <div class="sf-top"><strong>Scene</strong><button type="button" id="dualToggle">Dual</button></div>
-            <div class="sf-block"><div class="sf-name" id="sceneValue"></div><input type="range" id="sceneSlider" min="0" max="6" step="1" value="0"></div>
-            <div class="sf-block" id="blockB" hidden><div class="sf-name" id="sceneValueB"></div><input type="range" id="sceneSliderB" min="0" max="6" step="1" value="4"></div>
           </div>
           <div class="zoom-controls">
             <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
@@ -183,18 +185,46 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
         </div>
       </div>
-      <div class="result" id="resultBox"></div>
+      <div class="pos-row">
+        <strong>Lens Position</strong>
+        <span class="tick">Left</span>
+        <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
+        <span class="tick">Right</span>
+        <span class="value" id="lensPositionValue"></span>
+        <button class="reset-button" id="lensPositionReset">Reset</button>
+      </div>
     </div>
+
+      <div class="scene-row" id="sceneRow">
+        <div class="control" id="sceneControl">
+          <div class="control-heading"><strong>Viewing Scene</strong>
+            <div class="control-right"><span class="value" id="sceneValue"></span><button class="reset-button" id="dualToggle" type="button">Dual</button></div></div>
+          <input type="range" id="sceneSlider" min="0" max="6" step="1" value="0">
+          <div class="scale"><span>City</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+        </div>
+        <div class="control" id="blockB" hidden>
+          <div class="control-heading"><strong>Scene B</strong><span class="value" id="sceneValueB"></span></div>
+          <input type="range" id="sceneSliderB" min="0" max="6" step="1" value="4">
+          <div class="scale"><span>City</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+        </div>
+      </div>
+
+
 
     <div class="controls" id="controls">
       <div class="group" id="rxGroup">
         <button class="group-toggle" id="rxToggle" type="button" aria-expanded="true">
-          <span>Prescription: Far Lens Power, Accommodation, Cylinder, Axis, Intermediate ADD, Near ADD</span>
+          <span>Prescription: Far Lens Power, Accommodation, Cylinder, Axis, Near ADD</span>
           <span class="chev">&#9662;</span>
         </button>
-        <div class="group-body" id="rxBody"></div>
+        <div class="group-body" id="rxBody">
+        </div>
       </div>
+      <div class="corr-grid" id="extraBody"></div>
+      <div class="corr-grid" id="corrBody"></div>
     </div>
+
+    <div class="result" id="resultBox"></div>
 
     <button class="reset-all" id="resetAll" type="button">Reset All</button>
 
@@ -226,10 +256,10 @@ function lensPath(c) {
 }
 
 /* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
-const AGE_TABLE = [[0.25, 65], [0.5, 60], [1, 56], [2, 50], [3, 45], [4, 40], [5, 34]];  // [diopters, age]
+const AGE_TABLE = [[0.25, 58], [0.5, 53], [1, 49], [2, 43], [3, 38], [4, 33], [5, 27]];   // original gradient, shifted 7 years younger  // [diopters, age]
 function ageLabel(acc) {
-  if (acc <= AGE_TABLE[0][0]) return "65+ yrs";
-  if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return "34 yrs & below";
+  if (acc <= AGE_TABLE[0][0]) return AGE_TABLE[0][1] + "+ yrs";
+  if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs & below";
   for (let i = 1; i < AGE_TABLE.length; i++) {
     const [a0, y0] = AGE_TABLE[i - 1], [a1, y1] = AGE_TABLE[i];
     if (acc <= a1) return "~" + Math.round(y0 + (acc - a0) / (a1 - a0) * (y1 - y0)) + " yrs";
@@ -241,10 +271,10 @@ const controlDefs = [
   { rx: true, id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
     f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
   { rx: true, id: "accommodation", label: "Accommodation (Age)", min: 0.25, max: 5, step: 0.25, v: 3,
-    f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: ["65+ yrs", "34 yrs & below"] },
+    f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: [AGE_TABLE[0][1] + "+ yrs", AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs & below"] },
   { rx: true, id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
     f: v => v.toFixed(2), s: ["0", "4.00"] },
-  { rx: true, id: "axis", label: "Axis", min: 0, max: 180, step: 1, v: 0,
+  { rx: true, id: "axis", label: "Axis", min: 0, max: 180, step: 5, v: 0,
     f: v => v.toFixed(0) + "°", s: ["0°", "90°", "180°"] },
   { id: "lensPosition", label: "Lens Position", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
@@ -252,10 +282,7 @@ const controlDefs = [
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
   { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0 },
   { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0 },
-  { rx: true, id: "intermediateAdd", label: "Intermediate ADD (computer + phone)", min: 0, max: 3, step: 0.25, v: 0,
-    f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
-  { id: "addCorrection", label: "Intermediate ADD Correction", corr: true, base: "intermediateAdd", min: 0, max: 1, step: 0.25, v: 0 },
-  { rx: true, id: "nearAdd", label: "Near ADD (phone only)", min: 0, max: 3, step: 0.25, v: 0,
+  { rx: true, id: "nearAdd", label: "Near ADD", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
   { id: "nearCorrection", label: "Near ADD Correction", corr: true, base: "nearAdd", min: 0, max: 1, step: 0.25, v: 0 },
   { id: "aspheric", label: "Aspherical Design", min: 0, max: 80, step: 40, v: 0,
@@ -267,61 +294,41 @@ const controlDefs = [
 const el = {};
 const controlsBox = document.getElementById("controls");
 
-const isOff = {};       // correction manually switched Off (= 0). Only the Off button / Reset change this.
-const lastVal = {};     // lens value (D) to restore when switched back on
-const userSet = {};     // true once the slider has been moved by hand (otherwise it follows the base at 100%)
+const isOff = {};       // correction switched Off (= 0). Every correction starts Off; only the Off button / Reset change this
+const lastVal = {};     // lens value (D) to restore when switched back on (0 = 100% of the base)
+const userSet = {};     // true once the slider was moved by hand (otherwise it follows its base at 100%)
 const controlDivs = {};
 const defById = {};
 controlDefs.forEach(d => { defById[d.id] = d; });
 const q25 = x => Math.round(x / 0.25) * 0.25;
 
-/* A correction slider is the lens actually worn, in 0.25 D steps.
-   Its range follows its base slider: 50% to 150% of the base value. */
+// A correction slider is the lens actually worn, in 0.25 D steps: from 50% of its base up to 0.50 D (2 steps) over-corrected.
 function corrRange(d) {
   const base = Number(el[d.base].value), B = Math.abs(base);
   if (B === 0) return { base, B, lo: 0, hi: 0 };
-  const lo = Math.max(0.25, q25(0.5 * B));
-  const hi = Math.max(lo + 0.25, q25(1.5 * B));
-  return { base, B, lo, hi };
+  return { base, B, lo: Math.max(0.25, q25(0.5 * B)), hi: B + 0.5 };
 }
-const corrSign = r => (r.base < 0 ? "-" : "+");
-
 function syncCorrection(d) {
-  const slider = el[d.id], r = corrRange(d);
-  const lo$ = document.getElementById(d.id + "Lo"), mid$ = document.getElementById(d.id + "Mid"), hi$ = document.getElementById(d.id + "Hi");
-
-  if (r.B === 0) {                                   // nothing to correct: slider sits at 0
-    slider.min = 0; slider.max = 0; slider.value = 0;
-    lo$.textContent = mid$.textContent = hi$.textContent = "-";
-    return;
-  }
-  const clamp = v => Math.min(r.hi, Math.max(r.lo, v));
-  const prev = Number(slider.value);
-  if (Number(slider.min) !== r.lo) slider.min = r.lo;
-  if (Number(slider.max) !== r.hi) slider.max = r.hi;
-  slider.step = 0.25;
-
-  if (isOff[d.id]) slider.value = r.lo;                         // parked at the left while Off
-  else if (!userSet[d.id]) slider.value = clamp(q25(r.B));      // default: 100% of the base
-  else slider.value = clamp(prev);                              // keep the lens the user chose
-
-  const sg = corrSign(r);
-  lo$.textContent = sg + r.lo.toFixed(2) + " D";
-  mid$.textContent = sg + r.B.toFixed(2) + " D (100%)";
-  hi$.textContent = sg + r.hi.toFixed(2) + " D";
+  const slider = el[d.id], r = corrRange(d), sg = r.base < 0 ? "-" : "+";
+  const lab = k => document.getElementById(d.id + k);
+  if (r.B === 0) { slider.min = 0; slider.max = 0; slider.value = 0; ["Lo", "Mid", "Hi"].forEach(k => lab(k).textContent = "-"); return; }
+  const clamp = v => Math.min(r.hi, Math.max(r.lo, v)), prev = Number(slider.value);
+  slider.min = r.lo; slider.max = r.hi; slider.step = 0.25;
+  slider.value = isOff[d.id] ? r.lo : userSet[d.id] ? clamp(prev) : clamp(r.B);
+  slider.style.setProperty("--rp", ((r.B - r.lo) / (r.hi - r.lo) * 100) + "%");     // red shade starts after 100%
+  lab("Lo").textContent = sg + r.lo.toFixed(2) + " D";
+  lab("Mid").textContent = sg + r.B.toFixed(2) + " D (100%)";
+  lab("Hi").textContent = sg + r.hi.toFixed(2) + " D";
 }
-
-function corrFraction(d) {                              // lens value as a fraction of the base (1 = full correction)
+function corrFraction(d) {                                       // lens value as a fraction of the base (1 = full correction)
   if (isOff[d.id]) return 0;
   const r = corrRange(d);
   return r.B === 0 ? 1 : Number(el[d.id].value) / r.B;
 }
-
 function corrLabel(d) {
-  if (isOff[d.id]) return "OFF · 0.00 D";
+  if (isOff[d.id]) return "OFF · 0%";
   const r = corrRange(d), m = Number(el[d.id].value);
-  if (r.B === 0) return "0.00 D";
-  return corrSign(r) + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
+  return r.B === 0 ? "0.00 D" : (r.base < 0 ? "-" : "+") + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
 }
 
 controlDefs.forEach(d => {
@@ -338,7 +345,7 @@ controlDefs.forEach(d => {
        ${d.corr
          ? `<div class="scale"><span id="${d.id}Lo"></span><span id="${d.id}Mid"></span><span id="${d.id}Hi"></span></div>`
          : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
-    (d.rx ? document.getElementById("rxBody") : controlsBox).appendChild(div);
+    (d.corr ? document.getElementById("corrBody") : d.rx ? document.getElementById("rxBody") : document.getElementById("extraBody")).appendChild(div);
   }
   const slider = document.getElementById(d.id);
   el[d.id] = slider;
@@ -346,25 +353,25 @@ controlDefs.forEach(d => {
 
   if (d.corr) {
     controlDivs[d.id] = div;
-    isOff[d.id] = false;                       // default: on, at 100%
-    userSet[d.id] = false;
-    lastVal[d.id] = 0;
+    div.classList.add("corr", "off");
+    slider.classList.add("corr-slider");
+    isOff[d.id] = true; userSet[d.id] = false; lastVal[d.id] = 0;      // starts Off
 
     slider.addEventListener("input", () => {   // sliding by hand switches the correction on
       userSet[d.id] = true;
       if (isOff[d.id]) { isOff[d.id] = false; div.classList.remove("off"); }
     });
     document.getElementById(d.id + "Off").addEventListener("click", () => {
-      if (isOff[d.id]) {                       // back on at the previous lens value
+      if (isOff[d.id]) {                       // back on at the previous lens value (or 100%)
         isOff[d.id] = false; div.classList.remove("off");
-        if (lastVal[d.id]) slider.value = lastVal[d.id];
-      } else {                                 // manually switch off
-        lastVal[d.id] = Number(slider.value); isOff[d.id] = true; div.classList.add("off");
+        if (lastVal[d.id]) { slider.value = lastVal[d.id]; userSet[d.id] = true; }
+      } else {                                 // switch off
+        lastVal[d.id] = userSet[d.id] ? Number(slider.value) : 0; isOff[d.id] = true; div.classList.add("off");
       }
       update();
     });
     document.getElementById(d.id + "Reset").addEventListener("click", () => {
-      isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0; div.classList.remove("off"); update();
+      isOff[d.id] = true; userSet[d.id] = false; lastVal[d.id] = 0; div.classList.add("off"); update();
     });
   } else {
     document.getElementById(d.id + "Reset").addEventListener("click", () => { slider.value = d.v; update(); });
@@ -904,7 +911,7 @@ const boundaryVisibility = { far: true, intermediate: true, near: true, distorti
 // Edge of the clear corridor (fraction of lens half-width) at height t; Enhancement pushes it toward the sides
 const ZONES = {                                   // zone boundaries (fraction of lens height) + width of the clear corridor
   multi:  { far: 0.5, mid: 0.65, near: 0.8, edge: t => 0.55 - 0.3 * t },
-  office: { far: 0.2, mid: 0.5,  near: 0.8, edge: t => 0.75 - 0.25 * t }
+  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.55 - 0.3 * t }
 };
 const sideEdge = t => { const th = ZONES[lensType].edge(t); return th + (0.98 - th) * enhFrac; };
 
@@ -914,14 +921,14 @@ function drawLensGuides() {
   const { cx, cy, rx, ry } = lens, yAt = t => cy + ry * (2 * t - 1);
   const hline = (t, color) => { ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(cx - rx, yAt(t)); ctx.lineTo(cx + rx, yAt(t)); ctx.stroke(); };
   ctx.save(); lensPath(ctx); ctx.clip(); ctx.lineWidth = 3; ctx.setLineDash([12, 8]);
-  if (boundaryVisibility.far) hline(Z.far, "#E2B84B");
-  if (boundaryVisibility.intermediate) hline(Z.mid, "#4B9B80");
+  if (boundaryVisibility.far) hline(Z.far, "#4B9B80");
+  if (boundaryVisibility.intermediate) hline(Z.mid, "#E2B84B");
   if (boundaryVisibility.near) hline(Z.near, "#D77C55");
   if (boundaryVisibility.distortion) {
     ctx.setLineDash([7, 6]); ctx.strokeStyle = "#C0392B";
     [-1, 1].forEach(side => {
       ctx.beginPath();
-      for (let i = 0; i <= 100; i++) { const t = i / 100, x = cx + side * rx * sideEdge(t), y = yAt(t); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      for (let i = 0; i <= 100; i++) { const t = Z.far + (1 - Z.far) * i / 100, x = cx + side * rx * sideEdge(t), y = yAt(t); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
       ctx.stroke();
     });
   }
@@ -985,11 +992,9 @@ function renderView(v) {
   const cylinder = val("cylinder");
   const axis = val("axis");
   const accommodation = val("accommodation");
-  const intAdd = val("intermediateAdd");
   const nearAdd = val("nearAdd");
   const farCorr = corrFraction(defById.farCorrection);    // affects the far lens power only
   const cylCorr = corrFraction(defById.cylCorrection);    // affects cylinder + axis only
-  const addCorr = corrFraction(defById.addCorrection);    // affects the intermediate ADD only
   const nearCorr = corrFraction(defById.nearCorrection);  // affects the near ADD only
 
   controlDefs.forEach(d => {
@@ -1006,9 +1011,8 @@ function renderView(v) {
   else applyVisionHalves(ctx, Math.min(30, bgL * 5), Math.min(30, bgR * 5), cylinder, axis);
 
   /* Through the lens */
-  const intPart = intAdd * addCorr;
-  const nearPart = nearAdd * nearCorr;
-  const addTotal = intPart + nearPart;                            // full near power of the ADD
+  const addTotal = nearAdd * nearCorr;                            // the only ADD: full near power
+  const intPart = addTotal / 2;                                   // intermediate = the gradient half way between far and near
   const isMulti = !!ZONES[lensType];
   const lensAdd = lensType === "far" ? 0 : addTotal;              // "Near Lens Rx"
   const lensCylinder = cylinder * (1 - cylCorr);
@@ -1021,7 +1025,7 @@ function renderView(v) {
     if (lensType === "far") return 0;
     if (lensType === "near") return addTotal;
     const stops = lensType === "office"
-      ? [[0, 0], [0.2, 0], [0.3, intPart], [0.7, intPart], [0.8, addTotal], [1, addTotal]]   // office: far 20% | intermediate 60% | near 20%
+      ? [[0, 0], [0.05, 0], [0.2, intPart], [0.6, intPart], [0.7, addTotal], [1, addTotal]]   // office: far 5% | intermediate 65% | near 30%
       : [[0, 0], [0.5, 0], [0.65, intPart], [0.8, addTotal], [1, addTotal]];                 // multifocal: far 50% | intermediate 30% | near 20%
     for (let i = 1; i < stops.length; i++) {
       if (t <= stops[i][0]) {
@@ -1178,7 +1182,7 @@ function renderView(v) {
       let side = 0;
       if (isMulti) {
         side = sstep(sideEdge(t), 1.0, Math.abs(dx)) * Math.min(1, a) * (1 - 0.85 * enhFrac);
-        spy += dx * 80 * side;      // horizontal lines slant
+        spy += Math.abs(dx) * 80 * side;   // lines slant the same amount on both sides, mirrored (e.g. 30 deg right = 150 deg left)
         spx -= dx * 60 * side;      // image stretches sideways
       }
       let r = (spx < W / 2 ? dl : dr) * 5 + side * SIDE_BLUR;
@@ -1240,6 +1244,7 @@ $("dualToggle").addEventListener("click", e => {
   dual = !dual;
   e.currentTarget.classList.toggle("active", dual);
   ["cvB", "blockB", "tagA"].forEach(id => $(id).hidden = !dual);
+  $("sceneRow").classList.toggle("dual", dual);
   document.querySelector(".viewer").classList.toggle("dual", dual);
   setScene(0);
   if (dual) setScene(1);
