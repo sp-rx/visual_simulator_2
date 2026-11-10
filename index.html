@@ -9,14 +9,16 @@
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent}
-.container{max-width:1500px;margin:auto;zoom:0.8}
+.container{max-width:2200px;margin:auto;zoom:0.72}
 h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:10px}
 .panel{background:var(--panel);padding:14px;border-radius:12px;border:1px solid #E5E0D5}
 
 /* Layout: picture (stage) + controls. Stacked by default, side-by-side on landscape iPad */
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
-.stage{container-type:inline-size;min-width:0}
+.stage{min-width:0}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{min-width:0}
 
 .pos-row{display:flex;align-items:center;gap:10px;margin-top:8px}
 .scene-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
@@ -27,9 +29,8 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .pos-row input[type=range]{flex:1;min-width:0}
 .tick{font-size:9px;color:var(--muted)}
 
-.view-row{--vh:min(60vw,60vh);display:flex;gap:6px;align-items:stretch}
-@supports (width:1cqw){.view-row{--vh:calc((100cqw - 68px) * 2 / 3)}}
-.viewer{flex:1;min-width:0;height:var(--vh);overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px;display:flex;gap:4px}
+.view-row{--vh:400px;display:flex;gap:6px;align-items:stretch}
+.viewer{flex:1;min-width:0;aspect-ratio:3/2;overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px;display:flex;gap:4px}
 .cv{position:relative;flex:1;min-width:0;overflow:hidden;background:#D9D9D9}
 .cv-tag{position:absolute;left:8px;top:8px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(41,45,42,.72);color:#fff;font-size:9px;font-weight:bold}
 #tagB{left:auto;right:8px}
@@ -38,7 +39,7 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 [hidden]{display:none!important}
 .stress-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;transform-origin:center;transition:transform .2s ease}
-.vpos{width:62px;height:var(--vh);display:flex;flex-direction:column;align-items:center;gap:5px}
+.vpos{width:62px;display:flex;flex-direction:column;align-items:center;gap:5px}
 .vpos strong{font-size:9px}
 .vpos .reset-button{padding:1px 4px}
 .vtrack{position:relative;flex:1;width:30px}
@@ -98,14 +99,14 @@ input[type=range]::-webkit-slider-thumb{box-shadow:0 1px 5px rgba(0,0,0,.35),0 0
 .group{grid-column:1/-1;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:0 12px}
 
 /* Slider chips: small buttons that open a floating slider */
-.controls{display:flex;flex-direction:column;gap:5px}
-.chips{display:flex;flex-wrap:wrap;gap:4px}
-.chip-wrap{position:relative}
-.chip{display:flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:1px solid #C9D1C9;border-radius:999px;background:#fff;color:var(--green-dark);font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;white-space:nowrap}
-.chip .value{font-size:9px}
+.controls{display:flex;flex-direction:column;gap:8px;position:relative}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip-wrap{position:static}
+.chip{display:flex;align-items:center;gap:6px;height:36px;padding:0 15px;border:1px solid #C9D1C9;border-radius:999px;background:#fff;color:var(--green-dark);font-family:inherit;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.chip .value{font-size:11px}
 .chip.open{background:var(--green);border-color:var(--green);color:#fff}
 .chip.open .value{color:#fff}
-.pop{position:absolute;top:calc(100% + 6px);left:0;z-index:50;width:280px;max-width:90vw;background:var(--panel);border:1px solid #D8D2C4;border-radius:10px;padding:6px 12px 8px;box-shadow:0 8px 24px rgba(41,45,42,.28)}
+.pop{position:absolute;left:12.5%;z-index:50;width:75%;background:var(--panel);border:1px solid #D8D2C4;border-radius:10px;padding:6px 12px 8px;box-shadow:0 8px 24px rgba(41,45,42,.28)}
 .pop .control{border:0;padding:2px 0}
 .pop .control-heading{flex-wrap:nowrap}
 .pop .control-heading strong{flex:1}
@@ -118,18 +119,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#CBD6CD}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--green);border:3px solid #fff}
 
-@media (min-width:1000px) and (orientation:landscape){
-  .layout{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}
-  .stage{position:sticky;top:8px}
-}
 @media (max-width:600px){
   body{padding:7px}.panel{padding:8px}
 }
-.scale-wrapper {
-  width: 100%;
-  transform: scale(0.9);
-  transform-origin: top center;
-}
+.scale-wrapper{width:100%}
 .result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px;align-items:center;height:76px;margin-top:8px;padding:6px 10px}
 .result-main{font-size:10px}
 .result-sub{font-size:9px;line-height:1.35;margin-top:2px}
@@ -186,6 +179,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       </div>
     </div>
 
+    <div class="side">
     <div class="group">
       <div class="scene-row">
         <div class="scene-blocks" id="sceneBlocks">
@@ -213,6 +207,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div class="result" id="resultBox"></div>
 
     <button class="reset-all" id="resetAll" type="button">Reset All</button>
+    </div>
 
   </div>
 </div>
@@ -340,7 +335,8 @@ controlDefs.forEach(d => {
     pop.className = "pop"; pop.hidden = true;
     pop.appendChild(div);
     wrap.appendChild(pop);
-    (d.corr ? document.getElementById("corrBody") : d.rx ? document.getElementById("rxBody") : document.getElementById("extraBody")).appendChild(wrap);
+    const row1 = ["power", "cylinder", "axis"].includes(d.id);          // row 1: Far RX, Cyl Rx, Axis | row 2: the rest | row 3: corrections
+    (d.corr ? document.getElementById("corrBody") : row1 ? document.getElementById("rxBody") : document.getElementById("extraBody")).appendChild(wrap);
 
     const chip = wrap.querySelector(".chip");
     chip.addEventListener("click", () => {
@@ -348,11 +344,7 @@ controlDefs.forEach(d => {
       closePops(wrap);
       pop.hidden = !open;
       chip.classList.toggle("open", open);
-      if (open) {                                              // keep the floating slider inside the screen
-        pop.style.left = "0"; pop.style.right = "auto";
-        const r = pop.getBoundingClientRect();
-        if (r.right > window.innerWidth - 8) { pop.style.left = "auto"; pop.style.right = "0"; }
-      }
+      if (open) pop.style.top = (wrap.offsetTop + wrap.offsetHeight + 6) + "px";   // just under the chip
     });
   }
   const slider = document.getElementById(d.id);
@@ -473,6 +465,24 @@ function drawCityScene() {
     C("#222", x + 78 * s, y + 35 * s, 10 * s);
   };
   car(420, 550, 1.0, "#B94A3A"); car(680, 610, 0.65, "#E3E0D4"); car(580, 510, 0.65, "#E3E0D4");
+
+  // Small phone held in one hand (bottom right)
+  POLY("#D9A582", [[1225, 751], [935, 541], [865, 639], [1155, 849]]);        // forearm
+  POLY("#3A6656", [[1230, 745], [1143, 682], [1063, 792], [1150, 855]]);      // sleeve
+  S.fillStyle = "#D9A582"; S.beginPath(); S.ellipse(900, 585, 55, 45, -0.5, 0, Math.PI * 2); S.fill();   // palm
+  S.save(); S.translate(850, 500); S.rotate(-0.12);
+  RR("#252B2C", -58, -100, 116, 200, 16); RR("#F7F5EF", -52, -94, 104, 188, 11);
+  R("#3A6656", -52, -94, 104, 26);
+  TXT("#FFFDF7", "bold 9px Arial", "THE DAILY EDIT", -42, -76);
+  R("#292D2B", -42, -58, 84, 7); R("#292D2B", -42, -46, 64, 7);
+  for (let i = 0; i < 6; i++) R("#B9C8BE", -42, -28 + i * 11, 84 - (i % 3) * 14, 4);
+  RR("#E4EBE5", -42, 42, 84, 30, 5); R("#3A6656", -36, 50, 50, 4); R("#B9C8BE", -36, 58, 66, 4);
+  S.restore();
+  S.strokeStyle = "#D9A582"; S.lineCap = "round"; S.lineWidth = 26;
+  S.beginPath(); S.moveTo(802, 615); S.lineTo(793, 545); S.stroke();            // thumb
+  S.lineWidth = 20;
+  [478, 522, 566].forEach(y => { S.beginPath(); S.moveTo(918, y + 8); S.lineTo(893, y); S.stroke(); });   // fingers
+  S.lineCap = "butt";
 }
 
 /* ---------- SCENE 2: COMPUTER ---------- */
@@ -730,9 +740,38 @@ function drawNightScene() {
     });
   });
 
-  R("#0A0A0C", 0, 745, W, 55);
-  S.strokeStyle = "#15161A"; S.lineWidth = 26;
-  S.beginPath(); S.ellipse(600, 900, 340, 170, 0, Math.PI, 2 * Math.PI); S.stroke();
+  // ---- Car interior: roof, A-pillars, rear-view mirror, dashboard, cluster, centre screen, steering wheel
+  POLY("#08090C", [[0, 0], [W, 0], [W, 40], [900, 70], [300, 70], [0, 40]]);
+  POLY("#08090C", [[0, 0], [130, 0], [100, 640], [0, 640]]);
+  POLY("#08090C", [[W, 0], [W - 130, 0], [W - 100, 640], [W, 640]]);
+  R("#14161A", 596, 66, 8, 20);
+  RR("#14161A", 500, 80, 200, 58, 14); RR("#232B3B", 507, 87, 186, 44, 10);
+  S.globalCompositeOperation = "lighter"; glow(600, 112, 40, "255,40,30", 0.25); S.globalCompositeOperation = "source-over";
+
+  POLY("#0D0E12", [[0, 690], [260, 660], [940, 660], [W, 690], [W, H], [0, H]]);
+  S.strokeStyle = "#242830"; S.lineWidth = 3;
+  S.beginPath(); S.moveTo(0, 690); S.lineTo(260, 660); S.lineTo(940, 660); S.lineTo(W, 690); S.stroke();
+  RR("#050608", 820, 690, 150, 62, 8); RR("#16324A", 826, 696, 138, 50, 5);
+  R("#4FB6E8", 836, 708, 60, 5); R("#2F6E96", 836, 722, 100, 4); R("#2F6E96", 836, 733, 80, 4);
+
+  RR("#050608", 470, 690, 260, 78, 16);
+  [[540, 0.9], [660, 1.6]].forEach(([gx, ang]) => {
+    S.strokeStyle = "#4FB6E8"; S.lineWidth = 3; S.lineCap = "round";
+    S.beginPath(); S.arc(gx, 732, 28, Math.PI * 0.8, Math.PI * 2.2); S.stroke();
+    S.strokeStyle = "#FF8A3D"; S.lineWidth = 2;
+    S.beginPath(); S.moveTo(gx, 732); S.lineTo(gx + Math.cos(Math.PI * ang) * 22, 732 + Math.sin(Math.PI * ang) * 22); S.stroke();
+    for (let i = 0; i <= 8; i++) { const a = Math.PI * (0.8 + i * 0.175); R("#8FD3F5", gx + Math.cos(a) * 24 - 1, 732 + Math.sin(a) * 24 - 1, 2, 2); }
+  });
+  TXT("#DDF3FF", "bold 14px Arial", "62", 524, 738); TXT("#7FB6D4", "7px Arial", "km/h", 524, 750);
+  C("#3ED17A", 600, 700, 3); C("#FFB020", 612, 700, 3);
+
+  S.lineCap = "round"; S.strokeStyle = "#1A1B21"; S.lineWidth = 32;
+  S.beginPath(); S.ellipse(600, 800, 330, 185, 0, Math.PI, 2 * Math.PI); S.stroke();
+  S.strokeStyle = "#2B2E36"; S.lineWidth = 3;
+  S.beginPath(); S.ellipse(600, 800, 346, 201, 0, Math.PI * 1.02, Math.PI * 1.98); S.stroke();
+  S.strokeStyle = "#1A1B21"; S.lineWidth = 30;
+  S.beginPath(); S.moveTo(272, 805); S.lineTo(545, 792); S.moveTo(928, 805); S.lineTo(655, 792); S.stroke();
+  RR("#1A1B21", 520, 774, 160, 50, 18);
 }
 
 /* ---------- SCENE 5: MEETING ROOM ---------- */
@@ -853,6 +892,21 @@ function drawScene() {
 // Scenes with several focal distances: [x, y, w, h, demand in D]. The first entry is the base (whole picture);
 // later entries override it where they overlap. Coordinates are in the unmoved scene.
 const REGIONS = {
+  city: [
+    [0, 0, W, H, 0],                 // the street: far away
+    [790, 395, 140, 215, -2.5],      // phone (same demand as the phone scene)
+    [840, 530, 400, 290, -2.5]       // hand + arm holding it
+  ],
+  night: [
+    [0, 0, W, H, 0],                 // road, cars, buildings: far away
+    [0, 0, W, 70, -0.9],             // roof
+    [0, 0, 130, 640, -1.0],          // left A-pillar
+    [1070, 0, 130, 640, -1.0],       // right A-pillar
+    [500, 60, 200, 80, -1.0],        // rear-view mirror
+    [0, 655, W, 145, -1.5],          // dashboard
+    [270, 610, 660, 190, -1.5],      // steering wheel
+    [470, 690, 260, 78, -1.75]       // instrument cluster
+  ],
   computer: [
     [0, 0, W, H, -0.5],              // wall + posters (about 2 m)
     [70, 60, 360, 300, 0],           // window: far away
@@ -1039,7 +1093,7 @@ const FAN = { cx: 600, cy: 405, x0: 320, y0: 125, size: 560 };
 const fanPool = [];
 function fanBackground(target, sphR, cylAmt, axis) {
   const { cx, cy, x0, y0, size } = FAN, cylR = cylAmt * 5, alpha = (axis + 90) * Math.PI / 180, data = [];
-  const nL = fast ? 3 : 5, STEP = fast ? 2 : 1;
+  const nL = fast ? 3 : 5, STEP = 1;
   for (let i = 0; i < nL; i++) {
     const lv = fanPool[i] || (fanPool[i] = makeCanvas(true));
     applyVisionEffects(lv[1], Math.min(30, sphR + i * cylR / (nL - 1)), 0, axis);
@@ -1224,7 +1278,7 @@ function renderView(v) {
     for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20), rg[4]));
   });
   const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylAmt * 5 : 0));
-  const nLev = perPixel ? (fast ? 3 : 5) : 1;
+  const nLev = perPixel ? (fast ? 4 : 5) : 1;
 
   const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), fast ? 1 : 0].join("|");
   if (v.lvKey !== lvKey) {
@@ -1273,7 +1327,6 @@ function renderView(v) {
     const sx = Math.max(0, Math.min(gw - 1, px - gx));
     const sy = Math.max(0, Math.min(gh - 1, py - gy));
     const x0 = Math.floor(sx), y0 = Math.floor(sy);
-    if (fast) { const q = (y0 * gw + x0) * 4; s3[0] = arr[q]; s3[1] = arr[q + 1]; s3[2] = arr[q + 2]; return; }   // nearest pixel while dragging
     const x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1);
     const fx = sx - x0, fy = sy - y0;
     const p00 = (y0 * gw + x0) * 4, p10 = (y0 * gw + x1) * 4, p01 = (y1 * gw + x0) * 4, p11 = (y1 * gw + x1) * 4;
@@ -1282,7 +1335,7 @@ function renderView(v) {
     }
   }
 
-  const STEP = fast ? 3 : 1;
+  const STEP = 1;
   for (let y = yStart; y < yEnd; y += STEP) {
     const dy = (y - cy) / ry;
     if (dy * dy > 1) continue;
@@ -1440,6 +1493,13 @@ $("resetAll").addEventListener("click", () => {
   canvasZoom = 1; updateZoom();
   setScene(0);
 });
+
+// Keep the vertical slider as long as the picture, whatever the page width / orientation
+const viewRow = document.querySelector(".view-row"), viewerEl = document.querySelector(".viewer");
+const fitVSlider = () => viewRow.style.setProperty("--vh", viewerEl.offsetHeight + "px");
+new ResizeObserver(fitVSlider).observe(viewerEl);
+window.addEventListener("orientationchange", () => setTimeout(fitVSlider, 250));
+fitVSlider();
 
 setScene(0);
 updateLensPosition();
