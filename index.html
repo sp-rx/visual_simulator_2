@@ -14,7 +14,7 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:10px}
 .panel{background:var(--panel);padding:14px;border-radius:12px;border:1px solid #E5E0D5}
 
-/* Layout: picture (stage) + sliders. Stacked by default, side-by-side on landscape iPad */
+/* Layout: picture (stage) + controls. Stacked by default, side-by-side on landscape iPad */
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .stage{container-type:inline-size;min-width:0}
 
@@ -33,7 +33,6 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .cv{position:relative;flex:1;min-width:0;overflow:hidden;background:#D9D9D9}
 .cv-tag{position:absolute;left:8px;top:8px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(41,45,42,.72);color:#fff;font-size:9px;font-weight:bold}
 #tagB{left:auto;right:8px}
-/* Dual mode: the panel keeps its size; the two pictures shrink to fit side by side inside it */
 .viewer.dual{align-items:center}
 .viewer.dual .cv{flex:1;aspect-ratio:3/2}
 [hidden]{display:none!important}
@@ -50,7 +49,6 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .result-main,.result-sub{white-space:pre-line}
 .result-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
 
-.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:6px;align-content:start}
 .control{padding:4px 0}
 .control-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
 .control-heading strong{font-size:10px}
@@ -60,22 +58,10 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .reset-button:hover,.reset-button:active{background:#EAEFE9}
 .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 
-/* Correction sliders: compact grid, 100-125% shaded red (not recommended) */
-.corr-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));column-gap:14px}
-.control.corr .control-heading{flex-wrap:wrap;row-gap:2px}
-.control.corr .control-heading strong{flex:1 1 100%}
-.control.corr .control-right{width:100%;justify-content:space-between}
+/* Correction sliders: 100-125% shaded red (not recommended) */
 .control.corr .scale{font-size:9px}
 .control input.corr-slider::-webkit-slider-runnable-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
 .control input.corr-slider::-moz-range-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
-
-/* Correction sliders switched Off: red scheme */
-.control.off input[type=range]::-webkit-slider-thumb{background:#C0392B}
-.control.off input[type=range]::-webkit-slider-runnable-track{background:#EBC3BE}
-.control.off input[type=range]::-moz-range-thumb{background:#C0392B}
-.control.off input[type=range]::-moz-range-track{background:#EBC3BE}
-.control.off .value{color:#C0392B}
-.control.off .off-button{background:#C0392B;border-color:#C0392B;color:#fff}
 
 .reset-all{grid-column:1/-1;width:100%;height:30px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;font-size:11px;font-weight:bold;cursor:pointer}
 .reset-all:active{background:var(--green-dark)}
@@ -105,17 +91,25 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .viewer{box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 2px 10px rgba(41,45,42,.12)}
 .lens-switch,.boundary-controls,.zoom-controls{background:rgba(255,253,247,.95);border:1px solid #D8D2C4;box-shadow:0 2px 10px rgba(41,45,42,.15)}
 .lens-switch button,.boundary-controls button{transition:background .15s,color .15s}
-.control{padding:6px 0;border-bottom:1px solid #F0EBDF}
+.control{padding:6px 0}
 .result{background:linear-gradient(#F8F4EA,#F3EEE2);border:1px solid #EAE3D3}
 input[type=range]::-webkit-slider-thumb{box-shadow:0 1px 5px rgba(0,0,0,.35),0 0 0 1px rgba(58,102,86,.25)}
 
-/* Collapsible prescription panel */
 .group{grid-column:1/-1;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:0 12px}
-.group-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:none;border:0;padding:10px 0;font-family:inherit;font-size:10px;font-weight:bold;color:var(--green-dark);cursor:pointer;text-align:left}
-.group-toggle .chev{font-size:12px;transition:transform .2s}
-.group.closed .chev{transform:rotate(-90deg)}
-.group-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:6px;padding-bottom:8px}
-.group.closed .group-body{display:none}
+
+/* Slider chips: small buttons that open a floating slider */
+.controls{display:flex;flex-direction:column;gap:5px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip-wrap{position:relative}
+.chip{display:flex;align-items:center;gap:4px;height:22px;padding:0 8px;border:1px solid #C9D1C9;border-radius:999px;background:#fff;color:var(--green-dark);font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.chip .value{font-size:9px}
+.chip.open{background:var(--green);border-color:var(--green);color:#fff}
+.chip.open .value{color:#fff}
+.pop{position:absolute;top:calc(100% + 6px);left:0;z-index:50;width:280px;max-width:90vw;background:var(--panel);border:1px solid #D8D2C4;border-radius:10px;padding:6px 12px 8px;box-shadow:0 8px 24px rgba(41,45,42,.28)}
+.pop .control{border:0;padding:2px 0}
+.pop .control-heading{flex-wrap:nowrap}
+.pop .control-heading strong{flex:1}
+.pop .control-right{width:auto}
 
 /* Touch-friendly sliders */
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin:0;cursor:pointer;touch-action:pan-y}
@@ -124,16 +118,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
 input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#CBD6CD}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--green);border:3px solid #fff}
 
-/* Landscape iPad / desktop: picture on the left (stays in view), sliders on the right */
 @media (min-width:1000px) and (orientation:landscape){
   .layout{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);align-items:start}
   .stage{position:sticky;top:8px}
-  .controls,.group-body{grid-template-columns:minmax(0,1fr)}
 }
-/* Phones */
 @media (max-width:600px){
   body{padding:7px}.panel{padding:8px}
-  .controls,.group-body{grid-template-columns:minmax(0,1fr)}
 }
 .scale-wrapper {
   width: 100%;
@@ -167,10 +157,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
             <button type="button" data-type="office">Office Lens</button>
           </div>
           <div class="boundary-controls" id="boundaryControls">
-            <button type="button" data-boundary="far" class="active">Far</button>
-            <button type="button" data-boundary="intermediate" class="active">Intermediate</button>
-            <button type="button" data-boundary="near" class="active">Near</button>
-            <button type="button" data-boundary="distortion" class="active">Distortion</button>
+            <button type="button" data-boundary="far">Far</button>
+            <button type="button" data-boundary="intermediate">Intermediate</button>
+            <button type="button" data-boundary="near">Near</button>
+            <button type="button" data-boundary="distortion">Distortion</button>
           </div>
           </div>
           <div class="zoom-controls">
@@ -187,7 +177,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         </div>
       </div>
       <div class="pos-row">
-        <strong>Lens Position</strong>
+        <strong>Horizontal</strong>
         <span class="tick">Left</span>
         <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
         <span class="tick">Right</span>
@@ -215,16 +205,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     </div>
 
     <div class="controls" id="controls">
-      <div class="group" id="rxGroup">
-        <button class="group-toggle" id="rxToggle" type="button" aria-expanded="true">
-          <span>Prescription: Far Lens Power, Accommodation, Cylinder, Axis, Near ADD</span>
-          <span class="chev">&#9662;</span>
-        </button>
-        <div class="group-body" id="rxBody">
-        </div>
-      </div>
-      <div class="corr-grid" id="extraBody"></div>
-      <div class="corr-grid" id="corrBody"></div>
+      <div class="chips" id="rxBody"></div>
+      <div class="chips" id="extraBody"></div>
+      <div class="chips" id="corrBody"></div>
     </div>
 
     <div class="result" id="resultBox"></div>
@@ -239,6 +222,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 /* ---------- CANVASES ---------- */
 const W = 1200, H = 800;
 let canvas, ctx, sourceCanvas, S, curScene = "city";   // swapped per view by useView()
+let panX = 0, panY = 0;                                 // how far the view (scene) is moved; the lens stays in the middle
 
 function makeCanvas(willRead) {
   const c = document.createElement("canvas");
@@ -257,7 +241,7 @@ function lensPath(c) {
 }
 
 /* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
-const AGE_TABLE = [[0.25, 58], [0.5, 53], [1, 49], [2, 43], [3, 38], [4, 33], [5, 27]];   // original gradient, shifted 7 years younger  // [diopters, age]
+const AGE_TABLE = [[0.25, 58], [0.5, 53], [1, 49], [2, 43], [3, 38], [4, 33], [5, 27]];   // [diopters, age]
 function ageLabel(acc) {
   if (acc <= AGE_TABLE[0][0]) return AGE_TABLE[0][1] + "+ yrs";
   if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs & below";
@@ -267,7 +251,7 @@ function ageLabel(acc) {
   }
 }
 
-/* ---------- CONTROLS (generated, in this order: left, right, left, right...) ---------- */
+/* ---------- CONTROLS ---------- */
 const controlDefs = [
   { rx: true, id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
     f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
@@ -277,9 +261,9 @@ const controlDefs = [
     f: v => v.toFixed(2), s: ["0", "4.00"] },
   { rx: true, id: "axis", label: "Axis", min: 0, max: 180, step: 5, v: 0,
     f: v => v.toFixed(0) + "°", s: ["0°", "90°", "180°"] },
-  { id: "lensPosition", label: "Lens Position", min: 0, max: 100, step: 1, v: 50,
+  { id: "lensPosition", label: "Horizontal", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
-  { id: "lensVerticalPosition", label: "Vertical Lens Position", min: 0, max: 100, step: 1, v: 50,
+  { id: "lensVerticalPosition", label: "Vertical", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
   { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0 },
   { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0 },
@@ -292,11 +276,10 @@ const controlDefs = [
     f: v => v + "%", s: ["Standard", "Half", "Clearest"] }
 ];
 
+const SHORT = { power: "Far RX", accommodation: "AA Age", cylinder: "Cyl Rx", axis: "Axis", nearAdd: "Add", aspheric: "Aspheric", enhance: "MF Enhance", cylCorrection: "Cyl + Axis %", farCorrection: "Far RX %", nearCorrection: "Near RX %" };
 const el = {};
-const controlsBox = document.getElementById("controls");
-
-const isOff = {};       // correction switched Off (= 0). Corrections start on (100%); the Off button switches one off
-const lastVal = {};     // lens value (D) to restore when switched back on (0 = 100% of the base)
+const isOff = {};       // kept for the correction maths (always false now: the lens tabs control the frame)
+const lastVal = {};
 const userSet = {};     // true once the slider was moved by hand (otherwise it follows its base at 100%)
 const controlDivs = {};
 const defById = {};
@@ -315,21 +298,26 @@ function syncCorrection(d) {
   if (r.B === 0) { slider.min = 0; slider.max = 0; slider.value = 0; ["Lo", "Mid", "Hi"].forEach(k => lab(k).textContent = "-"); return; }
   const clamp = v => Math.min(r.hi, Math.max(r.lo, v)), prev = Number(slider.value);
   slider.min = r.lo; slider.max = r.hi; slider.step = 0.25;
-  slider.value = isOff[d.id] ? r.lo : userSet[d.id] ? clamp(prev) : clamp(r.B);
+  slider.value = userSet[d.id] ? clamp(prev) : clamp(r.B);
   slider.style.setProperty("--rp", ((r.B - r.lo) / (r.hi - r.lo) * 100) + "%");     // red shade starts after 100%
   lab("Lo").textContent = sg + r.lo.toFixed(2) + " D";
   lab("Mid").textContent = sg + r.B.toFixed(2) + " D (100%)";
   lab("Hi").textContent = sg + r.hi.toFixed(2) + " D";
 }
 function corrFraction(d) {                                       // lens value as a fraction of the base (1 = full correction)
-  if (isOff[d.id]) return 0;
   const r = corrRange(d);
   return r.B === 0 ? 1 : Number(el[d.id].value) / r.B;
 }
 function corrLabel(d) {
-  if (isOff[d.id]) return "OFF · 0%";
   const r = corrRange(d), m = Number(el[d.id].value);
   return r.B === 0 ? "0.00 D" : (r.base < 0 ? "-" : "+") + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
+}
+
+// Slider chips: one floating slider open at a time
+function closePops(except) {
+  document.querySelectorAll(".chip-wrap").forEach(w => {
+    if (w !== except) { w.querySelector(".pop").hidden = true; w.querySelector(".chip").classList.remove("open"); }
+  });
 }
 
 controlDefs.forEach(d => {
@@ -339,14 +327,33 @@ controlDefs.forEach(d => {
     div.className = "control";
     div.innerHTML =
       `<div class="control-heading"><strong>${d.label}</strong>
-         <div class="control-right"><span class="value" id="${d.id}Value"></span>
-         <button class="reset-button" id="${d.id}Reset">Reset</button>
-         ${d.corr ? `<button class="reset-button off-button" id="${d.id}Off">Off</button>` : ""}</div></div>
+         <div class="control-right"><span class="value" id="${d.id}Value"></span><button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
        <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
        ${d.corr
          ? `<div class="scale"><span id="${d.id}Lo"></span><span id="${d.id}Mid"></span><span id="${d.id}Hi"></span></div>`
          : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
-    (d.corr ? document.getElementById("corrBody") : d.rx ? document.getElementById("rxBody") : document.getElementById("extraBody")).appendChild(div);
+
+    const wrap = document.createElement("div");
+    wrap.className = "chip-wrap";
+    wrap.innerHTML = `<button type="button" class="chip"><span>${SHORT[d.id]}</span><span class="value" id="${d.id}Chip"></span></button>`;
+    const pop = document.createElement("div");
+    pop.className = "pop"; pop.hidden = true;
+    pop.appendChild(div);
+    wrap.appendChild(pop);
+    (d.corr ? document.getElementById("corrBody") : d.rx ? document.getElementById("rxBody") : document.getElementById("extraBody")).appendChild(wrap);
+
+    const chip = wrap.querySelector(".chip");
+    chip.addEventListener("click", () => {
+      const open = pop.hidden;
+      closePops(wrap);
+      pop.hidden = !open;
+      chip.classList.toggle("open", open);
+      if (open) {                                              // keep the floating slider inside the screen
+        pop.style.left = "0"; pop.style.right = "auto";
+        const r = pop.getBoundingClientRect();
+        if (r.right > window.innerWidth - 8) { pop.style.left = "auto"; pop.style.right = "0"; }
+      }
+    });
   }
   const slider = document.getElementById(d.id);
   el[d.id] = slider;
@@ -356,38 +363,17 @@ controlDefs.forEach(d => {
     controlDivs[d.id] = div;
     div.classList.add("corr");
     slider.classList.add("corr-slider");
-    isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0;     // starts on, at 100%
+    isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0;     // starts at 100%
 
-    slider.addEventListener("input", () => {   // sliding by hand switches the correction on
-      userSet[d.id] = true;
-      if (isOff[d.id]) { isOff[d.id] = false; div.classList.remove("off"); }
-    });
-    document.getElementById(d.id + "Off").addEventListener("click", () => {
-      if (isOff[d.id]) {                       // back on at the previous lens value (or 100%)
-        isOff[d.id] = false; div.classList.remove("off");
-        if (lastVal[d.id]) { slider.value = lastVal[d.id]; userSet[d.id] = true; }
-      } else {                                 // switch off
-        lastVal[d.id] = userSet[d.id] ? Number(slider.value) : 0; isOff[d.id] = true; div.classList.add("off");
-      }
-      update();
-    });
+    slider.addEventListener("input", () => { userSet[d.id] = true; });
     document.getElementById(d.id + "Reset").addEventListener("click", () => {
-      isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0; div.classList.remove("off"); update();
+      userSet[d.id] = false; lastVal[d.id] = 0; update();
     });
   } else {
     document.getElementById(d.id + "Reset").addEventListener("click", () => { slider.value = d.v; update(); });
   }
   slider.addEventListener("input", update);
 });
-
-// Open / close the prescription panel
-const rxGroup = document.getElementById("rxGroup");
-const rxToggle = document.getElementById("rxToggle");
-rxToggle.addEventListener("click", () => {
-  const closed = rxGroup.classList.toggle("closed");
-  rxToggle.setAttribute("aria-expanded", String(!closed));
-});
-
 
 const resultBox = document.getElementById("resultBox");
 const SCENES = [["city", "City View"], ["night", "Driving at Night"], ["meeting", "Meeting Room"],
@@ -398,20 +384,36 @@ const sliders = [document.getElementById("sceneSlider"), document.getElementById
 let dual = false;
 
 // Two views (A, B): each has its own canvas + scene; the lens, eye and sliders are shared.
+// raw = the scene as drawn; sc = the scene moved by the Horizontal / Vertical sliders (what the eye looks at).
 const views = [0, 1].map(i => {
-  const cv = document.getElementById(i ? "canvasB" : "canvas"), [sc, sctx] = makeCanvas(true);
+  const cv = document.getElementById(i ? "canvasB" : "canvas"), [sc, sctx] = makeCanvas();
+  const [rawC, rawS] = makeCanvas();
   const [bgCanvas, bgCtx] = makeCanvas();                                  // cache of the processed background
-  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, S: sctx, scene: "city", title: "", detail: "", bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], smearPool: [], ghostPool: null };
+  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS, scene: "city", title: "", detail: "", bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], smearPool: [], ghostPool: null, regPool: [] };
 });
-function useView(v) { canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.S; curScene = v.scene; }
+function useView(v) { canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.rawS; curScene = v.scene; }
+
+// Move the scene under the fixed lens; edges are stretched so there is never a blank gap.
+function panView(v) {
+  const c = v.sctx, dx = Math.max(-W + 2, Math.min(W - 2, panX)), dy = Math.max(-H + 2, Math.min(H - 2, panY));
+  c.clearRect(0, 0, W, H);
+  c.drawImage(v.raw, dx, dy);
+  if (dx > 0) c.drawImage(v.raw, 0, 0, 1, H, 0, dy, dx, H);
+  else if (dx < 0) c.drawImage(v.raw, W - 1, 0, 1, H, W + dx, dy, -dx, H);
+  if (dy > 0) c.drawImage(v.sc, 0, dy, W, 1, 0, 0, W, dy);
+  else if (dy < 0) c.drawImage(v.sc, 0, H + dy - 1, W, 1, 0, H + dy, W, -dy);
+}
 
 function setScene(i) {
   const v = views[i], idx = Number(sliders[i].value);
   v.scene = SCENES[idx][0];
   document.getElementById(i ? "sceneValueB" : "sceneValue").textContent = (dual ? (i ? "B: " : "A: ") : "") + SCENES[idx][1];
   document.getElementById(i ? "tagB" : "tagA").textContent = (i ? "B · " : "A · ") + SCENES[idx][1];
-  useView(v); drawScene(); render();
+  useView(v); drawScene(); panView(v); v.bgKey = ""; v.lvKey = ""; render();
 }
+
+const EX = 1600;                                   // scenes are drawn this much beyond the edges (zoomed-out view)
+const ZK = { computer: 0.7, phone: 0.7, meeting: 0.7 };   // zoom-out factor per scene (1 = original size)
 
 /* ---------- DRAWING HELPERS ---------- */
 const R = (c, x, y, w, h) => { S.fillStyle = c; S.fillRect(x, y, w, h); };
@@ -475,15 +477,42 @@ function drawCityScene() {
 
 /* ---------- SCENE 2: COMPUTER ---------- */
 function drawComputerScene() {
-  R("#D8D0C2", 0, 0, W, H);
-  R("#E9E3D8", 0, 0, W, 490);
+  R("#D8D0C2", -EX, -EX, W + 2 * EX, H + 2 * EX);
+  R("#E9E3D8", -EX, -EX, W + 2 * EX, 490 + EX);
 
+  // Window (far away)
   R("#A9C7D0", 70, 60, 360, 300);
   R("#F5F1E8", 235, 60, 12, 300);
   R("#F5F1E8", 70, 205, 360, 12);
   R("#6D927D", 70, 270, 360, 90);
 
-  R("#916D50", 0, 570, W, 230);
+  // Wall posters
+  R("#F5F1E8", 940, 70, 170, 230);
+  R("#3A6656", 950, 80, 150, 120);
+  C("#E2B84B", 1025, 125, 26);
+  POLY("#527A64", [[950, 200], [1000, 150], [1040, 185], [1075, 155], [1100, 200]]);
+  TXT("#3A6656", "bold 14px Arial", "FOCUS", 960, 228);
+  R("#B9C8BE", 960, 240, 120, 6); R("#B9C8BE", 960, 254, 90, 6); R("#B9C8BE", 960, 268, 105, 6);
+  R("#F5F1E8", 940, 330, 170, 110);
+  R("#D77C55", 950, 340, 150, 24);
+  TXT("#FFFDF7", "bold 12px Arial", "NOVEMBER", 962, 357);
+  for (let i = 0; i < 7; i++) for (let j = 0; j < 3; j++) R("#B9C8BE", 955 + i * 20, 372 + j * 20, 14, 12);
+  R("#F5F1E8", 560, 30, 170, 70);
+  R("#527A64", 570, 40, 150, 12);
+  R("#B9C8BE", 570, 62, 120, 7); R("#B9C8BE", 570, 76, 90, 7);
+
+  R("#916D50", -EX, 570, W + 2 * EX, 230 + EX);
+
+  // Extra room at the edges: bookshelf, desk plant, mug, lamp
+  R("#7A5C44", -250, 30, 250, 450);
+  const bk = ["#B94A3A", "#3A6656", "#E2B84B", "#527A64", "#354E49"];
+  for (let i = 0; i < 4; i++) {
+    R("#5E4635", -240, 100 + i * 100, 230, 8);
+    for (let j = 0; j < 9; j++) { const bh = 55 + ((i * 3 + j * 7) % 5) * 8; R(bk[(i + j) % 5], -238 + j * 24, 100 + i * 100 - bh, 20, bh); }
+  }
+  RR("#B94A3A", 1000, 525, 80, 75, 10); C("#426C50", 1040, 490, 40); C("#57835C", 1018, 462, 26); C("#426C50", 1066, 458, 28);
+  RR("#E2B84B", 880, 575, 40, 42, 6);
+  R("#343D40", 1210, 420, 10, 190); POLY("#E2B84B", [[1175, 420], [1255, 420], [1240, 370], [1190, 370]]); R("#343D40", 1175, 600, 80, 12);
 
   R("#303B3B", 300, 130, 600, 350);
   R("#A8C6C0", 320, 150, 560, 305);
@@ -529,19 +558,26 @@ function drawComputerScene() {
 
 /* ---------- SCENE 3: PHONE ---------- */
 function drawPhoneScene() {
-  R("#C4B9A7", 0, 0, W, H);
+  R("#C4B9A7", -EX, -EX, W + 2 * EX, H + 2 * EX);
+
+  // Extra room at the edges: picture, shelf with plant + mug, floor lamp
+  R("#F5F1E8", 440, -110, 320, 170); R("#527A64", 455, -95, 290, 140); C("#E2B84B", 560, -40, 26);
+  POLY("#3A6656", [[455, 45], [540, -20], [600, 20], [660, -30], [745, 45]]);
+  R("#916D50", -250, 260, 260, 16); R("#916D50", -240, 276, 12, 220);
+  RR("#B94A3A", -200, 180, 70, 80, 8); C("#426C50", -165, 150, 42); C("#57835C", -185, 125, 28);
+  RR("#F5F1E8", -100, 215, 50, 45, 8);
+  R("#343D40", 1280, 200, 10, 590); POLY("#E2B84B", [[1230, 200], [1340, 200], [1318, 130], [1252, 130]]); R("#343D40", 1230, 780, 110, 14);
 
   // Lap
   S.fillStyle = "#354E49"; S.beginPath();
-  S.moveTo(0, 800); S.lineTo(100, 490);
+  S.moveTo(-200, 1420); S.lineTo(100, 490);
   S.quadraticCurveTo(350, 420, 600, 450);
   S.quadraticCurveTo(850, 420, 1100, 490);
-  S.lineTo(1200, 800); S.closePath(); S.fill();
+  S.lineTo(1400, 1420); S.closePath(); S.fill();
 
   // Forearms
-  POLY("#D6A17E", [[0, 800], [0, 640], [300, 350], [480, 360], [510, 510], [340, 620], [250, 800]]);
-  POLY("#D9A582", [[1200, 800], [1200, 640], [900, 350], [720, 360], [690, 510], [860, 620], [950, 800]]);
-
+  POLY("#D6A17E", [[-300, 1100], [-300, 930], [0, 640], [300, 350], [480, 360], [510, 510], [340, 620], [250, 800], [170, 960], [170, 1100]]);
+  POLY("#D9A582", [[1500, 1100], [1500, 930], [1200, 640], [900, 350], [720, 360], [690, 510], [860, 620], [950, 800], [1030, 960], [1030, 1100]]);
 
   // Hands: side = 1 (left) or -1 (right, mirrored about x = 600)
   const hand = (color, m) => {
@@ -569,59 +605,53 @@ function drawPhoneScene() {
   hand("#D9A582", -1);
 
   // Sleeves
-  POLY("#3A6656", [[0, 800], [0, 650], [250, 540], [350, 625], [260, 800]]);
-  POLY("#3A6656", [[1200, 800], [1200, 650], [950, 540], [850, 625], [940, 800]]);
-
+  POLY("#3A6656", [[-300, 1100], [-300, 782], [0, 650], [250, 540], [350, 625], [260, 800], [170, 975], [170, 1100]]);
+  POLY("#3A6656", [[1500, 1100], [1500, 782], [1200, 650], [950, 540], [850, 625], [940, 800], [1030, 975], [1030, 1100]]);
 
   // Phone
   S.save();
-  S.translate(600, 355); S.rotate(-0.06);
+  S.translate(600, 355);
+  S.rotate(-0.06);
 
   RR("#252B2C", -190, -275, 380, 550, 32);
   RR("#F7F5EF", -174, -259, 348, 518, 23);
 
-  // Status bar
   TXT("#292D2B", "bold 11px Arial", "9:41", -150, -237);
   TXT("#292D2B", "11px Arial", "● ● ●", 105, -237);
 
-  // Header
   R("#3A6656", -174, -220, 348, 65);
-  TXT("#FFFDF7", "bold 19px Arial", "Messages", -145, -180);
-  TXT("#DCE5DD", "12px Arial", "Today, 10:42 AM", 45, -180);
+  TXT("#FFFDF7", "bold 18px Arial", "THE DAILY EDIT", -145, -190);
+  TXT("#DCE5DD", "11px Arial", "Lifestyle  /  Wellness", -145, -171);
 
-  // Message 1
-  RR("#E4EBE5", -145, -140, 250, 75, 12);
-  TXT("#292D2B", "13px Arial", "Are you free this", -130, -115);
-  TXT("#292D2B", "13px Arial", "afternoon? I need to", -130, -96);
-  TXT("#292D2B", "13px Arial", "discuss something.", -130, -77);
+  TXT("#292D2B", "bold 19px Arial", "The Hidden Cost of", -145, -133);
+  TXT("#292D2B", "bold 19px Arial", "Digital Convenience", -145, -110);
+  TXT("#89958C", "10px Arial", "NOVEMBER 10  ·  5 MIN READ", -145, -88);
+  R("#D9DFD8", -145, -73, 290, 1);
 
-  // Message 2
-  RR("#3A6656", -5, -55, 150, 55, 12);
-  TXT("#FFFDF7", "13px Arial", "Yes, what's up?", 10, -25);
+  TXT("#3A6656", "bold 12px Arial", "A DIFFERENT WAY TO SEE", -145, -52);
+  TXT("#292D2B", "12px Arial", "We spend hours every day looking at screens.", -145, -29);
+  TXT("#292D2B", "12px Arial", "Messages, emails, news and endless streams", -145, -11);
+  TXT("#292D2B", "12px Arial", "of information have become part of everyday", -145, 7);
+  TXT("#292D2B", "12px Arial", "life. Our eyes are constantly working.", -145, 25);
 
-  // Message 3
-  RR("#E4EBE5", -145, 15, 270, 90, 12);
-  TXT("#292D2B", "13px Arial", "I found a nice cafe", -130, 42);
-  TXT("#292D2B", "13px Arial", "near the shopping mall.", -130, 62);
-  TXT("#292D2B", "13px Arial", "Can we meet at 2 PM?", -130, 82);
+  TXT("#292D2B", "bold 14px Arial", "When convenience becomes a daily habit", -145, 53);
+  TXT("#292D2B", "11px Arial", "Digital devices make life easier, but they", -145, 78);
+  TXT("#292D2B", "11px Arial", "also demand constant attention. Small details", -145, 94);
+  TXT("#292D2B", "11px Arial", "can become harder to notice when our eyes", -145, 110);
+  TXT("#292D2B", "11px Arial", "feel tired after hours of continuous viewing.", -145, 126);
 
-  // Message 4
-  RR("#3A6656", -5, 125, 150, 55, 12);
-  TXT("#FFFDF7", "13px Arial", "Sure, see you!", 10, 157);
+  RR("#E4EBE5", -145, 143, 290, 55, 8);
+  TXT("#3A6656", "italic 12px Arial", "\"Clarity is not just about seeing.", -132, 165);
+  TXT("#3A6656", "italic 12px Arial", "It is about seeing comfortably.\"", -132, 182);
 
-  // Message input
-  RR("#E4EBE5", -150, 200, 300, 38, 18);
-  TXT("#89958C", "12px Arial", "Type a message...", -130, 224);
-  C("#3A6656", 132, 219, 11);
+  TXT("#292D2B", "bold 11px Arial", "A better everyday experience", -145, 222);
+  TXT("#89958C", "10px Arial", "Read more  →", 80, 239);
 
-  // Home indicator
   RR("#252B2C", -35, 248, 70, 5, 3);
-
   RR("#252B2C", -35, -269, 70, 6, 4);
+
   S.restore();
-
 }
-
 /* ---------- SCENE 4: DRIVING AT NIGHT ---------- */
 function glow(x, y, r, rgb, a) {
   const g = S.createRadialGradient(x, y, 0, x, y, r);
@@ -636,7 +666,6 @@ function drawNightScene() {
   S.fillStyle = sky; S.fillRect(0, 0, W, 360);
   R("#0B0E14", 0, 360, W, H - 360);
 
-  // Buildings with lit windows
   let seed = 11;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   [[0, 250, 150], [130, 200, 120], [250, 290, 110], [350, 230, 100], [440, 310, 90],
@@ -647,7 +676,6 @@ function drawNightScene() {
         if (rnd() > 0.55) R(rnd() > 0.5 ? "#F3D98B" : "#9CC7E8", wx, wy, 10, 14);
   });
 
-  // Road + edge lines + centre dashes (perspective)
   POLY("#1A1D24", [[570, 360], [630, 360], [1150, 800], [50, 800]]);
   S.strokeStyle = "#8A8F9A"; S.lineWidth = 3;
   S.beginPath(); S.moveTo(570, 360); S.lineTo(50, 800); S.moveTo(630, 360); S.lineTo(1150, 800); S.stroke();
@@ -658,7 +686,6 @@ function drawNightScene() {
     POLY("#E8D27A", [[600 - w0, y0], [600 + w0, y0], [600 + w1, y1], [600 - w1, y1]]);
   }
 
-  // Street lights (soft warm glow)
   [0.04, 0.14, 0.3, 0.55].forEach(u => {
     const y = 360 + 440 * u;
     [-1, 1].forEach(sd => {
@@ -671,7 +698,6 @@ function drawNightScene() {
     });
   });
 
-  // Cars: oncoming (right lane, front view) and ahead (left lane, rear view)
   const lane = (u, side) => 600 + side * (30 + 520 * u) / 2;
   const oval = (c, x, y, rx, ry) => { S.fillStyle = c; S.beginPath(); S.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); S.fill(); };
 
@@ -679,22 +705,22 @@ function drawNightScene() {
    [0.32, -1, false, "#28344A"], [0.5, 1, true, "#22303A"]].forEach(([u, side, oncoming, color]) => {
     const yB = 360 + 440 * u, cx = lane(u, side), cw = 14 + 230 * u, ch = cw * 0.55;
 
-    RR("#06070B", cx - cw * 0.5, yB - ch * 0.08, cw, ch * 0.1, 2);                   // shadow under car
-    RR(color, cx - cw * 0.5, yB - ch * 0.62, cw, ch * 0.55, cw * 0.08);              // body
-    POLY(oncoming ? "#3B4660" : "#1E2330",                                            // windscreen / rear window
+    RR("#06070B", cx - cw * 0.5, yB - ch * 0.08, cw, ch * 0.1, 2);
+    RR(color, cx - cw * 0.5, yB - ch * 0.62, cw, ch * 0.55, cw * 0.08);
+    POLY(oncoming ? "#3B4660" : "#1E2330",
          [[cx - cw * 0.38, yB - ch * 0.62], [cx - cw * 0.28, yB - ch], [cx + cw * 0.28, yB - ch], [cx + cw * 0.38, yB - ch * 0.62]]);
-    R("#050608", cx - cw * 0.46, yB - ch * 0.12, cw * 0.14, ch * 0.14);              // wheels
+    R("#050608", cx - cw * 0.46, yB - ch * 0.12, cw * 0.14, ch * 0.14);
     R("#050608", cx + cw * 0.32, yB - ch * 0.12, cw * 0.14, ch * 0.14);
 
-    if (oncoming) R("#11141B", cx - cw * 0.12, yB - ch * 0.36, cw * 0.24, ch * 0.1);  // grille
-    else R("#D9D6CC", cx - cw * 0.1, yB - ch * 0.3, cw * 0.2, ch * 0.08);             // number plate
+    if (oncoming) R("#11141B", cx - cw * 0.12, yB - ch * 0.36, cw * 0.24, ch * 0.1);
+    else R("#D9D6CC", cx - cw * 0.1, yB - ch * 0.3, cw * 0.2, ch * 0.08);
 
     [-1, 1].forEach(sd => {
       const lx = cx + sd * cw * 0.32, ly = yB - ch * 0.4;
       S.globalCompositeOperation = "lighter";
       if (oncoming) {
         glow(lx, ly, cw * 0.55, "255,235,190", 0.4);
-        glow(lx, yB + ch * 0.15, cw * 0.35, "255,235,190", 0.15);                      // road reflection
+        glow(lx, yB + ch * 0.15, cw * 0.35, "255,235,190", 0.15);
       } else {
         glow(lx, ly, cw * 0.5, "255,40,30", 0.45);
         glow(lx, yB + ch * 0.15, cw * 0.3, "255,40,30", 0.15);
@@ -704,7 +730,6 @@ function drawNightScene() {
     });
   });
 
-  // Dashboard + steering wheel
   R("#0A0A0C", 0, 745, W, 55);
   S.strokeStyle = "#15161A"; S.lineWidth = 26;
   S.beginPath(); S.ellipse(600, 900, 340, 170, 0, Math.PI, 2 * Math.PI); S.stroke();
@@ -712,12 +737,18 @@ function drawNightScene() {
 
 /* ---------- SCENE 5: MEETING ROOM ---------- */
 function drawMeetingScene() {
-  R("#E6E0D3", 0, 0, W, H);
-  R("#CFC6B6", 0, 430, W, H - 430);
+  R("#E6E0D3", -EX, -EX, W + 2 * EX, H + 2 * EX);
+  R("#CFC6B6", -EX, 430, W + 2 * EX, H + EX);
 
   // Window
   R("#A9C7D0", 40, 90, 200, 230);
   R("#F5F1E8", 135, 90, 10, 230);
+
+  // Extra room at the edges: whiteboard, wall clock, plant
+  R("#B9B2A3", -260, 100, 230, 170); R("#FFFDF7", -250, 110, 210, 150);
+  R("#527A64", -235, 130, 150, 6); R("#B9C8BE", -235, 150, 180, 5); R("#B9C8BE", -235, 166, 120, 5); R("#D77C55", -235, 190, 80, 30);
+  C("#343D40", 1060, 120, 40); C("#FFFDF7", 1060, 120, 34); R("#343D40", 1058, 98, 4, 24); R("#343D40", 1060, 118, 18, 4);
+  RR("#B94A3A", 1130, 400, 90, 80, 10); C("#426C50", 1175, 360, 45); C("#57835C", 1150, 330, 30); C("#426C50", 1205, 325, 32);
 
   // Projector screen
   R("#2B3330", 370, 60, 460, 260);
@@ -744,9 +775,11 @@ function drawMeetingScene() {
   person(480, 320, 1.05, "#B94A3A", "#E0B08E", "#1D1A18");
   person(720, 320, 1.05, "#354E49", "#C98F6B", "#3B2B22");
   person(960, 330, 1.0, "#C9B36A", "#D9A582", "#5A3B24");
+  person(0, 330, 1.0, "#354E49", "#C98F6B", "#2A211C");
+  person(1200, 330, 1.0, "#527A64", "#D6A17E", "#3B2B22");
 
   // Table + items
-  POLY("#916D50", [[100, 480], [1100, 480], [1200, 800], [0, 800]]);
+  POLY("#916D50", [[100, 480], [1100, 480], [1300, 1120], [-100, 1120]]);
   R("#A57F60", 100, 480, 1000, 8);
   [[220, 520], [470, 515], [700, 515], [950, 520]].forEach(([x, y]) => {
     R("#343D40", x - 55, y, 110, 14);
@@ -754,6 +787,13 @@ function drawMeetingScene() {
   });
   C("#F5F1E8", 360, 535, 14); C("#F5F1E8", 840, 538, 14);
   R("#FFFDF7", 560, 560, 90, 55);
+  for (let i = 0; i < 4; i++) R("#B9C8BE", 570, 572 + i * 11, 70 - (i % 2) * 15, 4);
+
+  // Notebook + pen in front of the viewer (nearest object)
+  R("#527A64", 470, 690, 250, 110);
+  R("#FFFDF7", 480, 700, 230, 100);
+  for (let i = 0; i < 5; i++) R("#B9C8BE", 495, 715 + i * 16, 200 - (i % 3) * 30, 4);
+  R("#3A6656", 730, 700, 8, 80);
 
   // People seen from behind (near side)
   RR("#3A6656", -30, 640, 260, 200, 80); C("#2A211C", 100, 635, 52);
@@ -762,15 +802,15 @@ function drawMeetingScene() {
 
 /* ---------- SCENE 6: DUOCHROME (red / blue) ---------- */
 function drawDuoScene() {
-  R("#E4DFD3", 0, 0, W, H);                                   // neutral surround
-  R("#B9B2A3", 336, 226, 528, 348);                           // chart frame
-  R("#f23f3f", 340, 230, 260, 340);                           // red half
-  R("#3ff2f2", 600, 230, 260, 340);                           // blue half
+  R("#E4DFD3", 0, 0, W, H);
+  R("#B9B2A3", 336, 226, 528, 348);
+  R("#f23f3f", 340, 230, 260, 340);
+  R("#3ff2f2", 600, 230, 260, 340);
   R("rgba(0,0,0,.35)", 598, 230, 4, 340);
   S.textAlign = "center"; S.textBaseline = "middle";
-  [["3 1", 50, 361], ["7 9 2", 25, 419], ["6 8 5 4", 13, 458]].forEach(([t, sz, y]) => {   // same text on both halves
-    TXT("#000", `bold ${sz}px Arial`, t, 540, y);             // red group
-    TXT("#000", `bold ${sz}px Arial`, t, 660, y);             // blue group (close to the red group)
+  [["3 1", 50, 361], ["7 9 2", 25, 419], ["6 8 5 4", 13, 458]].forEach(([t, sz, y]) => {
+    TXT("#000", `bold ${sz}px Arial`, t, 540, y);
+    TXT("#000", `bold ${sz}px Arial`, t, 660, y);
   });
   S.textAlign = "left"; S.textBaseline = "alphabetic";
 }
@@ -782,11 +822,11 @@ function drawFanScene() {
   S.textAlign = "center"; S.textBaseline = "middle";
   S.strokeStyle = "#111"; S.lineWidth = 5; S.lineCap = "butt";
   for (let k = 0; k < 12; k++) {
-    const a = k * Math.PI / 12, ux = Math.sin(a), uy = -Math.cos(a);   // k = 0 is vertical (12 o'clock), then clockwise
+    const a = k * Math.PI / 12, ux = Math.sin(a), uy = -Math.cos(a);
     [-1, 1].forEach(sg => {
       S.beginPath(); S.moveTo(cx + sg * ux * r0, cy + sg * uy * r0); S.lineTo(cx + sg * ux * r1, cy + sg * uy * r1); S.stroke();
     });
-    if (k % 2 === 0) {                                                 // clock numbers every 30 degrees
+    if (k % 2 === 0) {
       const h = k / 2;
       TXT("#444", "bold 17px Arial", String(h || 12), cx + ux * (r1 + 24), cy + uy * (r1 + 24));
       TXT("#444", "bold 17px Arial", String(h + 6), cx - ux * (r1 + 24), cy - uy * (r1 + 24));
@@ -797,7 +837,8 @@ function drawFanScene() {
 
 function drawScene() {
   S.clearRect(0, 0, W, H);
-  const scene = curScene;
+  const scene = curScene, zk0 = ZK[scene];
+  if (zk0) { S.save(); S.translate(600, 400); S.scale(zk0, zk0); S.translate(-600, -400); }
   if (scene === "city") drawCityScene();
   else if (scene === "night") drawNightScene();
   else if (scene === "meeting") drawMeetingScene();
@@ -805,11 +846,45 @@ function drawScene() {
   else if (scene === "duo") drawDuoScene();
   else if (scene === "fan") drawFanScene();
   else drawPhoneScene();
+  if (zk0) S.restore();
 }
 
 /* ---------- DEFOCUS MODEL ---------- */
+// Scenes with several focal distances: [x, y, w, h, demand in D]. The first entry is the base (whole picture);
+// later entries override it where they overlap. Coordinates are in the unmoved scene.
+const REGIONS = {
+  computer: [
+    [0, 0, W, H, -0.5],              // wall + posters (about 2 m)
+    [70, 60, 360, 300, 0],           // window: far away
+    [300, 130, 600, 350, -1.75],     // monitor
+    [510, 480, 180, 95, -1.75],      // monitor stand
+    [-2000, 570, 5200, 1200, -2.0]   // desk, keyboard, mouse, plant, lamp
+  ],
+  meeting: [
+    [0, 0, W, H, -0.25],             // back wall, projector screen
+    [40, 90, 200, 230, 0],           // window: far away
+    [-300, 285, 1800, 200, -0.6],    // people across the table
+    [-200, 480, 1600, 900, -1.5],    // table top
+    [165, 455, 110, 80, -0.9],       // laptops across the table
+    [415, 450, 110, 80, -0.9],
+    [645, 450, 110, 80, -0.9],
+    [895, 455, 110, 80, -0.9],
+    [560, 555, 95, 65, -2.0],        // paper
+    [470, 690, 270, 110, -2.75],     // notebook right in front
+    [-250, 590, 480, 500, -1.5],     // people next to the viewer
+    [980, 580, 500, 500, -1.5]
+  ]
+};
+function regionAt(regs, x, y) {
+  for (let i = regs.length - 1; i > 0; i--) {
+    const g = regs[i];
+    if (x >= g[0] && x < g[0] + g[2] && y >= g[1] && y < g[1] + g[3]) return i;
+  }
+  return 0;
+}
 function getSceneDemand() {
-  return { computer: -1.75, meeting: -0.75, phone: -2.5 }[curScene] || 0;
+  const rg = REGIONS[curScene];
+  return rg ? rg[0][4] : ({ phone: -2.5 }[curScene] || 0);
 }
 
 /* Eye with far point `power` and `accommodation` sees clearly when the demand reaching it lies in [power - accommodation, power].
@@ -836,7 +911,7 @@ const nativeBlur = (() => {
     x.filter = "blur(2px)";
     x.fillStyle = "#fff";
     x.fillRect(4, 4, 1, 1);
-    return x.getImageData(2, 4, 1, 1).data[3] > 0;   // blurred pixel spread = filter works
+    return x.getImageData(2, 4, 1, 1).data[3] > 0;
   } catch (e) { return false; }
 })();
 
@@ -863,7 +938,6 @@ function blurInto(dst, src, r) {
     return;
   }
 
-  // Fallback: shrink in halving steps, then enlarge back (smooth bilinear blur)
   const k = Math.max(1.5, r * 1.4);
   const chain = [];
   let cur = src, f = 1;
@@ -887,11 +961,8 @@ function blurInto(dst, src, r) {
 
 /* ---------- VISION EFFECTS (blur + cylinder ghosting) ---------- */
 function applyVisionEffects(target, blurAmount, cylinder, axis) {
-  // 1. Spherical blur
   blurInto(blurCtx, sourceCanvas, blurAmount);
 
-  // 1b. Cylinder blur: smear along the power meridian. Features along it stay sharp, features across it blur,
-  //     and in-between angles blur progressively. (The fan chart has its own per-line version.)
   const angle = (axis + 90) * Math.PI / 180;
   const smearLen = curScene === "fan" ? 0 : cylinder * 14;
   let layer = blurCanvas;
@@ -899,7 +970,7 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
     const n = Math.min(fast ? 7 : 15, Math.max(3, Math.ceil(smearLen / 3) + 1)), cs = Math.cos(angle), sn = Math.sin(angle);
     smearCtx.clearRect(0, 0, W, H);
     for (let k = 0; k < n; k++) {
-      smearCtx.globalAlpha = 1 / (k + 1);                  // running average of n shifted copies
+      smearCtx.globalAlpha = 1 / (k + 1);
       const o = (k - (n - 1) / 2) * smearLen / (n - 1);
       smearCtx.drawImage(blurCanvas, cs * o, sn * o);
     }
@@ -907,32 +978,32 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
     layer = smearCanvas;
   }
 
-  // 2. Cylinder doubling: two copies move apart symmetrically.
-  //    At zero cylinder both sit on top of each other (one image).
   ghostCtx.clearRect(0, 0, W, H);
 
-  const separation = cylinder * (curScene === "fan" ? 4 : 16);   // total gap between the two images (fan chart: a quarter)
-  const secondWeight = Math.min(.5, cylinder * 0.75);    // opacity of the second image (0.5 = equal to the first)
+  const separation = cylinder * (curScene === "fan" ? 4 : 16);
+  const secondWeight = Math.min(.5, cylinder * 0.75);
   const ox = Math.cos(angle) * separation / 2;
   const oy = Math.sin(angle) * separation / 2;
 
   ghostCtx.globalAlpha = 1;
-  ghostCtx.drawImage(layer, -ox, -oy);                    // image 1
+  ghostCtx.drawImage(layer, -ox, -oy);
   ghostCtx.globalAlpha = secondWeight;
-  ghostCtx.drawImage(layer, ox, oy);                      // image 2
+  ghostCtx.drawImage(layer, ox, oy);
   ghostCtx.globalAlpha = 1;
 
   target.clearRect(0, 0, W, H);
   target.drawImage(ghostCanvas, 0, 0);
 }
 
-let lensType = "far";     // "far" | "near" | "multi"
+let lensOn = true;        // glasses on / off
+let lensType = "far";     // "far" | "near" | "multi" | "office"
 let enhFrac = 0;          // Multifocal Enhancement 0..1
-const boundaryVisibility = { far: true, intermediate: true, near: true, distortion: true };
-// Edge of the clear corridor (fraction of lens half-width) at height t; Enhancement pushes it toward the sides
-const ZONES = {                                   // zone boundaries (fraction of lens height) + width of the clear corridor
-  multi:  { far: 0.5, mid: 0.65, near: 0.8, edge: t => 0.55 - 0.3 * t },
-  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.55 - 0.3 * t }
+const boundaryVisibility = { far: false, intermediate: false, near: false, distortion: false };   // guide lines start off
+const clamp01 = x => Math.min(1, Math.max(0, x));
+// Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, wider toward near.
+const ZONES = {
+  multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.15 + 0.18 * clamp01((t - 0.5) / 0.5) },
+  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.25 + 0.08 * clamp01((t - 0.05) / 0.95) }
 };
 const sideEdge = t => { const th = ZONES[lensType].edge(t); return th + (0.98 - th) * enhFrac; };
 
@@ -955,10 +1026,15 @@ function drawLensGuides() {
   }
   ctx.restore();
 }
+// The lens frame is always shown (it is the lens tabs, not the corrections, that choose the lens)
+function drawLensFrame() {
+  lensPath(ctx);
+  ctx.strokeStyle = "#3A6656"; ctx.lineWidth = 5; ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+}
 const sstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
-// Fan chart: blur grows progressively from the good meridian (lines along the doubling direction) to the opposite one.
-// Every line is radial, so the line direction at a pixel is its polar angle around the chart centre.
+// Fan chart: blur grows progressively from the good meridian to the opposite one.
 const FAN = { cx: 600, cy: 405, x0: 320, y0: 125, size: 560 };
 const fanPool = [];
 function fanBackground(target, sphR, cylAmt, axis) {
@@ -966,10 +1042,10 @@ function fanBackground(target, sphR, cylAmt, axis) {
   const nL = fast ? 3 : 5, STEP = fast ? 2 : 1;
   for (let i = 0; i < nL; i++) {
     const lv = fanPool[i] || (fanPool[i] = makeCanvas(true));
-    applyVisionEffects(lv[1], Math.min(30, sphR + i * cylR / (nL - 1)), 0, axis);   // blur only
+    applyVisionEffects(lv[1], Math.min(30, sphR + i * cylR / (nL - 1)), 0, axis);
     data.push(lv[1].getImageData(x0, y0, size, size).data);
   }
-  const gp = fanPool[5] || (fanPool[5] = makeCanvas(true));                          // split (doubled) layer, only sphere blur
+  const gp = fanPool[5] || (fanPool[5] = makeCanvas(true));
   applyVisionEffects(gp[1], Math.min(30, sphR), cylAmt, axis);
   const gd = gp[1].getImageData(x0, y0, size, size).data;
   target.clearRect(0, 0, W, H);
@@ -996,13 +1072,33 @@ let halfPool = null;
 function applyVisionHalves(target, rl, rr, cylinder, axis) {
   applyVisionEffects(target, rl, cylinder, axis);
   if (rl === rr) return;
-  halfPool = halfPool || makeCanvas(true);
+  const sx = Math.max(0, Math.min(W, Math.round(W / 2 + panX)));
+  if (sx >= W) return;
+  halfPool = halfPool || makeCanvas();
   applyVisionEffects(halfPool[1], rr, cylinder, axis);
-  target.drawImage(halfPool[0], W / 2, 0, W / 2, H, W / 2, 0, W / 2, H);
+  target.drawImage(halfPool[0], sx, 0, W - sx, H, sx, 0, W - sx, H);
+}
+
+// Scenes with several focal distances: each region gets the blur of its own demand
+function bgRegions(target, v, regs, radFn, cylinder, axis, zk) {
+  target.clearRect(0, 0, W, H);
+  const used = [];
+  regs.forEach((rg, i) => {
+    const rad = radFn(rg), key = rad.toFixed(2);
+    let j = used.indexOf(key);
+    if (j < 0) {
+      j = used.length; used.push(key);
+      const pc = v.regPool[j] || (v.regPool[j] = makeCanvas());
+      applyVisionEffects(pc[1], rad, cylinder, axis);
+    }
+    target.save();
+    if (i > 0) { target.beginPath(); target.rect(600 + (rg[0] - 600) * zk + panX, 400 + (rg[1] - 400) * zk + panY, rg[2] * zk, rg[3] * zk); target.clip(); }
+    target.drawImage(v.regPool[j][0], 0, 0);
+    target.restore();
+  });
 }
 
 /* ---------- RENDER ---------- */
-// While a slider is moving: a cheaper pass (fewer blur levels, every 2nd pixel). A full-quality pass follows 180 ms after you stop.
 let renderPending = false, fast = false, fastTimer = 0;
 
 function schedule() {
@@ -1019,48 +1115,50 @@ function render() {
 
 function renderView(v) {
   const val = id => Number(el[id].value);
-  enhFrac = val("enhance") / 300;
+  enhFrac = val("enhance") / 200;
   const power = val("power");
   const aspheric = val("aspheric");
   const cylinder = val("cylinder");
   const axis = val("axis");
   const accommodation = val("accommodation");
   const nearAdd = val("nearAdd");
-  const farCorr = corrFraction(defById.farCorrection);    // affects the far lens power only
-  const cylCorr = corrFraction(defById.cylCorrection);    // affects cylinder + axis only
-  const nearCorr = corrFraction(defById.nearCorrection);  // affects the near ADD only
+  const farCorr = corrFraction(defById.farCorrection);
+  const cylCorr = corrFraction(defById.cylCorrection);
+  const nearCorr = corrFraction(defById.nearCorrection);
 
-  /* Original (uncorrected) vision: always full power + full cylinder */
+  /* Original (uncorrected) vision */
   const demand = getSceneDemand();
+  const regs = REGIONS[curScene] || null, zk = ZK[curScene] || 1;                          // scenes with several focal distances
   const isDuo = curScene === "duo";
-  const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue")] : [Math.abs(sd), Math.abs(sd)];   // [left, right] defocus
-  const accom = curScene === "duo" ? 0 : accommodation;   // duochrome test: no accommodation, whatever the slider says
+  const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue")] : [Math.abs(sd), Math.abs(sd)];
+  const accom = curScene === "duo" ? 0 : accommodation;
+  const regRad = rg => Math.min(30, getResidualDefocus(power, accom, rg[4]) * 5);
   const [bgL, bgR] = sideDef(signedDefocus(power, accom, demand));
-  const bgKey = [curScene, bgL.toFixed(3), bgR.toFixed(3), cylinder, axis, fast ? 1 : 0].join("|");
+  const bgKey = [curScene, regs ? regs.map(rg => regRad(rg).toFixed(2)).join(",") : "", bgL.toFixed(3), bgR.toFixed(3), cylinder, axis, fast ? 1 : 0].join("|");
   if (v.bgKey === bgKey) { ctx.clearRect(0, 0, W, H); ctx.drawImage(v.bgCanvas, 0, 0); }
   else {
-    if (curScene === "fan" && cylinder > 0) fanBackground(ctx, Math.min(30, bgL * 5), cylinder, axis);
+    if (regs) bgRegions(ctx, v, regs, regRad, cylinder, axis, zk);
+    else if (curScene === "fan" && cylinder > 0) fanBackground(ctx, Math.min(30, bgL * 5), cylinder, axis);
     else applyVisionHalves(ctx, Math.min(30, bgL * 5), Math.min(30, bgR * 5), cylinder, axis);
     v.bgCtx.clearRect(0, 0, W, H); v.bgCtx.drawImage(canvas, 0, 0); v.bgKey = bgKey;
   }
 
   /* Through the lens */
-  const addTotal = nearAdd * nearCorr;                            // the only ADD: full near power
-  const intPart = addTotal / 2;                                   // intermediate = the gradient half way between far and near
+  const addTotal = nearAdd * nearCorr;
+  const intPart = addTotal / 2;
   const isMulti = !!ZONES[lensType];
-  const lensAdd = lensType === "far" ? 0 : addTotal;              // "Near Lens Rx"
+  const lensAdd = lensType === "far" ? 0 : addTotal;
   const lensCylinder = cylinder * (1 - cylCorr);
 
   // The eye sees the scene through lens power L = far correction + local ADD; accommodation only works when L is not enough
-  const defsAt = a => sideDef(signedDefocus(power, accom, demand + power * farCorr + a));
+  const defsAt = (a, dm = demand) => sideDef(signedDefocus(power, accom, dm + power * farCorr + a));
 
-  // ADD at a height in the lens (t: 0 = top, 1 = bottom)
   const addAt = t => {
     if (lensType === "far") return 0;
     if (lensType === "near") return addTotal;
     const stops = lensType === "office"
-      ? [[0, 0], [0.05, 0], [0.2, intPart], [0.6, intPart], [0.7, addTotal], [1, addTotal]]   // office: far 5% | intermediate 65% | near 30%
-      : [[0, 0], [0.5, 0], [0.65, intPart], [0.8, addTotal], [1, addTotal]];                 // multifocal: far 50% | intermediate 30% | near 20%
+      ? [[0, 0], [0.05, 0], [0.2, intPart], [0.6, intPart], [0.7, addTotal], [1, addTotal]]
+      : [[0, 0], [0.5, 0], [0.65, intPart], [0.8, addTotal], [1, addTotal]];
     for (let i = 1; i < stops.length; i++) {
       if (t <= stops[i][0]) {
         const [t0, a0] = stops[i - 1], [t1, a1] = stops[i];
@@ -1073,8 +1171,13 @@ function renderView(v) {
   /* Title + details */
   const effectivePower = power * farCorr;
   const effectiveCylinder = cylinder * cylCorr;
-  const presbyopiaRx = getResidualDefocus(0, accommodation, demand);   // accommodation deficit for this scene
+  const presbyopiaRx = Math.max(...(regs || [[0, 0, 0, 0, demand]]).map(rg => getResidualDefocus(0, accommodation, rg[4])));
   const rxText = v => (v > 0 ? "+" : "") + v.toFixed(2) + " D";
+  if (!lensOn) {                                                  // glasses off: just the eye, no frame
+    v.title = "Without Glasses";
+    v.detail = "Eye Rx: " + rxText(power) + " | Cylinder: " + cylinder.toFixed(2) + " | Presbyopia Rx: " + rxText(presbyopiaRx);
+    return;
+  }
 
   const effects = [];
   if (effectivePower < 0) effects.push("Myopic Lens");
@@ -1087,20 +1190,19 @@ function renderView(v) {
     " | Near Lens Rx: " + rxText(lensAdd) + " | Presbyopia Rx: " + rxText(presbyopiaRx);
 
   // Vision stress: over-correcting the far lens (> 100%) forces extra accommodation.
-  // 100% stress = the eye having to use 50% of its accommodation.
   const stress = Math.round(Math.max(0, farCorr - 1) * Math.abs(power) / (0.5 * accommodation) * 100);
   const stressColor = stress <= 50 ? "#2E9B5F" : stress <= 75 ? "#E0A800" : "#C0392B";
   v.detail += '\n<span class="stress-dot" style="background:' + stressColor + '"></span>Vision Stress: ' + stress + "%";
 
-  if (effectivePower === 0 && effectiveCylinder === 0 && lensAdd === 0) { drawLensGuides(); return; }   // lens changes nothing
+  if (effectivePower === 0 && effectiveCylinder === 0 && lensAdd === 0) { drawLensFrame(); drawLensGuides(); return; }   // lens changes nothing
 
   /* Lens distortion parameters */
   const effectiveAspheric = aspheric * Math.min(farCorr, 1);
   const magFactor = 1 + effectivePower / 25;
   const radialStrength = effectivePower * 0.085 * (1 - effectiveAspheric / 100);
-  const ADD_STRENGTH = 1;                                        // how obvious the plus-lens (ADD) distortion is
+  const ADD_STRENGTH = 1;
   const addRadK = ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
-  const cylMag = 1 + effectiveCylinder / 40;                     // stretch along power meridian
+  const cylMag = 1 + effectiveCylinder / 40;
   const mAngle = (axis + 90) * Math.PI / 180;
   const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
 
@@ -1112,30 +1214,32 @@ function renderView(v) {
   const gx = Math.max(0, xStart - 70), gy = Math.max(0, yStart - 70);
   const gw = Math.min(W, xEnd + 70) - gx, gh = Math.min(H, yEnd + 70) - gy;
 
-  /* Blur levels: sphere blur + residual cylinder ghosting. Multifocal uses 5 levels (blended per pixel). */
-  const SIDE_BLUR = 9;                                           // extra sphere blur at the sides of a multifocal
+  /* Blur levels */
+  const SIDE_BLUR = 9;
   const isFan = curScene === "fan";
-  const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;   // over-correction flips the meridian
-  const perPixel = isMulti || isDuo || isFan;                    // blur varies across the lens
+  const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;
+  const perPixel = isMulti || isDuo || isFan || !!regs;           // blur varies across the lens
   let maxDef = 0;
-  for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20)));
+  (regs || [[0, 0, 0, 0, demand]]).forEach(rg => {
+    for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20), rg[4]));
+  });
   const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylAmt * 5 : 0));
   const nLev = perPixel ? (fast ? 3 : 5) : 1;
 
   const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), fast ? 1 : 0].join("|");
-  if (v.lvKey !== lvKey) {                                       // rebuild only when something that affects the blur changed
+  if (v.lvKey !== lvKey) {
     for (let i = 0; i < nLev; i++) {
-      const lv = v.lvPool[i] || (v.lvPool[i] = makeCanvas(true));
-      applyVisionEffects(lv[1], nLev === 1 ? rMax : i * rMax / (nLev - 1), isFan ? 0 : cylAmt, cylAxis);   // fan chart: blur only, the split is a separate layer
+      const lv = v.lvPool[i] || (v.lvPool[i] = makeCanvas());
+      applyVisionEffects(lv[1], nLev === 1 ? rMax : i * rMax / (nLev - 1), isFan ? 0 : cylAmt, cylAxis);
     }
-    if (isFan && cylAmt > 0) {                                   // fan chart: sharp split (doubled) layer
-      v.ghostPool = v.ghostPool || makeCanvas(true);
+    if (isFan && cylAmt > 0) {
+      v.ghostPool = v.ghostPool || makeCanvas();
       applyVisionEffects(v.ghostPool[1], Math.min(30, maxDef * 5), cylAmt, cylAxis);
     }
-    if (isMulti) {                                               // multifocal sides: directional smear, tilted opposite ways left / right
+    if (isMulti) {
       const N = fast ? 5 : 9;
       [0.45, -0.45].forEach((ang, k) => {
-        const sc = v.smearPool[k] || (v.smearPool[k] = makeCanvas(true)), d2 = sc[1];
+        const sc = v.smearPool[k] || (v.smearPool[k] = makeCanvas()), d2 = sc[1];
         d2.clearRect(0, 0, W, H);
         for (let n = 0; n < N; n++) {
           d2.globalAlpha = 1 / (n + 1);
@@ -1145,21 +1249,23 @@ function renderView(v) {
         d2.globalAlpha = 1;
       });
     }
-    v.lvKey = lvKey;
+    v.lvKey = lvKey; v.lvData = null;
   }
   const readRegion = c => c[1].getImageData(gx, gy, gw, gh).data;
-  const levelData = v.lvPool.slice(0, nLev).map(readRegion);
-  const fanGhostData = (isFan && cylAmt > 0) ? readRegion(v.ghostPool) : null;
-  const smearData = isMulti ? v.smearPool.map(readRegion) : [];
+  const LD = v.lvData || (v.lvData = {                           // pixel data is cached until the blur levels change
+    levels: v.lvPool.slice(0, nLev).map(readRegion),
+    ghost: (isFan && cylAmt > 0) ? readRegion(v.ghostPool) : null,
+    smear: isMulti ? v.smearPool.map(readRegion) : [] });
+  const levelData = LD.levels, fanGhostData = LD.ghost, smearData = LD.smear;
 
-  const rowCache = [];                                           // ADD + defocus per lens height
-  const rowInfo = t => {
-    const k = Math.round(t * 200);
-    if (!rowCache[k]) { const a = addAt(k / 200), [dl, dr] = defsAt(a); rowCache[k] = { a, dl, dr }; }
-    return rowCache[k];
+  const rowCache = [];                                           // ADD + defocus per lens height and focal region
+  const rowInfo = (t, ri) => {
+    const k = Math.round(t * 200), key = k * 32 + ri;
+    if (!rowCache[key]) { const a = addAt(k / 200), [dl, dr] = defsAt(a, regs ? regs[ri][4] : demand); rowCache[key] = { a, dl, dr }; }
+    return rowCache[key];
   };
 
-  const output = ctx.getImageData(xStart, yStart, rw, rh);       // start from the processed background (lens area only)
+  const output = ctx.getImageData(xStart, yStart, rw, rh);
   const out = output.data;
 
   const s3 = [0, 0, 0];
@@ -1167,6 +1273,7 @@ function renderView(v) {
     const sx = Math.max(0, Math.min(gw - 1, px - gx));
     const sy = Math.max(0, Math.min(gh - 1, py - gy));
     const x0 = Math.floor(sx), y0 = Math.floor(sy);
+    if (fast) { const q = (y0 * gw + x0) * 4; s3[0] = arr[q]; s3[1] = arr[q + 1]; s3[2] = arr[q + 2]; return; }   // nearest pixel while dragging
     const x1 = Math.min(gw - 1, x0 + 1), y1 = Math.min(gh - 1, y0 + 1);
     const fx = sx - x0, fy = sy - y0;
     const p00 = (y0 * gw + x0) * 4, p10 = (y0 * gw + x1) * 4, p01 = (y1 * gw + x0) * 4, p11 = (y1 * gw + x1) * 4;
@@ -1175,18 +1282,18 @@ function renderView(v) {
     }
   }
 
-  const STEP = fast ? 2 : 1;                                     // while dragging: compute every 2nd pixel and fill 2x2 blocks
+  const STEP = fast ? 3 : 1;
   for (let y = yStart; y < yEnd; y += STEP) {
     const dy = (y - cy) / ry;
     if (dy * dy > 1) continue;
-    const t = (dy + 1) / 2, { a, dl, dr } = rowInfo(t);          // ADD + defocus at this height of the lens
+    const t = (dy + 1) / 2, a = rowInfo(t, 0).a;                 // ADD at this height of the lens
     const addMag = 1 + (a * ADD_STRENGTH) / 25, addRad = a * addRadK;
 
     for (let x = xStart; x < xEnd; x += STEP) {
       const dx = (x - cx) / rx, d2 = dx * dx + dy * dy;
-      if (d2 > 1) continue;                                      // outside the lens
+      if (d2 > 1) continue;
 
-      // 1) ADD: plus-lens magnification + pincushion (always hyperopic)
+      // 1) ADD: plus-lens magnification + pincushion
       const ra = 1 + addRad * d2;
       const ax = dx / addMag / ra;
       const ay = dy / addMag / ra;
@@ -1204,14 +1311,16 @@ function renderView(v) {
 
       let spx = cx + bx, spy = cy + by;
 
-      // Multifocal side aberration: blur + astigmatic "swim" (slanting + sideways stretch), weakened by Enhancement
+      // Multifocal side aberration
       let side = 0;
       if (isMulti) {
         side = sstep(sideEdge(t), 1.0, Math.abs(dx)) * Math.min(1, a) * (1 - 0.85 * enhFrac);
-        spy += Math.abs(dx) * 80 * side;   // lines slant the same amount on both sides, mirrored (e.g. 30 deg right = 150 deg left)
-        spx -= dx * 60 * side;             // image stretches sideways
+        spy += Math.abs(dx) * 80 * side;
+        spx -= dx * 60 * side;
       }
-      let r = (spx < W / 2 ? dl : dr) * 5 + side * SIDE_BLUR;
+      const ri = regs ? regionAt(regs, (spx - panX - 600) / zk + 600, (spy - panY - 400) / zk + 400) : 0;   // which focal distance this part of the scene has
+      const rr_ = rowInfo(t, ri);
+      let r = (spx < W / 2 + panX ? rr_.dl : rr_.dr) * 5 + side * SIDE_BLUR;
       if (isFan) r += Math.abs(Math.sin(Math.atan2(spy - FAN.cy, spx - FAN.cx) - (cylAxis + 90) * Math.PI / 180)) * cylAmt * 5;
       const L = (nLev === 1 || rMax <= 0) ? 0 : Math.min(nLev - 1, r / rMax * (nLev - 1));
       const i0 = Math.floor(L), i1 = Math.min(nLev - 1, i0 + 1), f = L - i0;
@@ -1222,7 +1331,7 @@ function renderView(v) {
         samp(levelData[i1], spx, spy);
         R0 += (s3[0] - R0) * f; G0 += (s3[1] - G0) * f; B0 += (s3[2] - B0) * f;
       }
-      if (side > 0.02) {                                         // mix in cylindrical (directional) blur
+      if (side > 0.02) {
         samp(smearData[dx < 0 ? 0 : 1], spx, spy);
         const m = side * 0.8;
         R0 += (s3[0] - R0) * m; G0 += (s3[1] - G0) * m; B0 += (s3[2] - B0) * m;
@@ -1241,31 +1350,40 @@ function renderView(v) {
   }
 
   ctx.putImageData(output, xStart, yStart);
-
-  lensPath(ctx);
-  ctx.strokeStyle = "#3A6656"; ctx.lineWidth = 5; ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+  drawLensFrame();
   drawLensGuides();
 }
 
 function doRender() {
   renderPending = false;
-  controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });   // ranges follow the base sliders
+  controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });
   controlDefs.forEach(d => {
-    document.getElementById(d.id + "Value").textContent = d.corr ? corrLabel(d) : d.f(Number(el[d.id].value));
+    const full = d.corr ? corrLabel(d) : d.f(Number(el[d.id].value));
+    const vEl = document.getElementById(d.id + "Value");
+    if (vEl.textContent !== full) vEl.textContent = full;
+    const cEl = document.getElementById(d.id + "Chip");
+    if (cEl) {                                                    // compact value on the chip
+      const pr = full.split(" · "), c = (d.corr || d.id === "accommodation" ? pr[pr.length - 1] : pr[0]).replace(" D", "");
+      if (cEl.textContent !== c) cEl.textContent = c;
+    }
   });
   const list = dual ? views : [views[0]];
   list.forEach(v => { useView(v); renderView(v); });
-  resultBox.innerHTML = list.map((v, i) =>
+  const html = list.map((v, i) =>
     `<div><div class="result-main">${dual ? "AB"[i] + " · " : ""}${v.title}</div><div class="result-sub">${v.detail}</div></div>`).join("");
+  if (html !== doRender.last) { resultBox.innerHTML = html; doRender.last = html; }
 }
 
-/* ---------- LENS POSITION ---------- */
+/* ---------- VIEW POSITION (the lens stays in the middle, the scene moves) ---------- */
 function updateLensPosition() {
   const h = Number(el.lensPosition.value);
   const v = Number(el.lensVerticalPosition.value);
-  lens.cx = lens.rx + (h / 100) * (W - 2 * lens.rx);
-  lens.cy = lens.ry + (v / 100) * (H - 2 * lens.ry);
+  panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
+  panY = Math.round(-(v - 50) / 100 * (H - 2 * lens.ry));
+  FAN.cx = 600 + panX; FAN.cy = 405 + panY;
+  FAN.x0 = Math.max(0, Math.min(W - FAN.size, 320 + panX));
+  FAN.y0 = Math.max(0, Math.min(H - FAN.size, 125 + panY));
+  views.forEach(vw => { vw.bgKey = ""; vw.lvKey = ""; panView(vw); });
   render();
 }
 
@@ -1284,7 +1402,7 @@ $("dualToggle").addEventListener("click", e => {
   if (dual) setScene(1);
 });
 
-const updateBoundaryControls = () => { $("boundaryControls").style.display = ZONES[lensType] ? "flex" : "none"; };
+const updateBoundaryControls = () => { $("boundaryControls").style.display = ZONES[lensType] && lensOn ? "flex" : "none"; };
 document.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
   const k = b.dataset.boundary;
   boundaryVisibility[k] = !boundaryVisibility[k];
@@ -1294,8 +1412,10 @@ document.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("cl
 
 const lensButtons = document.querySelectorAll("#lensSwitch button");
 lensButtons.forEach(b => b.addEventListener("click", () => {
-  lensType = b.dataset.type;
-  lensButtons.forEach(x => x.classList.toggle("active", x === b));
+  const t = b.dataset.type;
+  if (lensOn && lensType === t) lensOn = false;            // tap the chosen lens again = take the glasses off
+  else { lensOn = true; lensType = t; }
+  lensButtons.forEach(x => x.classList.toggle("active", lensOn && x === b));
   updateBoundaryControls();
   render();
 }));
@@ -1315,7 +1435,8 @@ $("resetAll").addEventListener("click", () => {
   controlDefs.forEach(d => $(d.id + "Reset").click());
   sliders[0].value = 0; sliders[1].value = 4;
   if (dual) $("dualToggle").click();
-  document.querySelector('#lensSwitch [data-type="far"]').click();
+  lensOn = false; document.querySelector('#lensSwitch [data-type="far"]').click();
+  closePops();
   canvasZoom = 1; updateZoom();
   setScene(0);
 });
