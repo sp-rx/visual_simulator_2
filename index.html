@@ -470,30 +470,26 @@ function drawCityScene() {
   S.save(); S.translate(750, 550);
   RR("#252B2C", -58, -100, 116, 200, 16); RR("#F7F5EF", -52, -94, 104, 188, 11);
   R("#3A6656", -52, -94, 104, 26);
-  TXT("#FFFDF7", "bold 9px Arial", "THE DAILY EDIT", -42, -76);
+  TXT("#FFFDF7", "bold 9.5px Arial", "THE DAILY EDIT", -46, -75);
 
-  TXT("#292D2B", "bold 7px Arial", "Why small print gets harder", -46, -58);
-  TXT("#292D2B", "bold 7px Arial", "to read as we get older", -46, -49);
-  TXT("#89958C", "4px Arial", "HEALTH  ·  4 MIN READ", -46, -42);
+  TXT("#292D2B", "bold 8.5px Arial", "Why small print", -46, -57);
+  TXT("#292D2B", "bold 8.5px Arial", "gets harder to read", -46, -46);
+  TXT("#89958C", "bold 5.5px Arial", "HEALTH  ·  4 MIN READ", -46, -37);
 
   [
-    "We spend hours each day looking at",
-    "screens. Messages, emails and news",
-    "fill every spare moment, and our",
-    "eyes are constantly asked to refocus",
-    "between near and far.",
-    "Small print is the first thing to",
-    "suffer. Many people notice that",
-    "words blur after a long day, and",
-    "hold the phone further away to read.",
-    "This is often an early sign of",
-    "presbyopia, the natural loss of",
-    "focusing power that begins in the",
-    "early forties and continues slowly.",
-    "A simple eye test can help."
-  ].forEach((line, i) => TXT("#292D2B", "5px Arial", line, -46, -32 + i * 7));
+    "We spend hours a day",
+    "looking at screens.",
+    "Our eyes are always",
+    "switching near to far.",
+    "Small print suffers",
+    "first. Words blur after",
+    "a long day, so we hold",
+    "the phone further away.",
+    "This is often an early",
+    "sign of presbyopia."
+  ].forEach((line, i) => TXT("#292D2B", "7px Arial", line, -46, -26 + i * 9.5));
 
-  TXT("#3A6656", "bold 4px Arial", "Read more  →", 10, 86);
+  TXT("#3A6656", "bold 7px Arial", "Read more  →", -46, 80);
   S.restore();
 }
 
@@ -533,10 +529,7 @@ function drawComputerScene() {
 
   R("#916D50", -EX, 570, W + 2 * EX, 230 + EX);
 
-  // Extra room at the edges: desk plant, mug, lamp
-  RR("#B94A3A", 1000, 525, 80, 75, 10); C("#426C50", 1040, 490, 40); C("#57835C", 1018, 462, 26); C("#426C50", 1066, 458, 28);
-  RR("#E2B84B", 880, 575, 40, 42, 6);
-  R("#343D40", 1210, 420, 10, 190); POLY("#E2B84B", [[1175, 420], [1255, 420], [1240, 370], [1190, 370]]); R("#343D40", 1175, 600, 80, 12);
+
 
   R("#303B3B", 300, 130, 600, 350);
   R("#A8C6C0", 320, 150, 560, 305);
@@ -591,13 +584,17 @@ function drawPhoneScene() {
   S.quadraticCurveTo(850, 420, 1100, 490);
   S.lineTo(1400, 1420); S.closePath(); S.fill();
 
-  // Forearms
+  // Forearms (moved outward to follow the wider phone)
+  S.save(); S.translate(-95, 0);
   POLY("#D6A17E", [[-300, 1100], [-300, 930], [0, 640], [300, 350], [480, 360], [510, 510], [340, 620], [250, 800], [170, 960], [170, 1100]]);
+  S.restore();
+  S.save(); S.translate(95, 0);
   POLY("#D9A582", [[1500, 1100], [1500, 930], [1200, 640], [900, 350], [720, 360], [690, 510], [860, 620], [950, 800], [1030, 960], [1030, 1100]]);
+  S.restore();
 
   // Hands: side = 1 (left) or -1 (right, mirrored about x = 600)
   const hand = (color, m) => {
-    const X = x => m === 1 ? x : 1200 - x;
+    const X = x => m === 1 ? x - 95 : 1200 - x + 95;
     S.fillStyle = color; S.beginPath();
     S.moveTo(X(300), 350);
     S.bezierCurveTo(X(260), 295, X(280), 220, X(345), 195);
@@ -621,13 +618,18 @@ function drawPhoneScene() {
   hand("#D9A582", -1);
 
   // Sleeves
+  S.save(); S.translate(-95, 0);
   POLY("#3A6656", [[-300, 1100], [-300, 782], [0, 650], [250, 540], [350, 625], [260, 800], [170, 975], [170, 1100]]);
+  S.restore();
+  S.save(); S.translate(95, 0);
   POLY("#3A6656", [[1500, 1100], [1500, 782], [1200, 650], [950, 540], [850, 625], [940, 800], [1030, 975], [1030, 1100]]);
+  S.restore();
 
   // Phone
   S.save();
   S.translate(600, 355);
   S.rotate(-0.06);
+  S.scale(1.5, 1.28);      // wider (x1.5) and closer / larger (x1.28)
 
   RR("#252B2C", -190, -275, 380, 550, 32);
   RR("#F7F5EF", -174, -259, 348, 518, 23);
@@ -975,14 +977,14 @@ const REGIONS = {
     [470, 690, 260, 78, -1.75],       // instrument cluster
     [480, 800, 240, 330, -2.0]        // centre console
   ],
-  computer: [
-    [0, 0, W, H, -0.5],              // wall + posters + bookshelf (about 2 m)
-    [-310, 60, 360, 300, 0],         // window: far away (now at the left edge)
-    [300, 130, 600, 350, -1.75],     // monitor
-    [560, 480, 80, 90, -1.75],       // monitor stand: neck
-    [510, 560, 180, 15, -1.75],      // monitor stand: foot
-    [-2000, 570, 5200, 1200, -2.0]   // desk, keyboard, mouse, plant, lamp
-  ],
+computer: [
+  [0, 0, W, H, -0.5],              // wall + posters + bookshelf (about 2 m)
+  [-310, 60, 360, 300, 0],         // window
+  [300, 130, 600, 350, -1.75],     // monitor
+  [560, 480, 80, 90, -1.75],       // monitor stand: neck
+  [510, 560, 180, 15, -1.75],      // monitor stand: foot
+  [-2000, 570, 5200, 1200, -2.0],  // desk, keyboard, mouse
+],
   meeting: [
     [0, 0, W, H, -0.25],             // back wall, projector screen
     [40, 90, 200, 230, 0],           // window: far away
@@ -1123,12 +1125,12 @@ let lensType = "far";     // "far" | "near" | "multi" | "office"
 let enhFrac = 0;          // Multifocal Enhancement 0..1
 const boundaryVisibility = { far: false, intermediate: false, near: false, distortion: false };   // guide lines start off
 const clamp01 = x => Math.min(1, Math.max(0, x));
-// Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, wider toward near.
+// Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, narrower still toward near.
 const ZONES = {
-  multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.15 + 0.18 * clamp01((t - 0.5) / 0.5) },
-  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.25 + 0.08 * clamp01((t - 0.05) / 0.95) }
+  multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.15 + 0.25 * clamp01((t - 0.5) / 0.5) },     
+  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.25 + 0.15 * clamp01((t - 0.05) / 0.95) }  
 };
-const sideEdge = t => { const th = ZONES[lensType].edge(t); return th + (0.98 - th) * enhFrac; };
+const sideEdge = t => { const th = ZONES[lensType].edge(t) ; return th + (0.98 - th) * enhFrac; };
 
 function drawLensGuides() {
   const Z = ZONES[lensType];
@@ -1238,7 +1240,7 @@ function render() {
 
 function renderView(v) {
   const val = id => Number(el[id].value);
-  enhFrac = val("enhance") / 200;
+  enhFrac = val("enhance") / 250;
   const power = val("power");
   const aspheric = val("aspheric");
   const cylinder = val("cylinder");
@@ -1522,6 +1524,11 @@ $("dualToggle").addEventListener("click", e => {
   document.querySelector(".viewer").classList.toggle("dual", dual);
   setScene(0);
   if (dual) setScene(1);
+});
+
+// Tap / click anywhere outside a chip or its slider popup closes the open popup
+document.addEventListener("pointerdown", e => {
+  if (!e.target.closest(".chip-wrap")) closePops();
 });
 
 const updateBoundaryControls = () => { $("boundaryControls").style.display = ZONES[lensType] && lensOn ? "flex" : "none"; };
