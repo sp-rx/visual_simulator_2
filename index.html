@@ -151,7 +151,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           </div>
           <div class="boundary-controls" id="boundaryControls">
             <button type="button" data-boundary="far">Far</button>
-            <button type="button" data-boundary="intermediate">Intermediate</button>
+            <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
             <button type="button" data-boundary="near">Near</button>
             <button type="button" data-boundary="distortion">Distortion</button>
           </div>
@@ -185,13 +185,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="scene-blocks" id="sceneBlocks">
           <div class="control" id="sceneControl">
             <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
-            <input type="range" id="sceneSlider" min="0" max="6" step="1" value="0">
-            <div class="scale"><span>City</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+            <input type="range" id="sceneSlider" min="0" max="8" step="1" value="0">
+            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
           </div>
           <div class="control" id="blockB" hidden>
             <div class="control-heading"><strong>Scene B</strong><span class="value" id="sceneValueB"></span></div>
-            <input type="range" id="sceneSliderB" min="0" max="6" step="1" value="4">
-            <div class="scale"><span>City</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+            <input type="range" id="sceneSliderB" min="0" max="8" step="1" value="6">
+            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
           </div>
         </div>
         <button class="reset-button" id="dualToggle" type="button">Dual</button>
@@ -368,7 +368,8 @@ controlDefs.forEach(d => {
 });
 
 const resultBox = document.getElementById("resultBox");
-const SCENES = [["city", "City View"], ["night", "Driving at Night"], ["meeting", "Meeting Room"],
+const SCENES = [["city", "City View"], ["escalator", "Going Down an Escalator"], ["market", "Supermarket Aisle"],
+                ["night", "Driving at Night"], ["meeting", "Meeting Room"],
                 ["computer", "Working at Computer"], ["phone", "Looking at Phone"],
                 ["duo", "Duochrome (Red / Blue)"], ["fan", "Astigmatic Fan Chart"]];
 const sceneName = k => SCENES.find(x => x[0] === k)[1];
@@ -418,6 +419,33 @@ const POLY = (c, pts) => {
 const TXT = (c, font, t, x, y) => { S.fillStyle = c; S.font = font; S.fillText(t, x, y); };
 const RR = (c, x, y, w, h, r) => { S.fillStyle = c; S.beginPath(); S.roundRect(x, y, w, h, r); S.fill(); };
 
+/* ---------- SHARED: the small phone from the City view (same position, same size, same demand) ---------- */
+// Small phone held in one hand (no arm), phone perfectly upright
+function drawSmallPhone() {
+  S.save(); S.translate(750, 550);
+  RR("#252B2C", -58, -100, 116, 200, 16); RR("#F7F5EF", -52, -94, 104, 188, 11);
+  R("#3A6656", -52, -94, 104, 26);
+  TXT("#FFFDF7", "bold 13.5px Arial", "THE DAILY", -46, -75);
+
+  TXT("#292D2B", "bold 10.5px Arial", "Why small print", -46, -53);
+  TXT("#292D2B", "bold 10.5px Arial", "are hard to read", -46, -43);
+
+  [
+    "We spend many hours",
+    "looking at screens.",
+    "Our eyes are always",
+    "switching near to far.",
+    "Small print suffers",
+    "first. Words blur after",
+    "a long day, so we hold",
+    "the phone far away.",
+    "This is an early",
+    "sign of presbyopia."
+  ].forEach((line, i) => TXT("#292D2B", "9.5px Arial", line, -46, -26 + i * 10.5));
+
+  S.restore();
+}
+
 /* ---------- SCENE 1: CITY ---------- */
 function drawCityScene() {
   const sky = S.createLinearGradient(0, 0, 0, H);
@@ -466,29 +494,7 @@ function drawCityScene() {
   };
   car(420, 550, 1.0, "#B94A3A"); car(680, 610, 0.65, "#E3E0D4"); car(580, 510, 0.65, "#E3E0D4");
 
-  // Small phone held in one hand (no arm), phone perfectly upright
-  S.save(); S.translate(750, 550);
-  RR("#252B2C", -58, -100, 116, 200, 16); RR("#F7F5EF", -52, -94, 104, 188, 11);
-  R("#3A6656", -52, -94, 104, 26);
-  TXT("#FFFDF7", "bold 13.5px Arial", "THE DAILY", -46, -75);
-
-  TXT("#292D2B", "bold 10.5px Arial", "Why small print", -46, -53);
-  TXT("#292D2B", "bold 10.5px Arial", "are hard to read", -46, -43);
-
-  [
-    "We spend many hours",
-    "looking at screens.",
-    "Our eyes are always",
-    "switching near to far.",
-    "Small print suffers",
-    "first. Words blur after",
-    "a long day, so we hold",
-    "the phone far away.",
-    "This is an early",
-    "sign of presbyopia."
-  ].forEach((line, i) => TXT("#292D2B", "9.5px Arial", line, -46, -26 + i * 10.5));
-
-  S.restore();
+  drawSmallPhone();
 }
 
 /* ---------- SCENE 2: COMPUTER ---------- */
@@ -937,6 +943,144 @@ function drawFanScene() {
   S.textAlign = "left"; S.textBaseline = "alphabetic";
 }
 
+/* ---------- SCENE 8: GOING DOWN AN ESCALATOR (same small phone as the City view) ---------- */
+// Mall around you; the escalator drops away below the horizon. Dark ribbed treads with silver grooves, a ridged dark band
+// on every step, yellow edge segments that break at each step (left and right deliberately out of step), black skirts,
+// brushed-steel side panels with black handrails.
+function drawEscalatorScene() {
+  const VX = 600, HZ = 270, YF = 440, YN = 800;                    // centre, horizon, far end of the steps, near edge
+  const yAt = u => YF + (YN - YF) * Math.pow(u, 1.7);
+  const hw = y => 80 + 1.528 * (y - YF);                           // half-width of the steps at screen height y (straight edges)
+  const rh = y => 25 + 0.625 * (y - YF);                           // handrail height above the step edge
+
+  // Mall at the lower level far ahead: ceiling, shop fronts
+  const bg = S.createLinearGradient(0, 0, 0, HZ);
+  bg.addColorStop(0, "#EDE8DC"); bg.addColorStop(1, "#D9D2C3");
+  S.fillStyle = bg; S.fillRect(0, 0, W, HZ);
+  for (let i = 0; i < 6; i++) R("#FFFDF7", 80 + i * 200, 18, 120, 10);
+  [[40, 120, 200, "#3A6656", "CAFE"], [280, 140, 180, "#D77C55", "BOOKS"],
+   [740, 140, 180, "#E2B84B", "OPTICAL"], [960, 120, 200, "#527A64", "SHOES"]].forEach(([x, y, w, c, t]) => {
+    R("#CFC6B6", x, y, w, HZ - y); R(c, x, y, w, 34);
+    TXT("#FFFDF7", "bold 16px Arial", t, x + 12, y + 24);
+    R("#A9C7D0", x + 12, y + 50, w - 24, 70);
+  });
+  R("#3A6656", 520, 40, 160, 40); TXT("#FFFDF7", "bold 16px Arial", "LEVEL 1  \u2193", 548, 66);
+
+  // Far lower floor, tile lines converging on the horizon
+  R("#BFB6A6", 0, HZ, W, YF - HZ);
+  S.strokeStyle = "#B2A998"; S.lineWidth = 2;
+  for (let k = -6; k <= 6; k++) { S.beginPath(); S.moveTo(VX, HZ); S.lineTo(VX + k * 260, YF); S.stroke(); }
+  for (let i = 1; i <= 7; i++) { const y = HZ + (YF - HZ) * Math.pow(i / 7, 2); S.beginPath(); S.moveTo(0, y); S.lineTo(W, y); S.stroke(); }
+
+  // Upper-level floor around the escalator (your level)
+  R("#D8D0C2", 0, YF, W, H - YF);
+
+  // Steps, far (low) to near (high)
+  const yel = (m, ya, yb) => {                                     // one yellow edge segment on one side
+    if (yb - ya < 1) return;
+    const wa = hw(ya), wb = hw(yb);
+    POLY("#E3D12B", [[VX + m * wa, ya], [VX + m * wa * 0.95, ya], [VX + m * wb * 0.95, yb], [VX + m * wb, yb]]);
+  };
+  const N = 14;
+  for (let i = 0; i < N; i++) {
+    const y0 = yAt(i / N), y1 = yAt((i + 1) / N);
+    const yt = i > 0 ? y0 - 0.75 * (y1 - y0) : y0;                  // each step's far edge is lifted: it rises over the step below
+    const w1 = hw(y1), wt = hw(yt), L = y1 - yt, d = i / N;
+    if (i > 0) {                                                   // shadow on the lower step, right behind the raised edge
+      const ys = yt - 0.035 * (y1 - y0), ws = hw(ys);
+      POLY("rgba(5,8,10,0.95)", [[VX - ws, ys], [VX + ws, ys], [VX + wt, yt], [VX - wt, yt]]);
+    }
+    POLY("#14181B", [[VX - wt, yt], [VX + wt, yt], [VX + w1, y1], [VX - w1, y1]]);
+    S.strokeStyle = "#C3C8CC"; S.lineWidth = 0.7 + 2.2 * d; S.lineCap = "butt";            // fine silver grooves down the slope
+    S.beginPath();
+    for (let k = -49; k <= 49; k++) { const f = k * 0.02; S.moveTo(VX + f * wt, yt); S.lineTo(VX + f * w1, y1); }
+    S.stroke();
+    const bb = L * 0.14, yb = yt + bb, wb = hw(yb);                                         // dark ridged band at the step edge
+    POLY("#0C0F11", [[VX - wt, yt], [VX + wt, yt], [VX + wb, yb], [VX - wb, yb]]);
+    S.strokeStyle = "rgba(205,210,213,0.55)"; S.lineWidth = Math.max(1, bb * 0.22); S.setLineDash([3, 3]);
+    S.beginPath(); S.moveTo(VX - hw(yt + bb / 2), yt + bb / 2); S.lineTo(VX + hw(yt + bb / 2), yt + bb / 2); S.stroke();
+    S.setLineDash([]);
+    const g = S.createLinearGradient(0, yt, 0, y1);                // tilted tread: catches light at the raised edge, darker toward the low end
+    g.addColorStop(0, "rgba(255,255,255,0.28)"); g.addColorStop(1, "rgba(0,0,0,0.3)");
+    POLY(g, [[VX - wt, yt], [VX + wt, yt], [VX + w1, y1], [VX - w1, y1]]);
+    POLY("rgba(20,25,30," + (0.35 * (1 - d)).toFixed(2) + ")", [[VX - wt, yt], [VX + wt, yt], [VX + w1, y1], [VX - w1, y1]]);   // deeper = darker
+    S.strokeStyle = "rgba(255,255,255,0.65)"; S.lineWidth = 2.5;                             // bright lip on the raised edge
+    S.beginPath(); S.moveTo(VX - wt, yt); S.lineTo(VX + wt, yt); S.stroke();
+    yel(-1, yb + 0.03 * L, y1 - 0.14 * L);                         // left: starts right after the band, breaks before the next step
+    yel(1, yb + 0.24 * L, y1 - 0.02 * L);                          // right: shifted down, so the two sides never line up
+  }
+  R("#8E9397", VX - 80, YF - 6, 160, 6);                           // comb plate at the bottom landing
+
+  // Black skirts, brushed-steel side panels, black handrails (the rail sits above the step edge)
+  const U2 = 1.08, Yb = yAt(U2);
+  const pt = (m, u, t) => { const y = yAt(u), h = hw(y), lx = VX + m * 1.05 * h, ux = VX + m * 1.06 * h; return [lx + (ux - lx) * t, y - rh(y) * t]; };
+  const band = (m, t0, t1, c) => POLY(c, [pt(m, 0, t0), pt(m, U2, t0), pt(m, U2, t1), pt(m, 0, t1)]);
+  [-1, 1].forEach(m => {
+    POLY("#1A1F22", [[VX + m * hw(YF), YF], [VX + m * 1.05 * hw(YF), YF], [VX + m * 1.05 * hw(Yb), Yb], [VX + m * hw(Yb), Yb]]);
+    band(m, 0, 1, "#A9A39C");
+    band(m, 0.12, 0.3, "rgba(231,201,196,0.55)");
+    band(m, 0.5, 0.68, "#F2ECE6");
+    band(m, 0.88, 1, "#6F6B67");
+    band(m, 1, 1.22, "#15181A");
+    band(m, 1, 1.04, "rgba(255,255,255,0.25)");
+  });
+
+  drawSmallPhone();                                                // same phone, same place as the City view
+}
+
+/* ---------- SCENE 9: SUPERMARKET AISLE (white square floor tiles with lines; same small phone) ---------- */
+function drawMarketScene() {
+  const f = 600, h = 1.6, VX = 600, VY = 330, ZE = 14, HW = 1.2;   // simple perspective: x = VX + X*f/z, y = VY + (h-Y)*f/z
+  const P = (X, Y, z) => [VX + X * f / z, VY + (h - Y) * f / z];
+
+  R("#ECECE8", 0, 0, W, H);                                        // ceiling
+  R("#F6F6F2", 0, VY, W, H - VY);                                  // white floor
+
+  // Square tiles: lines running along the aisle + lines across it, spaced equally in depth
+  S.strokeStyle = "#B4B8B5"; S.lineWidth = 2;
+  for (let k = -3; k <= 3; k++) {
+    const a = P(k * 0.6, 0, ZE), b = P(k * 0.6, 0, 1.0);
+    S.beginPath(); S.moveTo(a[0], a[1]); S.lineTo(b[0], b[1]); S.stroke();
+  }
+  for (let z = 1.0; z <= ZE; z += 0.6) {
+    const a = P(-HW, 0, z), b = P(HW, 0, z);
+    S.beginPath(); S.moveTo(a[0], a[1]); S.lineTo(b[0], b[1]); S.stroke();
+  }
+
+  // End wall + a produce display + banner
+  POLY("#E8E3D6", [P(-HW, 0, ZE), P(-HW, 3.2, ZE), P(HW, 3.2, ZE), P(HW, 0, ZE)]);
+  POLY("#D9534F", [P(-0.9, 2.9, ZE), P(-0.9, 2.3, ZE), P(0.9, 2.3, ZE), P(0.9, 2.9, ZE)]);
+  [["#E2B84B", -0.8], ["#57835C", -0.3], ["#D77C55", 0.2], ["#B94A3A", 0.6]].forEach(([c, X]) =>
+    POLY(c, [P(X, 0, ZE), P(X, 0.8, ZE), P(X + 0.4, 0.8, ZE), P(X + 0.4, 0, ZE)]));
+
+  // Shelving on both sides, packed with products
+  const cols = ["#D9534F", "#3A6656", "#E2B84B", "#4A90C2", "#F2F2EE", "#D77C55", "#7A5C9E", "#57835C"];
+  [-1, 1].forEach(sd => {
+    const X = sd * HW;
+    POLY("#E8E3D6", [P(X, 2.5, 1.0), P(X, 3.2, 1.0), P(X, 3.2, ZE), P(X, 2.5, ZE)]);     // wall above shelves
+    POLY("#5B6468", [P(X, 0, 1.0), P(X, 2.5, 1.0), P(X, 2.5, ZE), P(X, 0, ZE)]);         // shelf body
+    for (let l = 0; l < 5; l++) {
+      const Yb = 0.12 + l * 0.5;
+      let z = 1.0, m = 0;
+      while (z < ZE) {
+        const z2 = Math.min(ZE, z * 1.12), zE = Math.min(ZE, z * 1.10);
+        const Yt = Yb + 0.22 + 0.16 * ((m * 7 + l) % 3) / 2;
+        POLY(cols[(m * 3 + l * 5 + (sd > 0 ? 2 : 0)) % cols.length], [P(X, Yb, z), P(X, Yt, z), P(X, Yt, zE), P(X, Yb, zE)]);
+        z = z2; m++;
+      }
+    }
+  });
+
+  // Ceiling light panels + hanging aisle sign
+  for (let z = 1.6; z < ZE; z *= 1.5)
+    POLY("#FFFFFF", [P(-0.5, 3.2, z), P(0.5, 3.2, z), P(0.5, 3.2, z * 1.25), P(-0.5, 3.2, z * 1.25)]);
+  const sg = P(-0.5, 2.95, 6), sg2 = P(0.5, 2.55, 6);
+  R("#3A6656", sg[0], sg[1], sg2[0] - sg[0], sg2[1] - sg[1]);
+  TXT("#FFFDF7", "bold 13px Arial", "AISLE 7", sg[0] + 12, sg[1] + 26);
+
+  drawSmallPhone();                                                // same phone, same place as the City view
+}
+
 function drawScene() {
   S.clearRect(0, 0, W, H);
   const scene = curScene, zk0 = ZK[scene];
@@ -947,6 +1091,8 @@ function drawScene() {
   else if (scene === "computer") drawComputerScene();
   else if (scene === "duo") drawDuoScene();
   else if (scene === "fan") drawFanScene();
+  else if (scene === "escalator") drawEscalatorScene();
+  else if (scene === "market") drawMarketScene();
   else drawPhoneScene();
   if (zk0) S.restore();
 }
@@ -996,6 +1142,20 @@ computer: [
     [470, 690, 270, 110, -2.75],     // notebook right in front
     [-250, 590, 480, 500, -1.5],     // people next to the viewer
     [980, 580, 500, 500, -1.5]
+  ],
+  escalator: [
+    [0, 0, W, H, 0],                 // far mall, shops and the far end of the escalator
+    [0, 500, W, 300, -0.25],         // nearest steps and handrails
+    [692, 450, 116, 200, -3.0]       // phone (same as City view)
+  ],
+  market: [
+    [0, 0, W, H, -0.25],             // middle shelves and ceiling
+    [540, 250, 120, 160, 0],         // far end of the aisle
+    [250, 400, 700, 240, -0.25],     // middle floor
+    [250, 640, 700, 160, -0.5],      // nearest floor
+    [0, 0, 260, 800, -0.5],          // nearest shelves, left
+    [940, 0, 260, 800, -0.5],        // nearest shelves, right
+    [692, 450, 116, 200, -3.0]       // phone (same as City view)
   ]
 };
 function regionAt(regs, x, y) {
@@ -1126,7 +1286,7 @@ const clamp01 = x => Math.min(1, Math.max(0, x));
 // Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, narrower still toward near.
 const ZONES = {
   multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.15 + 0.25 * clamp01((t - 0.5) / 0.5) },     
-  office: { far: 0.05, mid: 0.375, near: 0.7, edge: t => 0.25 + 0.15 * clamp01((t - 0.05) / 0.95) }  
+  office: { far: 0.1, mid: 0.3, near: 0.7, edge: t => 0.35 + 0.15 * clamp01((t - 0.05) / 0.95) }  
 };
 const sideEdge = t => { const th = ZONES[lensType].edge(t) ; return th + (0.98 - th) * enhFrac; };
 
@@ -1560,7 +1720,7 @@ $("zoomReset").addEventListener("click", () => { canvasZoom = 1; updateZoom(); }
 // Reset All: sliders, scenes, dual mode, lens type and zoom back to defaults
 $("resetAll").addEventListener("click", () => {
   controlDefs.forEach(d => $(d.id + "Reset").click());
-  sliders[0].value = 0; sliders[1].value = 4;
+  sliders[0].value = 0; sliders[1].value = 6;
   if (dual) $("dualToggle").click();
   lensOn = false; document.querySelector('#lensSwitch [data-type="far"]').click();
   closePops();
