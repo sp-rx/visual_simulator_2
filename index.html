@@ -470,26 +470,24 @@ function drawCityScene() {
   S.save(); S.translate(750, 550);
   RR("#252B2C", -58, -100, 116, 200, 16); RR("#F7F5EF", -52, -94, 104, 188, 11);
   R("#3A6656", -52, -94, 104, 26);
-  TXT("#FFFDF7", "bold 9.5px Arial", "THE DAILY EDIT", -46, -75);
+  TXT("#FFFDF7", "bold 13.5px Arial", "THE DAILY", -46, -75);
 
-  TXT("#292D2B", "bold 8.5px Arial", "Why small print", -46, -57);
-  TXT("#292D2B", "bold 8.5px Arial", "gets harder to read", -46, -46);
-  TXT("#89958C", "bold 5.5px Arial", "HEALTH  ·  4 MIN READ", -46, -37);
+  TXT("#292D2B", "bold 10.5px Arial", "Why small print", -46, -53);
+  TXT("#292D2B", "bold 10.5px Arial", "are hard to read", -46, -43);
 
   [
-    "We spend hours a day",
+    "We spend many hours",
     "looking at screens.",
     "Our eyes are always",
     "switching near to far.",
     "Small print suffers",
     "first. Words blur after",
     "a long day, so we hold",
-    "the phone further away.",
-    "This is often an early",
+    "the phone far away.",
+    "This is an early",
     "sign of presbyopia."
-  ].forEach((line, i) => TXT("#292D2B", "7px Arial", line, -46, -26 + i * 9.5));
+  ].forEach((line, i) => TXT("#292D2B", "9.5px Arial", line, -46, -26 + i * 10.5));
 
-  TXT("#3A6656", "bold 7px Arial", "Read more  →", -46, 80);
   S.restore();
 }
 
