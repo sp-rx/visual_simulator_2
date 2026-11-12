@@ -14,7 +14,7 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:10px}
 .panel{background:var(--panel);padding:14px;border-radius:12px;border:1px solid #E5E0D5}
 
-/* Layout: picture (stage) + controls. Stacked by default, side-by-side on landscape iPad */
+/* Layout: picture (stage) + controls. Stacked by default */
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .stage{min-width:0}
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -29,7 +29,7 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .pos-row input[type=range]{flex:1;min-width:0}
 .tick{font-size:9px;color:var(--muted)}
 
-.view-row{--vh:400px;display:flex;gap:6px;align-items:stretch}
+.view-row{display:flex;gap:6px;align-items:stretch}
 .viewer{flex:1;min-width:0;aspect-ratio:3/2;overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px;display:flex;gap:4px}
 .cv{position:relative;flex:1;min-width:0;overflow:hidden;background:#D9D9D9}
 .cv-tag{position:absolute;left:8px;top:8px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(41,45,42,.72);color:#fff;font-size:9px;font-weight:bold}
@@ -39,11 +39,6 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 [hidden]{display:none!important}
 .stress-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;transform-origin:center;transition:transform .2s ease}
-.vpos{width:62px;display:flex;flex-direction:column;align-items:center;gap:5px}
-.vpos strong{font-size:9px}
-.vpos .reset-button{padding:1px 4px}
-.vtrack{position:relative;flex:1;width:30px}
-.vtrack input[type=range]{position:absolute;top:50%;left:50%;margin:0;width:calc(var(--vh) - 130px);transform:translate(-50%,-50%) rotate(90deg);touch-action:pan-x}
 
 .result{height:112px;overflow:auto;margin-top:10px;padding:10px;background:#F5F1E8;border-radius:10px;text-align:center}
 .result-main{font-size:11px;font-weight:bold;color:var(--green-dark)}
@@ -69,10 +64,13 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 
 .lens-switch button.active{background:var(--green);color:#fff}
 
-/* Floating canvas controls: one toolbar row */
-.toolbar{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:max-content;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:calc(100% - 16px);z-index:3}
+/* View panel (below Reset All): position sliders + lens buttons + zoom */
+.viewpanel{border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:8px 12px}
+.pos-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pos-pair .pos-row{margin-top:0}
+.toolbar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:10px}
 .lens-switch,.boundary-controls{display:flex;align-items:center;gap:4px;padding:4px;height:34px;border-radius:999px;white-space:nowrap}
-.boundary-controls{display:none}
+.boundary-controls{display:flex;visibility:hidden}
 .lens-switch button{border:0;background:transparent;color:var(--green-dark);font-family:inherit;font-size:10px;font-weight:bold;height:26px;padding:0 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .boundary-controls button{--c:#3A6656;height:26px;padding:0 10px;border:1.5px solid var(--c);border-radius:999px;background:transparent;color:var(--c);font-family:inherit;font-size:9px;font-weight:bold;cursor:pointer;opacity:.6}
 .boundary-controls button.active{background:var(--c);color:#fff;opacity:1}
@@ -81,7 +79,7 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .boundary-controls [data-boundary=intermediate].active{color:#3a3000}
 .boundary-controls [data-boundary=near]{--c:#D77C55}
 .boundary-controls [data-boundary=distortion]{--c:#C0392B}
-.zoom-controls{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:5px;padding:5px;border-radius:9px;z-index:4}
+.zoom-controls{display:flex;align-items:center;gap:5px;padding:5px;border-radius:9px}
 .zoom-controls button{height:27px;min-width:27px;border:1px solid #C9D1C9;border-radius:6px;background:var(--green);color:#fff;font-size:13px;font-weight:bold;cursor:pointer}
 .zoom-controls #zoomReset{background:transparent;color:var(--green-dark);font-size:9px;padding:0 7px}
 #zoomValue{min-width:35px;text-align:center;font-size:9px;font-weight:bold;color:var(--green-dark)}
@@ -124,6 +122,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 }
 .scale-wrapper{width:100%}
 .result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px;align-items:center;height:76px;margin-top:8px;padding:6px 10px}
+.result-panel{display:flex;align-items:flex-start;gap:6px;align-self:flex-start;padding:4px;background:linear-gradient(#F8F4EA,#F3EEE2);border:1px solid #EAE3D3;border-radius:10px}
+.result-panel.open{align-self:stretch}
+.result-panel .result{flex:1;min-width:0;margin:0;background:none;border:0}
+.detail-toggle{flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--green-dark);font-family:inherit;font-size:14px;font-weight:bold;cursor:pointer}
+.detail-toggle:active{background:#EAEFE9}
+.detail-toggle .arrow{display:inline-block;transition:transform .15s}
+.detail-toggle[aria-expanded=true] .arrow{transform:rotate(90deg)}
 .result-main{font-size:10px}
 .result-sub{font-size:9px;line-height:1.35;margin-top:2px}
 .result{grid-column:1/-1}
@@ -141,41 +146,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="viewer">
           <div class="cv"><canvas id="canvas" width="1200" height="800"></canvas><span class="cv-tag" id="tagA" hidden></span></div>
           <div class="cv" id="cvB" hidden><canvas id="canvasB" width="1200" height="800"></canvas><span class="cv-tag" id="tagB"></span></div>
-
-          <div class="toolbar">
-          <div class="lens-switch" id="lensSwitch">
-            <button type="button" data-type="far" class="active">Far Lens</button>
-            <button type="button" data-type="near">Near Lens</button>
-            <button type="button" data-type="multi">Multifocal Lens</button>
-            <button type="button" data-type="office">Office Lens</button>
-          </div>
-          <div class="boundary-controls" id="boundaryControls">
-            <button type="button" data-boundary="far">Far</button>
-            <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
-            <button type="button" data-boundary="near">Near</button>
-            <button type="button" data-boundary="distortion">Distortion</button>
-          </div>
-          </div>
-          <div class="zoom-controls">
-            <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
-          </div>
         </div>
-        <div class="vpos">
-          <strong>Vertical</strong>
-          <span class="tick">Top</span>
-          <div class="vtrack"><input type="range" id="lensVerticalPosition" min="-100" max="200" step="1" value="50"></div>
-          <span class="tick">Bottom</span>
-          <span class="value" id="lensVerticalPositionValue"></span>
-          <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
-        </div>
-      </div>
-      <div class="pos-row">
-        <strong>Horizontal</strong>
-        <span class="tick">Left</span>
-        <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
-        <span class="tick">Right</span>
-        <span class="value" id="lensPositionValue"></span>
-        <button class="reset-button" id="lensPositionReset">Reset</button>
       </div>
     </div>
 
@@ -204,9 +175,51 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="chips" id="corrBody"></div>
     </div>
 
-    <div class="result" id="resultBox"></div>
+    <div class="result-panel" id="resultPanel">
+      <button class="detail-toggle" id="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
+      <div class="result" id="resultBox" hidden></div>
+    </div>
 
     <button class="reset-all" id="resetAll" type="button">Reset All</button>
+
+    <div class="viewpanel">
+      <div class="pos-pair">
+        <div class="pos-row">
+          <strong>Horizontal</strong>
+          <span class="tick">Left</span>
+          <input type="range" id="lensPosition" min="-100" max="200" step="1" value="50">
+          <span class="tick">Right</span>
+          <span class="value" id="lensPositionValue"></span>
+          <button class="reset-button" id="lensPositionReset">Reset</button>
+        </div>
+        <div class="pos-row">
+          <strong>Vertical</strong>
+          <span class="tick">Top</span>
+          <input type="range" id="lensVerticalPosition" min="-100" max="200" step="1" value="50">
+          <span class="tick">Bottom</span>
+          <span class="value" id="lensVerticalPositionValue"></span>
+          <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="lens-switch" id="lensSwitch">
+          <button type="button" data-type="far" class="active">Far Lens</button>
+          <button type="button" data-type="near">Near Lens</button>
+          <button type="button" data-type="multi">Multifocal Lens</button>
+          <button type="button" data-type="office">Office Lens</button>
+        </div>
+        <div class="boundary-controls" id="boundaryControls">
+          <button type="button" data-boundary="far">Far</button>
+          <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
+          <button type="button" data-boundary="near">Near</button>
+          <button type="button" data-boundary="distortion">Distortion</button>
+        </div>
+        <div class="zoom-controls">
+          <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
+        </div>
+      </div>
+    </div>
     </div>
 
   </div>
@@ -1685,12 +1698,20 @@ $("dualToggle").addEventListener("click", e => {
   if (dual) setScene(1);
 });
 
+// Details panel: hidden by default, arrow toggles it open / closed
+$("detailToggle").addEventListener("click", e => {
+  const open = resultBox.hidden;
+  resultBox.hidden = !open;
+  $("resultPanel").classList.toggle("open", open);
+  e.currentTarget.setAttribute("aria-expanded", open);
+});
+
 // Tap / click anywhere outside a chip or its slider popup closes the open popup
 document.addEventListener("pointerdown", e => {
   if (!e.target.closest(".chip-wrap")) closePops();
 });
 
-const updateBoundaryControls = () => { $("boundaryControls").style.display = ZONES[lensType] && lensOn ? "flex" : "none"; };
+const updateBoundaryControls = () => { $("boundaryControls").style.visibility = ZONES[lensType] && lensOn ? "visible" : "hidden"; };
 document.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
   const k = b.dataset.boundary;
   boundaryVisibility[k] = !boundaryVisibility[k];
@@ -1728,13 +1749,6 @@ $("resetAll").addEventListener("click", () => {
   canvasZoom = 1; updateZoom();
   setScene(0);
 });
-
-// Keep the vertical slider as long as the picture, whatever the page width / orientation
-const viewRow = document.querySelector(".view-row"), viewerEl = document.querySelector(".viewer");
-const fitVSlider = () => viewRow.style.setProperty("--vh", viewerEl.offsetHeight + "px");
-new ResizeObserver(fitVSlider).observe(viewerEl);
-window.addEventListener("orientationchange", () => setTimeout(fitVSlider, 250));
-fitVSlider();
 
 setScene(0);
 updateLensPosition();
