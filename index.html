@@ -68,6 +68,11 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .viewpanel{border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF;padding:8px 12px}
 .pos-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .pos-pair .pos-row{margin-top:0}
+@media (max-width:940px){
+  .pos-pair{grid-template-columns:minmax(0,1fr);gap:6px}   /* Horizontal on top, Vertical below */
+  .pos-pair .pos-row strong{min-width:62px}                /* both tracks start at the same x */
+  .pos-pair .pos-row input[type=range]{min-width:80px}     /* track can't collapse */
+}
 .toolbar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:10px}
 .lens-switch,.boundary-controls{display:flex;align-items:center;gap:4px;padding:4px;height:34px;border-radius:999px;white-space:nowrap}
 .boundary-controls{display:flex;visibility:hidden}
@@ -215,6 +220,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           <button type="button" data-boundary="near">Near</button>
           <button type="button" data-boundary="distortion">Distortion</button>
         </div>
+        <div class="lens-switch">
+          <button type="button" id="shapeToggle">Circle</button>
+        </div>
         <div class="zoom-controls">
           <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
         </div>
@@ -242,9 +250,13 @@ const [ghostCanvas, ghostCtx] = makeCanvas();
 const [smearCanvas, smearCtx] = makeCanvas();
 const lens = { cx: W / 2, cy: H / 2, rx: 390, ry: 230 };
 
+let lensCircle = false;          // circle mask on/off (the oval maths is unchanged either way)
+const CIRCLE_R = 207;            // 90% of the oval's half-height (230); change this to resize the circle
+
 function lensPath(c) {
   c.beginPath();
-  c.ellipse(lens.cx, lens.cy, lens.rx, lens.ry, 0, 0, Math.PI * 2);
+  if (lensCircle) c.arc(lens.cx, lens.cy, CIRCLE_R, 0, Math.PI * 2);
+  else c.ellipse(lens.cx, lens.cy, lens.rx, lens.ry, 0, 0, Math.PI * 2);
   c.closePath();
 }
 
@@ -1587,6 +1599,7 @@ function renderView(v) {
     for (let x = xStart; x < xEnd; x += STEP) {
       const dx = (x - cx) / rx, d2 = dx * dx + dy * dy;
       if (d2 > 1) continue;
+      if (lensCircle && (x - cx) * (x - cx) + (y - cy) * (y - cy) > CIRCLE_R * CIRCLE_R) continue;   // circle mask: keep the background pixel
 
       // 1) ADD: plus-lens magnification + pincushion
       const ra = 1 + addRad * d2;
@@ -1739,8 +1752,15 @@ $("zoomIn").addEventListener("click", () => { canvasZoom = Math.min(1.5, canvasZ
 $("zoomOut").addEventListener("click", () => { canvasZoom = Math.max(0.5, canvasZoom - 0.25); updateZoom(); });
 $("zoomReset").addEventListener("click", () => { canvasZoom = 1; updateZoom(); });
 
+$("shapeToggle").addEventListener("click", e => {
+  lensCircle = !lensCircle;
+  e.currentTarget.classList.toggle("active", lensCircle);
+  render();
+});
+
 // Reset All: sliders, scenes, dual mode, lens type and zoom back to defaults
 $("resetAll").addEventListener("click", () => {
+  if (lensCircle) $("shapeToggle").click();   // <-- add this line
   controlDefs.forEach(d => $(d.id + "Reset").click());
   sliders[0].value = 0; sliders[1].value = 6;
   if (dual) $("dualToggle").click();
