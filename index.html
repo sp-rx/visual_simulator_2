@@ -161,13 +161,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         <div class="scene-blocks" id="sceneBlocks">
           <div class="control" id="sceneControl">
             <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
-            <input type="range" id="sceneSlider" min="0" max="8" step="1" value="0">
-            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+            <input type="range" id="sceneSlider" min="0" max="7" step="1" value="0">
+            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
           </div>
           <div class="control" id="blockB" hidden>
             <div class="control-heading"><strong>Scene B</strong><span class="value" id="sceneValueB"></span></div>
-            <input type="range" id="sceneSliderB" min="0" max="8" step="1" value="6">
-            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duochrome</span><span>Fan</span></div>
+            <input type="range" id="sceneSliderB" min="0" max="7" step="1" value="6">
+            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
           </div>
         </div>
         <button class="reset-button" id="dualToggle" type="button">Dual</button>
@@ -396,7 +396,7 @@ const resultBox = document.getElementById("resultBox");
 const SCENES = [["city", "City View"], ["escalator", "Going Down an Escalator"], ["market", "Supermarket Aisle"],
                 ["night", "Driving at Night"], ["meeting", "Meeting Room"],
                 ["computer", "Working at Computer"], ["phone", "Looking at Phone"],
-                ["duo", "Duochrome (Red / Blue)"], ["fan", "Astigmatic Fan Chart"]];
+                ["duo", "Duochrome + Fan Chart"]];
 const sceneName = k => SCENES.find(x => x[0] === k)[1];
 const sliders = [document.getElementById("sceneSlider"), document.getElementById("sceneSliderB")];
 let dual = false;
@@ -407,7 +407,7 @@ const views = [0, 1].map(i => {
   const cv = document.getElementById(i ? "canvasB" : "canvas"), [sc, sctx] = makeCanvas();
   const [rawC, rawS] = makeCanvas();
   const [bgCanvas, bgCtx] = makeCanvas();                                  // cache of the processed background
-  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS, scene: "city", title: "", detail: "", bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], smearPool: [], ghostPool: null, regPool: [] };
+  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS, scene: "city", title: "", detail: "", bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], lvPool2: [], smearPool: [], ghostPool: null, regPool: [] };
 });
 function useView(v) { canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.rawS; curScene = v.scene; }
 
@@ -933,38 +933,54 @@ function drawMeetingScene() {
   RR("#527A64", 980, 650, 260, 200, 80); C("#3B2B22", 1100, 630, 52);
 }
 
-/* ---------- SCENE 6: DUOCHROME (red / blue) ---------- */
-function drawDuoScene() {
-  R("#E4DFD3", 0, 0, W, H);
-  R("#B9B2A3", 336, 226, 528, 348);
-  R("#f23f3f", 340, 230, 260, 340);
-  R("#3ff2f2", 600, 230, 260, 340);
-  R("rgba(0,0,0,.35)", 598, 230, 4, 340);
-  S.textAlign = "center"; S.textBaseline = "middle";
-  [["3 1", 50, 361], ["7 9 2", 25, 419], ["6 8 5 4", 13, 458]].forEach(([t, sz, y]) => {
-    TXT("#000", `bold ${sz}px Arial`, t, 540, y);
-    TXT("#000", `bold ${sz}px Arial`, t, 660, y);
-  });
-  S.textAlign = "left"; S.textBaseline = "alphabetic";
-}
+/* ---------- SCENE 6: DUOCHROME + FAN CHART — change the sizes and spacing here ---------- */
+// Fan chart (left)
+const FAN_CX = 404, FAN_CY = 405;      // fan centre: change FAN_CX to move it left / right
+const FAN_R = 128;                      // fan SIZE (radius of the lines; was 160, now 20% smaller). Numbers keep their size
+const FAN_LINE_W = 3.75;                // thickness of the fan lines (was 5, now 25% thinner)
+const FAN_LINE_COLOR = "#404040";       // fan line colour: 75% black (use "#111" for near-black)
+const FAN_NUM_PX = 17;                  // size of the clock numbers 12, 1, 2, 3 ...
+const FAN_NUM_GAP = 24;                 // distance of the numbers from the end of the lines
+// Duochrome (right)
+const DUO_CX = 786, DUO_CY = 400;       // centre of the red / blue seam: change DUO_CX to move it left / right
+const DUO_PANEL_W = 165;                // WIDTH of the red panel and of the blue panel (each; was 110, now +50%)
+const DUO_H = 340;                      // HEIGHT of the chart
+const DUO_TEXT_OFFSET = 60;             // how far the numbers sit from the seam
+const DUO_SCALE = 1;                    // scales the number sizes (1 = normal)
+// Zone boundaries used by the blur maths (derived, no need to edit)
+const DUO_XC = DUO_CX;                                                              // red / blue seam
+const DUO_X0 = Math.round((FAN_CX + FAN_R + 40 + DUO_CX - DUO_PANEL_W) / 2);        // fan zone ends / red zone begins
 
-/* ---------- SCENE 7: ASTIGMATIC FAN CHART (clock dial) ---------- */
-function drawFanScene() {
-  R("#FBFAF6", 0, 0, W, H);
-  const cx = 600, cy = 405, r0 = 32, r1 = 160;
+function drawDuoScene() {
+  R("#ECEBE7", 0, 0, W, H);                       // off-white, a little grey
+
+  // Fan chart (lines shrink with FAN_R; numbers do not)
+  const r0 = 32 * FAN_R / 160, r1 = FAN_R, lab = r1 + FAN_NUM_GAP;
   S.textAlign = "center"; S.textBaseline = "middle";
-  S.strokeStyle = "#111"; S.lineWidth = 5; S.lineCap = "butt";
+  S.strokeStyle = FAN_LINE_COLOR; S.lineWidth = FAN_LINE_W; S.lineCap = "butt";
   for (let k = 0; k < 12; k++) {
     const a = k * Math.PI / 12, ux = Math.sin(a), uy = -Math.cos(a);
     [-1, 1].forEach(sg => {
-      S.beginPath(); S.moveTo(cx + sg * ux * r0, cy + sg * uy * r0); S.lineTo(cx + sg * ux * r1, cy + sg * uy * r1); S.stroke();
+      S.beginPath(); S.moveTo(FAN_CX + sg * ux * r0, FAN_CY + sg * uy * r0); S.lineTo(FAN_CX + sg * ux * r1, FAN_CY + sg * uy * r1); S.stroke();
     });
     if (k % 2 === 0) {
       const h = k / 2;
-      TXT("#444", "bold 17px Arial", String(h || 12), cx + ux * (r1 + 24), cy + uy * (r1 + 24));
-      TXT("#444", "bold 17px Arial", String(h + 6), cx - ux * (r1 + 24), cy - uy * (r1 + 24));
+      TXT("#444", `bold ${FAN_NUM_PX}px Arial`, String(h || 12), FAN_CX + ux * lab, FAN_CY + uy * lab);
+      TXT("#444", `bold ${FAN_NUM_PX}px Arial`, String(h + 6), FAN_CX - ux * lab, FAN_CY - uy * lab);
     }
   }
+
+  // Duochrome
+  const top = DUO_CY - DUO_H / 2;
+  R("#B9B2A3", DUO_CX - DUO_PANEL_W - 4, top - 4, DUO_PANEL_W * 2 + 8, DUO_H + 8);   // frame
+  R("#f23f3f", DUO_CX - DUO_PANEL_W, top, DUO_PANEL_W, DUO_H);                        // red
+  R("#3ff2f2", DUO_CX, top, DUO_PANEL_W, DUO_H);                                      // blue
+  R("rgba(0,0,0,.35)", DUO_CX - 2, top, 4, DUO_H);                                    // seam
+  [["3 1", 50, -39], ["7 9 2", 25, 19], ["6 8 5 4", 13, 58]].forEach(([t, sz, dy]) => {
+    const f = `bold ${Math.round(sz * DUO_SCALE)}px Arial`;
+    TXT("#000", f, t, DUO_CX - DUO_TEXT_OFFSET, DUO_CY + dy * DUO_SCALE);
+    TXT("#000", f, t, DUO_CX + DUO_TEXT_OFFSET, DUO_CY + dy * DUO_SCALE);
+  });
   S.textAlign = "left"; S.textBaseline = "alphabetic";
 }
 
@@ -1115,7 +1131,6 @@ function drawScene() {
   else if (scene === "meeting") drawMeetingScene();
   else if (scene === "computer") drawComputerScene();
   else if (scene === "duo") drawDuoScene();
-  else if (scene === "fan") drawFanScene();
   else if (scene === "escalator") drawEscalatorScene();
   else if (scene === "market") drawMarketScene();
   else drawPhoneScene();
@@ -1268,11 +1283,27 @@ function blurInto(dst, src, r) {
 }
 
 /* ---------- VISION EFFECTS (blur + cylinder ghosting) ---------- */
+// Cylinder "double image" strength. Everything except the fan chart is HALF of the old values; the fan chart is DOUBLE its old values.
+const CYL_SMEAR = 7;            // streak length per diopter (was 14)
+const CYL_SEP = 8;              // distance between the two images per diopter (was 16)
+const CYL_WEIGHT = 0.375;       // brightness of the second image per diopter (was 0.75)
+const CYL_WEIGHT_MAX = 0.25;    // cap on the second image (was 0.5)
+const FAN_CYL_SEP = 8;          // fan chart: distance between the two images per diopter (was 4)
+const FAN_CYL_WEIGHT = 1.5;     // fan chart: brightness of the second image per diopter (was 0.75)
+const FAN_CYL_WEIGHT_MAX = 0.5; // fan chart: cap (kept at 0.5 so the second image never outshines the first)
+// How the cylinder effect grows with Cyl Rx (D)
+// SPLIT (distance + strength of the second image): normal up to 1.00 D, after that every extra step adds only 25% of the usual amount.
+// BLUR (streak along the axis, and the fan chart's meridian blur): normal up to 2.00 D, after that every extra step adds 25% MORE than usual.
+const CYL_SPLIT_KNEE = 1.00, CYL_SPLIT_SLOPE = 0.25;
+const CYL_BLUR_KNEE = 2.00, CYL_BLUR_SLOPE = 1.25;
+const cylSplit = c => c <= CYL_SPLIT_KNEE ? c : CYL_SPLIT_KNEE + (c - CYL_SPLIT_KNEE) * CYL_SPLIT_SLOPE;
+const cylBlur = c => c <= CYL_BLUR_KNEE ? c : CYL_BLUR_KNEE + (c - CYL_BLUR_KNEE) * CYL_BLUR_SLOPE;
+let fanFx = false;   // true only while building the fan chart's own ghost layer (no smear, smaller separation)
 function applyVisionEffects(target, blurAmount, cylinder, axis) {
   blurInto(blurCtx, sourceCanvas, blurAmount);
 
   const angle = (axis + 90) * Math.PI / 180;
-  const smearLen = curScene === "fan" ? 0 : cylinder * 14;
+  const smearLen = fanFx ? 0 : cylBlur(cylinder) * CYL_SMEAR;
   let layer = blurCanvas;
   if (smearLen > 0.5) {
     const n = Math.min(fast ? 7 : 15, Math.max(3, Math.ceil(smearLen / 3) + 1)), cs = Math.cos(angle), sn = Math.sin(angle);
@@ -1288,8 +1319,8 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
 
   ghostCtx.clearRect(0, 0, W, H);
 
-  const separation = cylinder * (curScene === "fan" ? 4 : 16);
-  const secondWeight = Math.min(.5, cylinder * 0.75);
+  const separation = cylSplit(cylinder) * (fanFx ? FAN_CYL_SEP : CYL_SEP);
+  const secondWeight = fanFx ? Math.min(FAN_CYL_WEIGHT_MAX, cylSplit(cylinder) * FAN_CYL_WEIGHT) : Math.min(CYL_WEIGHT_MAX, cylSplit(cylinder) * CYL_WEIGHT);
   const ox = Math.cos(angle) * separation / 2;
   const oy = Math.sin(angle) * separation / 2;
 
@@ -1310,8 +1341,8 @@ const boundaryVisibility = { far: false, intermediate: false, near: false, disto
 const clamp01 = x => Math.min(1, Math.max(0, x));
 // Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, narrower still toward near.
 const ZONES = {
-  multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.1 + 0.15 * clamp01((t - 0.5) / 0.5) },     
-  office: { far: 0.1, mid: 0.3, near: 0.7, edge: t => 0.25 + 0.15 * clamp01((t - 0.05) / 0.95) }  
+  multi:  { far: 0.5, mid: 0.60, near: 0.7, edge: t => 0.1 + 0.15 * clamp01((t - 0.5) / 0.5) },
+  office: { far: 0.1, mid: 0.3, near: 0.7, edge: t => 0.25 + 0.15 * clamp01((t - 0.05) / 0.95) }
 };
 const sideEdge = t => { const th = ZONES[lensType].edge(t) ; return th + (0.98 - th) * enhFrac; };
 
@@ -1343,10 +1374,10 @@ function drawLensFrame() {
 const sstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
 // Fan chart: blur grows progressively from the good meridian to the opposite one.
-const FAN = { cx: 600, cy: 405, x0: 320, y0: 125, size: 560 };
+const FAN = { cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) };
 const fanPool = [];
 function fanBackground(target, sphR, cylAmt, axis) {
-  const { cx, cy, x0, y0, size } = FAN, cylR = cylAmt * 5, alpha = (axis + 90) * Math.PI / 180, data = [];
+  const { cx, cy, x0, y0, size } = FAN, cylR = cylBlur(cylAmt) * 5, alpha = (axis + 90) * Math.PI / 180, data = [];
   const nL = fast ? 3 : 5, STEP = 1;
   for (let i = 0; i < nL; i++) {
     const lv = fanPool[i] || (fanPool[i] = makeCanvas(true));
@@ -1354,7 +1385,7 @@ function fanBackground(target, sphR, cylAmt, axis) {
     data.push(lv[1].getImageData(x0, y0, size, size).data);
   }
   const gp = fanPool[5] || (fanPool[5] = makeCanvas(true));
-  applyVisionEffects(gp[1], Math.min(30, sphR), cylAmt, axis);
+  fanFx = true; applyVisionEffects(gp[1], Math.min(30, sphR), cylAmt, axis); fanFx = false;
   const gd = gp[1].getImageData(x0, y0, size, size).data;
   target.clearRect(0, 0, W, H);
   target.drawImage(fanPool[0][0], 0, 0);
@@ -1373,6 +1404,21 @@ function fanBackground(target, sphR, cylAmt, axis) {
     }
   }
   target.putImageData(img, x0, y0);
+}
+
+// Combined scene background: fan chart (neutral blur) | red half | blue half
+const comboPool = [];
+function bgCombo(target, rn, rl, rr, cylinder, axis) {
+  if (cylinder > 0) fanBackground(target, rn, cylinder, axis);
+  else applyVisionEffects(target, rn, 0, axis);
+  const cl = x => Math.max(0, Math.min(W, Math.round(x)));
+  const x1 = cl(DUO_X0 + panX), x2 = cl(DUO_XC + panX);
+  [[x1, x2, rl, 0], [x2, W, rr, 1]].forEach(([a, b, rad, k]) => {
+    if (b <= a) return;
+    const pc = comboPool[k] || (comboPool[k] = makeCanvas());
+    applyVisionEffects(pc[1], rad, cylinder, axis);
+    target.drawImage(pc[0], a, 0, b - a, H, a, 0, b - a, H);
+  });
 }
 
 // Blur with a different radius on the left (red) and right (blue) half of the picture
@@ -1437,16 +1483,18 @@ function renderView(v) {
   /* Original (uncorrected) vision */
   const demand = getSceneDemand();
   const regs = REGIONS[curScene] || null, zk = ZK[curScene] || 1;                          // scenes with several focal distances
-  const isDuo = curScene === "duo";
-  const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue")] : [Math.abs(sd), Math.abs(sd)];
+  const isDuo = curScene === "duo";                                                        // fan chart (left) + duochrome (right)
+  // [red side, blue side, neutral] defocus. Neutral is used for the fan chart and for every non-duochrome scene.
+  const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue"), Math.abs(sd)] : [Math.abs(sd), Math.abs(sd), Math.abs(sd)];
+  const zx0 = DUO_X0 + panX, zc = DUO_XC + panX;                                           // duochrome zone start / red-blue seam on screen
   const accom = curScene === "duo" ? 0 : accommodation;
   const regRad = rg => Math.min(30, getResidualDefocus(power, accom, rg[4]) * 5);
-  const [bgL, bgR] = sideDef(signedDefocus(power, accom, demand));
-  const bgKey = [curScene, regs ? regs.map(rg => regRad(rg).toFixed(2)).join(",") : "", bgL.toFixed(3), bgR.toFixed(3), cylinder, axis, fast ? 1 : 0].join("|");
+  const [bgL, bgR, bgN] = sideDef(signedDefocus(power, accom, demand));
+  const bgKey = [curScene, regs ? regs.map(rg => regRad(rg).toFixed(2)).join(",") : "", bgL.toFixed(3), bgR.toFixed(3), bgN.toFixed(3), cylinder, axis, fast ? 1 : 0].join("|");
   if (v.bgKey === bgKey) { ctx.clearRect(0, 0, W, H); ctx.drawImage(v.bgCanvas, 0, 0); }
   else {
     if (regs) bgRegions(ctx, v, regs, regRad, cylinder, axis, zk);
-    else if (curScene === "fan" && cylinder > 0) fanBackground(ctx, Math.min(30, bgL * 5), cylinder, axis);
+    else if (isDuo) bgCombo(ctx, Math.min(30, bgN * 5), Math.min(30, bgL * 5), Math.min(30, bgR * 5), cylinder, axis);
     else applyVisionHalves(ctx, Math.min(30, bgL * 5), Math.min(30, bgR * 5), cylinder, axis);
     v.bgCtx.clearRect(0, 0, W, H); v.bgCtx.drawImage(canvas, 0, 0); v.bgKey = bgKey;
   }
@@ -1524,14 +1572,14 @@ function renderView(v) {
 
   /* Blur levels */
   const SIDE_BLUR = 9;
-  const isFan = curScene === "fan";
+  const isFan = isDuo;                                            // the fan chart lives in the combined scene
   const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;
   const perPixel = isMulti || isDuo || isFan || !!regs;           // blur varies across the lens
   let maxDef = 0;
   (regs || [[0, 0, 0, 0, demand]]).forEach(rg => {
     for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20), rg[4]));
   });
-  const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylAmt * 5 : 0));
+  const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylBlur(cylAmt) * 5 : 0));
   const nLev = perPixel ? (fast ? 4 : 5) : 1;
 
   const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), fast ? 1 : 0].join("|");
@@ -1540,9 +1588,16 @@ function renderView(v) {
       const lv = v.lvPool[i] || (v.lvPool[i] = makeCanvas());
       applyVisionEffects(lv[1], nLev === 1 ? rMax : i * rMax / (nLev - 1), isFan ? 0 : cylAmt, cylAxis);
     }
+    v.lvPool2 = v.lvPool2 || [];
+    if (isFan && cylAmt > 0) {                                    // duochrome side: normal cylinder smear
+      for (let i = 0; i < nLev; i++) {
+        const lv = v.lvPool2[i] || (v.lvPool2[i] = makeCanvas());
+        applyVisionEffects(lv[1], i * rMax / (nLev - 1), cylAmt, cylAxis);
+      }
+    }
     if (isFan && cylAmt > 0) {
       v.ghostPool = v.ghostPool || makeCanvas();
-      applyVisionEffects(v.ghostPool[1], Math.min(30, maxDef * 5), cylAmt, cylAxis);
+      fanFx = true; applyVisionEffects(v.ghostPool[1], Math.min(30, maxDef * 5), cylAmt, cylAxis); fanFx = false;
     }
     if (isMulti) {
       const N = fast ? 5 : 9;
@@ -1562,14 +1617,15 @@ function renderView(v) {
   const readRegion = c => c[1].getImageData(gx, gy, gw, gh).data;
   const LD = v.lvData || (v.lvData = {                           // pixel data is cached until the blur levels change
     levels: v.lvPool.slice(0, nLev).map(readRegion),
+    levels2: (isFan && cylAmt > 0) ? v.lvPool2.slice(0, nLev).map(readRegion) : null,
     ghost: (isFan && cylAmt > 0) ? readRegion(v.ghostPool) : null,
     smear: isMulti ? v.smearPool.map(readRegion) : [] });
-  const levelData = LD.levels, fanGhostData = LD.ghost, smearData = LD.smear;
+  const levelData = LD.levels, levels2Data = LD.levels2, fanGhostData = LD.ghost, smearData = LD.smear;
 
   const rowCache = [];                                           // ADD + defocus per lens height and focal region
   const rowInfo = (t, ri) => {
     const k = Math.round(t * 200), key = k * 32 + ri;
-    if (!rowCache[key]) { const a = addAt(k / 200), [dl, dr] = defsAt(a, regs ? regs[ri][4] : demand); rowCache[key] = { a, dl, dr }; }
+    if (!rowCache[key]) { const a = addAt(k / 200), [dl, dr, dn] = defsAt(a, regs ? regs[ri][4] : demand); rowCache[key] = { a, dl, dr, dn }; }
     return rowCache[key];
   };
 
@@ -1629,15 +1685,17 @@ side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.mi
       }
       const ri = regs ? regionAt(regs, (spx - panX - 600) / zk + 600, (spy - panY - 400) / zk + 400) : 0;   // which focal distance this part of the scene has
       const rr_ = rowInfo(t, ri);
-      let r = (spx < W / 2 + panX ? rr_.dl : rr_.dr) * 5 + side * SIDE_BLUR;
-      if (isFan) r += Math.abs(Math.sin(Math.atan2(spy - FAN.cy, spx - FAN.cx) - (cylAxis + 90) * Math.PI / 180)) * cylAmt * 5;
+      const inFan = isFan && spx < zx0;                                      // left part of the combined scene: the fan chart
+      let r = (spx < zx0 ? rr_.dn : spx < zc ? rr_.dl : rr_.dr) * 5 + side * SIDE_BLUR;   // fan: neutral | red half | blue half
+      if (inFan) r += Math.abs(Math.sin(Math.atan2(spy - FAN.cy, spx - FAN.cx) - (cylAxis + 90) * Math.PI / 180)) * cylBlur(cylAmt) * 5;
+      const lvData = (isFan && !inFan && levels2Data) ? levels2Data : levelData;
       const L = (nLev === 1 || rMax <= 0) ? 0 : Math.min(nLev - 1, r / rMax * (nLev - 1));
       const i0 = Math.floor(L), i1 = Math.min(nLev - 1, i0 + 1), f = L - i0;
 
-      samp(levelData[i0], spx, spy);
+      samp(lvData[i0], spx, spy);
       let R0 = s3[0], G0 = s3[1], B0 = s3[2];
       if (f > 0.001 && i1 !== i0) {
-        samp(levelData[i1], spx, spy);
+        samp(lvData[i1], spx, spy);
         R0 += (s3[0] - R0) * f; G0 += (s3[1] - G0) * f; B0 += (s3[2] - B0) * f;
       }
       if (side > 0.02) {
@@ -1645,7 +1703,7 @@ side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.mi
         const m = side * 0.8;
         R0 += (s3[0] - R0) * m; G0 += (s3[1] - G0) * m; B0 += (s3[2] - B0) * m;
       }
-      if (fanGhostData) {
+      if (fanGhostData && inFan) {
         samp(fanGhostData, spx, spy);
         R0 = R0 * 0.4 + s3[0] * 0.6; G0 = G0 * 0.4 + s3[1] * 0.6; B0 = B0 * 0.4 + s3[2] * 0.6;
       }
@@ -1689,9 +1747,9 @@ function updateLensPosition() {
   const v = Number(el.lensVerticalPosition.value);
   panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
   panY = Math.round(-(v - 50) / 100 * (H - 2 * lens.ry));
-  FAN.cx = 600 + panX; FAN.cy = 405 + panY;
-  FAN.x0 = Math.max(0, Math.min(W - FAN.size, 320 + panX));
-  FAN.y0 = Math.max(0, Math.min(H - FAN.size, 125 + panY));
+  FAN.cx = FAN_CX + panX; FAN.cy = FAN_CY + panY;
+  FAN.x0 = Math.max(0, Math.min(W - FAN.size, FAN_CX - (FAN_R + 120) + panX));
+  FAN.y0 = Math.max(0, Math.min(H - FAN.size, FAN_CY - (FAN_R + 120) + panY));
   views.forEach(vw => { vw.bgKey = ""; vw.lvKey = ""; panView(vw); });
   render();
 }
@@ -1760,7 +1818,7 @@ $("shapeToggle").addEventListener("click", e => {
 
 // Reset All: sliders, scenes, dual mode, lens type and zoom back to defaults
 $("resetAll").addEventListener("click", () => {
-  if (lensCircle) $("shapeToggle").click();   // <-- add this line
+  if (lensCircle) $("shapeToggle").click();
   controlDefs.forEach(d => $(d.id + "Reset").click());
   sliders[0].value = 0; sliders[1].value = 6;
   if (dual) $("dualToggle").click();
