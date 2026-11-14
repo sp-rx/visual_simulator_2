@@ -54,10 +54,10 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .reset-button:hover,.reset-button:active{background:#EAEFE9}
 .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 
-/* Correction sliders: 100-125% shaded red (not recommended) */
+/* Correction sliders: 100-125% shaded red (not recommended). The Axis Correction slider sets its own track (--tg): red = more than 15 deg from the eye's axis */
 .control.corr .scale{font-size:9px}
-.control input.corr-slider::-webkit-slider-runnable-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
-.control input.corr-slider::-moz-range-track{background:linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%)}
+.control input.corr-slider::-webkit-slider-runnable-track{background:var(--tg,linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%))}
+.control input.corr-slider::-moz-range-track{background:var(--tg,linear-gradient(to right,#CBD6CD 0 var(--rp,66%),#E7A9A2 var(--rp,66%) 100%))}
 
 .reset-all{grid-column:1/-1;width:100%;height:30px;border:0;border-radius:8px;background:var(--green);color:#fff;font-family:inherit;font-size:11px;font-weight:bold;cursor:pointer}
 .reset-all:active{background:var(--green-dark)}
@@ -285,7 +285,8 @@ const controlDefs = [
     f: v => v + "%", s: ["Left", "Centre", "Right"], pos: true },
   { id: "lensVerticalPosition", label: "Vertical", min: 0, max: 100, step: 1, v: 50,
     f: v => v + "%", s: ["Top", "Centre", "Bottom"], pos: true },
-  { id: "cylCorrection", label: "Cylinder & Axis Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0 },
+  { id: "cylCorrection", label: "Cylinder Correction", corr: true, base: "cylinder", min: 0, max: 1, step: 0.25, v: 0 },
+  { id: "axisCorrection", label: "Axis Correction", corr: true, axisCorr: true, base: "axis", min: 0, max: 180, step: 5, v: 0 },
   { id: "farCorrection", label: "Far Spectacle Correction", corr: true, base: "power", min: 0, max: 1, step: 0.25, v: 0 },
   { rx: true, id: "nearAdd", label: "Near ADD", min: 0, max: 3, step: 0.25, v: 0,
     f: v => "+" + v.toFixed(2) + " D", s: ["0.00 D", "+1.50 D", "+3.00 D"] },
@@ -296,7 +297,7 @@ const controlDefs = [
     f: v => v + "%", s: ["Standard", "Half", "Clearest"] }
 ];
 
-const SHORT = { power: "Far RX", accommodation: "AA Age", cylinder: "Cyl Rx", axis: "Axis", nearAdd: "Add", aspheric: "Aspheric", enhance: "MF Enhance", cylCorrection: "Cyl + Axis %", farCorrection: "Far RX %", nearCorrection: "Near RX %" };
+const SHORT = { power: "Far RX", accommodation: "AA Age", cylinder: "Cyl Rx", axis: "Axis", nearAdd: "Add", aspheric: "Aspheric", enhance: "MF Enhance", cylCorrection: "Cyl Rx %", axisCorrection: "Axis Corr", farCorrection: "Far RX %", nearCorrection: "Near RX %" };
 const el = {};
 const isOff = {};       // kept for the correction maths (always false now: the lens tabs control the frame)
 const lastVal = {};
@@ -313,8 +314,26 @@ function corrRange(d) {
   return { base, B, lo: Math.max(0.25, q25(0.5 * B)), hi: B + 1.5 };
 }
 function syncCorrection(d) {
-  const slider = el[d.id], r = corrRange(d), sg = r.base < 0 ? "-" : "+";
-  const lab = k => document.getElementById(d.id + k);
+  const slider = el[d.id], lab = k => document.getElementById(d.id + k);
+  if (d.axisCorr) {                                  // Axis correction: 0-180, starts on the eye's axis (100% corrected) until moved
+    const prevA = Number(slider.value), eyeAxis = Number(el[d.base].value);
+    slider.min = 0; slider.max = 180; slider.step = 5;
+    slider.value = userSet[d.id] ? prevA : eyeAxis;
+    // green = within 15 deg of the eye's axis (wraps around 0/180); red = further away
+    if (Number(el.cylinder.value) === 0) slider.style.removeProperty("--tg");   // no cylinder -> the axis doesn't matter
+    else {
+      const G = "#CBD6CD", Rd = "#E7A9A2", p = v => (v / 180 * 100).toFixed(2) + "%";
+      const lo = eyeAxis - 15, hi = eyeAxis + 15;
+      slider.style.setProperty("--tg", lo < 0
+        ? `linear-gradient(to right,${G} 0 ${p(hi)},${Rd} ${p(hi)} ${p(180 + lo)},${G} ${p(180 + lo)} 100%)`
+        : hi > 180
+        ? `linear-gradient(to right,${G} 0 ${p(hi - 180)},${Rd} ${p(hi - 180)} ${p(lo)},${G} ${p(lo)} 100%)`
+        : `linear-gradient(to right,${Rd} 0 ${p(lo)},${G} ${p(lo)} ${p(hi)},${Rd} ${p(hi)} 100%)`);
+    }
+    lab("Lo").textContent = "0°"; lab("Mid").textContent = "Eye axis " + eyeAxis + "°"; lab("Hi").textContent = "180°";
+    return;
+  }
+  const r = corrRange(d), sg = r.base < 0 ? "-" : "+";
   if (r.B === 0) { slider.min = 0; slider.max = 0; slider.value = 0; ["Lo", "Mid", "Hi"].forEach(k => lab(k).textContent = "-"); return; }
   const clamp = v => Math.min(r.hi, Math.max(r.lo, v)), prev = Number(slider.value);
   slider.min = r.lo; slider.max = r.hi; slider.step = 0.25;
@@ -329,6 +348,11 @@ function corrFraction(d) {                                       // lens value a
   return r.B === 0 ? 1 : Number(el[d.id].value) / r.B;
 }
 function corrLabel(d) {
+  if (d.axisCorr) {
+    const m = Number(el[d.id].value), eye = Number(el[d.base].value);
+    let df = ((m - eye + 90) % 180 + 180) % 180 - 90;          // off-axis error, -90..+90
+    return m + "° · " + (df === 0 ? "exact" : (df > 0 ? "+" : "") + df + "°");
+  }
   const r = corrRange(d), m = Number(el[d.id].value);
   return r.B === 0 ? "0.00 D" : (r.base < 0 ? "-" : "+") + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
 }
@@ -1378,7 +1402,7 @@ const FAN = { cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (
 const fanPool = [];
 function fanBackground(target, sphR, cylAmt, axis) {
   const { cx, cy, x0, y0, size } = FAN, cylR = cylBlur(cylAmt) * 5, alpha = (axis + 90) * Math.PI / 180, data = [];
-  const nL = fast ? 3 : 5, STEP = 1;
+  const nL = fast ? 3 : 5, STEP = fast ? 3 : 1;                  // while dragging, fill in 3x3 blocks (much faster)
   for (let i = 0; i < nL; i++) {
     const lv = fanPool[i] || (fanPool[i] = makeCanvas(true));
     applyVisionEffects(lv[1], Math.min(30, sphR + i * cylR / (nL - 1)), 0, axis);
@@ -1479,6 +1503,7 @@ function renderView(v) {
   const farCorr = corrFraction(defById.farCorrection);
   const cylCorr = corrFraction(defById.cylCorrection);
   const nearCorr = corrFraction(defById.nearCorrection);
+  const axisCorr = val("axisCorrection");                              // axis of the correcting cylinder lens
 
   /* Original (uncorrected) vision */
   const demand = getSceneDemand();
@@ -1559,7 +1584,7 @@ function renderView(v) {
   const ADD_STRENGTH = 1;
   const addRadK = ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
   const cylMag = 1 + effectiveCylinder / 40;
-  const mAngle = (axis + 90) * Math.PI / 180;
+  const mAngle = (axisCorr + 90) * Math.PI / 180;
   const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
 
   /* Lens region (+ padding for sampling) */
@@ -1573,14 +1598,18 @@ function renderView(v) {
   /* Blur levels */
   const SIDE_BLUR = 9;
   const isFan = isDuo;                                            // the fan chart lives in the combined scene
-  const cylAmt = Math.abs(lensCylinder), cylAxis = lensCylinder < 0 ? axis + 90 : axis;
+  // Residual cylinder = eye's cylinder (at its axis) minus the correcting cylinder (at its own axis), combined as vectors.
+  // Same axis + full power -> 0. Wrong power -> leftover (over-correction flips 90 deg). Wrong axis -> leftover double image.
+  const t1 = 2 * axis * Math.PI / 180, t2 = 2 * axisCorr * Math.PI / 180;
+  const resX = cylinder * Math.cos(t1) - effectiveCylinder * Math.cos(t2), resY = cylinder * Math.sin(t1) - effectiveCylinder * Math.sin(t2);
+  const cylAmt = Math.hypot(resX, resY), cylAxis = ((Math.atan2(resY, resX) * 90 / Math.PI) % 180 + 180) % 180;
   const perPixel = isMulti || isDuo || isFan || !!regs;           // blur varies across the lens
   let maxDef = 0;
   (regs || [[0, 0, 0, 0, demand]]).forEach(rg => {
     for (let k = 0; k <= (isMulti ? 20 : 0); k++) maxDef = Math.max(maxDef, ...defsAt(addAt(k / 20), rg[4]));
   });
   const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylBlur(cylAmt) * 5 : 0));
-  const nLev = perPixel ? (fast ? 4 : 5) : 1;
+  const nLev = perPixel ? (fast ? 3 : 5) : 1;                     // fewer blur levels while dragging
 
   const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), fast ? 1 : 0].join("|");
   if (v.lvKey !== lvKey) {
@@ -1645,7 +1674,7 @@ function renderView(v) {
     }
   }
 
-  const STEP = 1;
+  const STEP = fast ? 3 : 1;                                     // while dragging, compute 3x3 blocks (about 9x fewer pixels); full quality ~180 ms after you stop
   for (let y = yStart; y < yEnd; y += STEP) {
     const dy = (y - cy) / ry;
     if (dy * dy > 1) continue;
@@ -1730,7 +1759,7 @@ function doRender() {
     if (vEl.textContent !== full) vEl.textContent = full;
     const cEl = document.getElementById(d.id + "Chip");
     if (cEl) {                                                    // compact value on the chip
-      const pr = full.split(" · "), c = (d.corr || d.id === "accommodation" ? pr[pr.length - 1] : pr[0]).replace(" D", "");
+      const pr = full.split(" · "), c = (d.axisCorr ? pr[0] : d.corr || d.id === "accommodation" ? pr[pr.length - 1] : pr[0]).replace(" D", "");
       if (cEl.textContent !== c) cEl.textContent = c;
     }
   });
