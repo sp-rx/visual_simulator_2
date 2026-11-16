@@ -23,8 +23,7 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .pos-row{display:flex;align-items:center;gap:10px;margin-top:8px}
 .scene-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
 .scene-blocks{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);column-gap:14px}
-.scene-blocks.dual{grid-template-columns:1fr 1fr}
-#dualToggle{flex:none;margin-top:8px}
+.dual-btn{flex:none;margin-top:8px}
 .pos-row strong{font-size:9px;white-space:nowrap}
 .pos-row input[type=range]{flex:1;min-width:0}
 .tick{font-size:9px;color:var(--muted)}
@@ -33,9 +32,6 @@ h2{margin:0 0 2px;font-size:15px;color:var(--green-dark)}
 .viewer{flex:1;min-width:0;aspect-ratio:3/2;overflow:hidden;position:relative;background:#D9D9D9;border-radius:10px;display:flex;gap:4px}
 .cv{position:relative;flex:1;min-width:0;overflow:hidden;background:#D9D9D9}
 .cv-tag{position:absolute;left:8px;top:8px;z-index:2;padding:3px 8px;border-radius:999px;background:rgba(41,45,42,.72);color:#fff;font-size:9px;font-weight:bold}
-#tagB{left:auto;right:8px}
-.viewer.dual{align-items:center}
-.viewer.dual .cv{flex:1;aspect-ratio:3/2}
 [hidden]{display:none!important}
 .stress-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;transform-origin:center;transition:transform .2s ease}
@@ -86,9 +82,9 @@ canvas{position:absolute;width:100%;height:100%;left:0;top:0;display:block;trans
 .boundary-controls [data-boundary=distortion]{--c:#C0392B}
 .zoom-controls{display:flex;align-items:center;gap:5px;padding:5px;border-radius:9px}
 .zoom-controls button{height:27px;min-width:27px;border:1px solid #C9D1C9;border-radius:6px;background:var(--green);color:#fff;font-size:13px;font-weight:bold;cursor:pointer}
-.zoom-controls #zoomReset{background:transparent;color:var(--green-dark);font-size:9px;padding:0 7px}
-#zoomValue{min-width:35px;text-align:center;font-size:9px;font-weight:bold;color:var(--green-dark)}
-#dualToggle.active{background:var(--green);color:#fff;border-color:var(--green)}
+.zoom-controls .zreset{background:transparent;color:var(--green-dark);font-size:9px;padding:0 7px}
+.zval{min-width:35px;text-align:center;font-size:9px;font-weight:bold;color:var(--green-dark)}
+.dual-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
 
 /* Polish */
 .panel{box-shadow:0 6px 24px rgba(41,45,42,.08)}
@@ -140,96 +136,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .result-main{font-size:10px}
 .result-sub{font-size:9px;line-height:1.35;margin-top:2px}
 .result{grid-column:1/-1}
+/* Two simulators side by side */
+.sims{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.sims.dual{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sims.dual .pos-pair{grid-template-columns:minmax(0,1fr);gap:6px}
+.sims.dual .pos-pair .pos-row strong{min-width:62px}
 </style>
 </head>
 <body>
 
 <div class="scale-wrapper">
-
 <div class="container">
-  <div class="panel layout">
-
-    <div class="stage">
-      <div class="view-row">
-        <div class="viewer">
-          <div class="cv"><canvas id="canvas" width="1200" height="800"></canvas><span class="cv-tag" id="tagA" hidden></span></div>
-          <div class="cv" id="cvB" hidden><canvas id="canvasB" width="1200" height="800"></canvas><span class="cv-tag" id="tagB"></span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="side">
-    <div class="group">
-      <div class="scene-row">
-        <div class="scene-blocks" id="sceneBlocks">
-          <div class="control" id="sceneControl">
-            <div class="control-heading"><strong>Viewing Scene</strong><span class="value" id="sceneValue"></span></div>
-            <input type="range" id="sceneSlider" min="0" max="7" step="1" value="0">
-            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
-          </div>
-          <div class="control" id="blockB" hidden>
-            <div class="control-heading"><strong>Scene B</strong><span class="value" id="sceneValueB"></span></div>
-            <input type="range" id="sceneSliderB" min="0" max="7" step="1" value="6">
-            <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
-          </div>
-        </div>
-        <button class="reset-button" id="dualToggle" type="button">Dual</button>
-      </div>
-    </div>
-
-    <div class="controls" id="controls">
-      <div class="chipgrid" id="chipGrid"><button class="reset-all" id="resetAll" type="button">Reset All</button></div>
-    </div>
-
-    <div class="result-panel" id="resultPanel">
-      <button class="detail-toggle" id="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
-      <div class="result" id="resultBox" hidden></div>
-    </div>
-
-    <div class="viewpanel">
-      <div class="pos-pair">
-        <div class="pos-row">
-          <strong>Horizontal</strong>
-          <span class="tick">Left</span>
-          <input type="range" id="lensPosition" min="20" max="80" step="1" value="50">
-          <span class="tick">Right</span>
-          <span class="value" id="lensPositionValue"></span>
-          <button class="reset-button" id="lensPositionReset">Reset</button>
-        </div>
-        <div class="pos-row">
-          <strong>Vertical</strong>
-          <span class="tick">Top</span>
-          <input type="range" id="lensVerticalPosition" min="20" max="80" step="1" value="50">
-          <span class="tick">Bottom</span>
-          <span class="value" id="lensVerticalPositionValue"></span>
-          <button class="reset-button" id="lensVerticalPositionReset">Reset</button>
-        </div>
-      </div>
-
-      <div class="toolbar">
-        <div class="lens-switch" id="lensSwitch">
-          <button type="button" data-type="far" class="active">Far Lens</button>
-          <button type="button" data-type="near">Near Lens</button>
-          <button type="button" data-type="multi">Multifocal Lens</button>
-          <button type="button" data-type="office">Office Lens</button>
-        </div>
-        <div class="boundary-controls" id="boundaryControls">
-          <button type="button" data-boundary="far">Far</button>
-          <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
-          <button type="button" data-boundary="near">Near</button>
-          <button type="button" data-boundary="distortion">Distortion</button>
-        </div>
-        <div class="lens-switch">
-          <button type="button" id="shapeToggle">Circle</button>
-        </div>
-        <div class="zoom-controls">
-          <button type="button" id="zoomOut">&minus;</button><span id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" id="zoomReset">Reset</button>
-        </div>
-      </div>
-    </div>
-    </div>
-
-  </div>
+  <div class="sims" id="sims"></div>
 </div>
 </div>
 
@@ -237,6 +155,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 /* ---------- CANVASES ---------- */
 const W = 1200, H = 800;
 let canvas, ctx, sourceCanvas, S, curScene = "city";   // swapped per view by useView()
+let cur = null;                                         // the simulator (A or B) being drawn right now, set by useView()
 let panX = 0, panY = 0;                                 // how far the view (scene) is moved; the lens stays in the middle
 
 function makeCanvas(willRead) {
@@ -297,11 +216,8 @@ const controlDefs = [
 ];
 
 const SHORT = { power: "Far RX", accommodation: "AA Age", cylinder: "Cyl Rx", axis: "Axis", nearAdd: "Add", aspheric: "Aspheric", enhance: "MF Enhance", cylCorrection: "Cyl Rx %", axisCorrection: "Axis %", farCorrection: "Far RX %", nearCorrection: "Near RX %" };
-const el = {};
-const isOff = {};       // kept for the correction maths (always false now: the lens tabs control the frame)
-const lastVal = {};
-const userSet = {};     // true once the slider was moved by hand (otherwise it follows its base at 100%)
-const controlDivs = {};
+let el = {};            // the active simulator's sliders (swapped by useView)
+let userSet = {};       // the active simulator's "moved by hand" flags
 const defById = {};
 controlDefs.forEach(d => { defById[d.id] = d; });
 const q25 = x => Math.round(x / 0.25) * 0.25;
@@ -325,7 +241,7 @@ function axisTol(cyl) {
   return AXIS_TOL_MIN + (AXIS_TOL_LOW - AXIS_TOL_MIN) * (e(k) - e(1)) / (e(0) - e(1));
 }
 function syncCorrection(d) {
-  const slider = el[d.id], lab = k => document.getElementById(d.id + k);
+  const slider = el[d.id], lab = k => cur.r(d.id + k);
   if (d.axisCorr) {                                  // Axis correction: 0-180, starts on the eye's axis (100% corrected) until moved
     const prevA = Number(slider.value), eyeAxis = Number(el[d.base].value);
     slider.min = 0; slider.max = 180; slider.step = 5;
@@ -376,85 +292,29 @@ function closePops(except) {
   });
 }
 
-controlDefs.forEach(d => {
-  let div = null;
-  if (!d.pos) {
-    div = document.createElement("div");
-    div.className = "control";
-    div.innerHTML =
-      `<div class="control-heading"><strong>${d.label}</strong>
-         <div class="control-right"><span class="value" id="${d.id}Value"></span><button class="reset-button" id="${d.id}Reset">Reset</button></div></div>
-       <input type="range" id="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
-       ${d.corr
-         ? `<div class="scale"><span id="${d.id}Lo"></span><span id="${d.id}Mid"></span><span id="${d.id}Hi"></span></div>`
-         : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
-
-    const wrap = document.createElement("div");
-    wrap.className = "chip-wrap";
-    wrap.innerHTML = `<button type="button" class="chip"><span>${SHORT[d.id]}</span><span class="value" id="${d.id}Chip"></span></button>`;
-    const pop = document.createElement("div");
-    pop.className = "pop"; pop.hidden = true;
-    pop.appendChild(div);
-    wrap.appendChild(pop);
-    const GRID = {                                                     // [row, column]: each correction sits under its Rx chip
-      power: [1, 1], cylinder: [1, 2], axis: [1, 3],
-      farCorrection: [2, 1], cylCorrection: [2, 2], axisCorrection: [2, 3],
-      nearAdd: [1, 4], nearCorrection: [2, 4],
-      accommodation: [3, 1], aspheric: [3, 2], enhance: [3, 3] }[d.id];
-    wrap.style.gridRow = GRID[0]; wrap.style.gridColumn = GRID[1];
-    document.getElementById("chipGrid").appendChild(wrap);
-
-    const chip = wrap.querySelector(".chip");
-    chip.addEventListener("click", () => {
-      const open = pop.hidden;
-      closePops(wrap);
-      pop.hidden = !open;
-      chip.classList.toggle("open", open);
-      if (open) pop.style.top = (wrap.offsetTop + wrap.offsetHeight + 6) + "px";   // just under the chip
-    });
-  }
-  const slider = document.getElementById(d.id);
-  el[d.id] = slider;
-  const update = d.pos ? updateLensPosition : render;
-
-  if (d.corr) {
-    controlDivs[d.id] = div;
-    div.classList.add("corr");
-    slider.classList.add("corr-slider");
-    isOff[d.id] = false; userSet[d.id] = false; lastVal[d.id] = 0;     // starts at 100%
-
-    slider.addEventListener("input", () => { userSet[d.id] = true; });
-    document.getElementById(d.id + "Reset").addEventListener("click", () => {
-      userSet[d.id] = false; lastVal[d.id] = 0; update();
-    });
-  } else {
-    document.getElementById(d.id + "Reset").addEventListener("click", () => { slider.value = d.v; update(); });
-  }
-  slider.addEventListener("input", update);
-});
-
-const resultBox = document.getElementById("resultBox");
+/* ---------- SCENES + SIMULATORS (A and B are two complete, independent copies) ---------- */
+const $ = id => document.getElementById(id);
 const SCENES = [["city", "City View"], ["escalator", "Going Down an Escalator"], ["market", "Supermarket Aisle"],
                 ["night", "Driving at Night"], ["meeting", "Meeting Room"],
                 ["computer", "Working at Computer"], ["phone", "Looking at Phone"],
                 ["duo", "Duochrome + Fan Chart"]];
+const SCENE_SHORT = ["City", "Escalator", "Aisle", "Night", "Meeting", "Computer", "Phone", "Duo + Fan"];
 const sceneName = k => SCENES.find(x => x[0] === k)[1];
-const sliders = [document.getElementById("sceneSlider"), document.getElementById("sceneSliderB")];
+const sims = [];
 let dual = false;
+const newFan = () => ({ cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) });
 
-// Two views (A, B): each has its own canvas + scene; the lens, eye and sliders are shared.
-// raw = the scene as drawn; sc = the scene moved by the Horizontal / Vertical sliders (what the eye looks at).
-const views = [0, 1].map(i => {
-  const cv = document.getElementById(i ? "canvasB" : "canvas"), [sc, sctx] = makeCanvas();
-  const [rawC, rawS] = makeCanvas();
-  const [bgCanvas, bgCtx] = makeCanvas();                                  // cache of the processed background
-  return { cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS, scene: "city", title: "", detail: "", bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], lvPool2: [], smearPool: [], ghostPool: null, regPool: [] };
-});
-function useView(v) { canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.rawS; curScene = v.scene; }
+// Make one simulator the "active" one: every drawing / vision function reads these globals.
+function useView(v) {
+  cur = v; canvas = v.cv; ctx = v.ctx; sourceCanvas = v.sc; S = v.rawS; curScene = v.scene;
+  el = v.el; userSet = v.userSet; panX = v.panX; panY = v.panY;
+  lensCircle = v.lensCircle; lensOn = v.lensOn; lensType = v.lensType;
+  boundaryVisibility = v.boundary; FAN = v.FAN; fast = v.fast;
+}
 
 // Move the scene under the fixed lens; edges are stretched so there is never a blank gap.
 function panView(v) {
-  const c = v.sctx, dx = Math.max(-W + 2, Math.min(W - 2, panX)), dy = Math.max(-H + 2, Math.min(H - 2, panY));
+  const c = v.sctx, dx = Math.max(-W + 2, Math.min(W - 2, v.panX)), dy = Math.max(-H + 2, Math.min(H - 2, v.panY));
   c.clearRect(0, 0, W, H);
   c.drawImage(v.raw, dx, dy);
   if (dx > 0) c.drawImage(v.raw, 0, 0, 1, H, 0, dy, dx, H);
@@ -463,12 +323,213 @@ function panView(v) {
   else if (dy < 0) c.drawImage(v.sc, 0, H + dy - 1, W, 1, 0, H + dy, W, -dy);
 }
 
-function setScene(i) {
-  const v = views[i], idx = Number(sliders[i].value);
-  v.scene = SCENES[idx][0];
-  document.getElementById(i ? "sceneValueB" : "sceneValue").textContent = (dual ? (i ? "B: " : "A: ") : "") + SCENES[idx][1];
-  document.getElementById(i ? "tagB" : "tagA").textContent = (i ? "B · " : "A · ") + SCENES[idx][1];
-  useView(v); drawScene(); panView(v); v.bgKey = ""; v.lvKey = ""; render();
+function setScene(sim) {
+  const idx = Number(sim.r("scene").value), tagLetter = "AB"[sim.i];
+  sim.scene = SCENES[idx][0];
+  sim.r("sceneValue").textContent = (dual ? tagLetter + ": " : "") + SCENES[idx][1];
+  sim.r("tag").textContent = tagLetter + " · " + SCENES[idx][1];
+  useView(sim); drawScene(); panView(sim); sim.bgKey = ""; sim.lvKey = ""; render(sim);
+}
+
+// The whole panel (picture + every control). The same template is used for A and B.
+const panelHTML = i => `
+<div class="stage"><div class="view-row"><div class="viewer"><div class="cv">
+  <canvas data-r="canvas" width="1200" height="800"></canvas><span class="cv-tag" data-r="tag" hidden></span>
+</div></div></div></div>
+<div class="side">
+  <div class="group"><div class="scene-row">
+    <div class="scene-blocks"><div class="control">
+      <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
+      <input type="range" data-r="scene" min="0" max="7" step="1" value="${i ? 6 : 0}">
+      <div class="scale">${SCENE_SHORT.map(t => `<span>${t}</span>`).join("")}</div>
+    </div></div>
+    ${i ? "" : '<button class="reset-button dual-btn" data-r="dual" type="button">Dual</button>'}
+  </div></div>
+
+  <div class="controls"><div class="chipgrid" data-r="grid"><button class="reset-all" data-r="resetAll" type="button">Reset All</button></div></div>
+
+  <div class="result-panel" data-r="resultPanel">
+    <button class="detail-toggle" data-r="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
+    <div class="result" data-r="resultBox" hidden></div>
+  </div>
+
+  <div class="viewpanel">
+    <div class="pos-pair">
+      <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
+        <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
+        <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
+      <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
+        <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
+        <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
+    </div>
+    <div class="toolbar">
+      <div class="lens-switch" data-r="lensSwitch">
+        <button type="button" data-type="far" class="active">Far Lens</button>
+        <button type="button" data-type="near">Near Lens</button>
+        <button type="button" data-type="multi">Multifocal Lens</button>
+        <button type="button" data-type="office">Office Lens</button>
+      </div>
+      <div class="boundary-controls" data-r="boundaryControls">
+        <button type="button" data-boundary="far">Far</button>
+        <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
+        <button type="button" data-boundary="near">Near</button>
+        <button type="button" data-boundary="distortion">Distortion</button>
+      </div>
+      <div class="lens-switch"><button type="button" data-r="shapeToggle">Circle</button></div>
+      <div class="zoom-controls">
+        <button type="button" data-r="zoomOut">&minus;</button><span class="zval" data-r="zoomValue">100%</span><button type="button" data-r="zoomIn">+</button><button type="button" class="zreset" data-r="zoomReset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+// Chips + their floating sliders for ONE simulator
+function buildControls(sim) {
+  const r = sim.r;
+  controlDefs.forEach(d => {
+    let div = null;
+    if (!d.pos) {
+      div = document.createElement("div");
+      div.className = "control";
+      div.innerHTML =
+        `<div class="control-heading"><strong>${d.label}</strong>
+           <div class="control-right"><span class="value" data-r="${d.id}Value"></span><button class="reset-button" data-r="${d.id}Reset" type="button">Reset</button></div></div>
+         <input type="range" data-r="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
+         ${d.corr
+           ? `<div class="scale"><span data-r="${d.id}Lo"></span><span data-r="${d.id}Mid"></span><span data-r="${d.id}Hi"></span></div>`
+           : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "chip-wrap";
+      wrap.innerHTML = `<button type="button" class="chip"><span>${SHORT[d.id]}</span><span class="value" data-r="${d.id}Chip"></span></button>`;
+      const pop = document.createElement("div");
+      pop.className = "pop"; pop.hidden = true;
+      pop.appendChild(div);
+      wrap.appendChild(pop);
+      const GRID = {                                                     // [row, column]: each correction sits under its Rx chip
+        power: [1, 1], cylinder: [1, 2], axis: [1, 3],
+        farCorrection: [2, 1], cylCorrection: [2, 2], axisCorrection: [2, 3],
+        nearAdd: [1, 4], nearCorrection: [2, 4],
+        accommodation: [3, 1], aspheric: [3, 2], enhance: [3, 3] }[d.id];
+      wrap.style.gridRow = GRID[0]; wrap.style.gridColumn = GRID[1];
+      r("grid").appendChild(wrap);
+
+      const chip = wrap.querySelector(".chip");
+      chip.addEventListener("click", () => {
+        const open = pop.hidden;
+        closePops(wrap);
+        pop.hidden = !open;
+        chip.classList.toggle("open", open);
+        if (open) pop.style.top = (wrap.offsetTop + wrap.offsetHeight + 6) + "px";   // just under the chip
+      });
+    }
+    const slider = r(d.id);
+    sim.el[d.id] = slider;
+    const update = d.pos ? () => updateLensPosition(sim) : () => render(sim);
+
+    if (d.corr) {
+      div.classList.add("corr");
+      slider.classList.add("corr-slider");
+      sim.userSet[d.id] = false;                                       // starts at 100%
+      slider.addEventListener("input", () => { sim.userSet[d.id] = true; });
+      r(d.id + "Reset").addEventListener("click", () => { sim.userSet[d.id] = false; update(); });
+    } else {
+      r(d.id + "Reset").addEventListener("click", () => { slider.value = d.v; update(); });
+    }
+    slider.addEventListener("input", update);
+  });
+}
+
+const ZOOM_BASE = 1.5;                    // shown as 100% = real 150%
+const updateZoom = sim => {
+  sim.cv.style.transform = `scale(${sim.zoom * ZOOM_BASE})`;
+  sim.r("zoomValue").textContent = Math.round(sim.zoom * 100) + "%";
+};
+const updateBoundaryControls = sim => { sim.r("boundaryControls").style.visibility = ZONES[sim.lensType] && sim.lensOn ? "visible" : "hidden"; };
+
+function toggleDual() {
+  dual = !dual;
+  sims[0].r("dual").classList.toggle("active", dual);
+  $("sims").classList.toggle("dual", dual);
+  sims[1].root.hidden = !dual;
+  sims.forEach(s => s.r("tag").hidden = !dual);
+  setScene(sims[0]);
+  if (dual) setScene(sims[1]);
+}
+
+function createSim(i) {
+  const root = document.createElement("div");
+  root.className = "panel layout";
+  root.innerHTML = panelHTML(i);
+  $("sims").appendChild(root);
+  const r = n => root.querySelector('[data-r="' + n + '"]');
+  const cv = r("canvas"), [sc, sctx] = makeCanvas(), [rawC, rawS] = makeCanvas(), [bgCanvas, bgCtx] = makeCanvas();
+  const sim = {
+    i, root, r, cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS,
+    scene: "city", title: "", detail: "", lastHtml: "",
+    // render caches (per simulator)
+    bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], lvPool2: [], smearPool: [], ghostPool: null, regPool: [],
+    // this simulator's own settings
+    el: {}, userSet: {}, lensOn: true, lensType: "far", lensCircle: false,
+    boundary: { far: false, intermediate: false, near: false, distortion: false },
+    panX: 0, panY: 0, FAN: newFan(), zoom: 1,
+    fast: false, fastTimer: 0, renderPending: false
+  };
+  sims.push(sim);
+  buildControls(sim);
+
+  r("scene").addEventListener("input", () => setScene(sim));
+  if (i === 0) r("dual").addEventListener("click", toggleDual);
+
+  // Details panel: hidden by default, arrow toggles it open / closed
+  r("detailToggle").addEventListener("click", e => {
+    const box = r("resultBox"), open = box.hidden;
+    box.hidden = !open;
+    r("resultPanel").classList.toggle("open", open);
+    e.currentTarget.setAttribute("aria-expanded", open);
+  });
+
+  root.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.boundary;
+    sim.boundary[k] = !sim.boundary[k];
+    b.classList.toggle("active", sim.boundary[k]);
+    render(sim);
+  }));
+
+  const lensButtons = r("lensSwitch").querySelectorAll("button");
+  lensButtons.forEach(b => b.addEventListener("click", () => {
+    const t = b.dataset.type;
+    if (sim.lensOn && sim.lensType === t) sim.lensOn = false;       // tap the chosen lens again = take the glasses off
+    else { sim.lensOn = true; sim.lensType = t; }
+    lensButtons.forEach(x => x.classList.toggle("active", sim.lensOn && x === b));
+    updateBoundaryControls(sim);
+    render(sim);
+  }));
+
+  r("zoomIn").addEventListener("click", () => { sim.zoom = Math.min(1.5, sim.zoom + 0.25); updateZoom(sim); });
+  r("zoomOut").addEventListener("click", () => { sim.zoom = Math.max(0.5, sim.zoom - 0.25); updateZoom(sim); });
+  r("zoomReset").addEventListener("click", () => { sim.zoom = 1; updateZoom(sim); });
+
+  r("shapeToggle").addEventListener("click", e => {
+    sim.lensCircle = !sim.lensCircle;
+    e.currentTarget.classList.toggle("active", sim.lensCircle);
+    render(sim);
+  });
+
+  // Reset All: this simulator only (its sliders, scene, lens type and zoom). Dual mode is left as it is.
+  r("resetAll").addEventListener("click", () => {
+    if (sim.lensCircle) r("shapeToggle").click();
+    controlDefs.forEach(d => r(d.id + "Reset").click());
+    r("scene").value = i ? 6 : 0;
+    sim.lensOn = false; r("lensSwitch").querySelector('[data-type="far"]').click();
+    closePops();
+    sim.zoom = 1; updateZoom(sim);
+    setScene(sim);
+  });
+
+  updateBoundaryControls(sim);
+  updateZoom(sim);
+  return sim;
 }
 
 const EX = 1600;                                   // scenes are drawn this much beyond the edges (zoomed-out view)
@@ -1378,7 +1439,7 @@ function applyVisionEffects(target, blurAmount, cylinder, axis) {
 let lensOn = true;        // glasses on / off
 let lensType = "far";     // "far" | "near" | "multi" | "office"
 let enhFrac = 0;          // Multifocal Enhancement 0..1
-const boundaryVisibility = { far: false, intermediate: false, near: false, distortion: false };   // guide lines start off
+let boundaryVisibility = { far: false, intermediate: false, near: false, distortion: false };   // guide lines start off
 const clamp01 = x => Math.min(1, Math.max(0, x));
 // Edge of the clear corridor (fraction of lens half-width) at height t: narrowest in the intermediate, narrower still toward near.
 const ZONES = {
@@ -1415,7 +1476,7 @@ function drawLensFrame() {
 const sstep = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
 // Fan chart: blur grows progressively from the good meridian to the opposite one.
-const FAN = { cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) };
+let FAN = { cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) };
 const fanPool = [];
 function fanBackground(target, sphR, cylAmt, axis) {
   const { cx, cy, x0, y0, size } = FAN, cylR = cylBlur(cylAmt) * 5, alpha = (axis + 90) * Math.PI / 180, data = [];
@@ -1494,23 +1555,23 @@ function bgRegions(target, v, regs, radFn, cylinder, axis, zk) {
 }
 
 /* ---------- RENDER ---------- */
-let renderPending = false, fast = false, fastTimer = 0, lensSmall = null;
+let fast = false, lensSmall = null;      // `fast` is swapped per simulator by useView()
 
-function schedule() {
-  if (renderPending) return;
-  renderPending = true;
-  requestAnimationFrame(doRender);
+function schedule(sim) {
+  if (sim.renderPending) return;
+  sim.renderPending = true;
+  requestAnimationFrame(() => doRender(sim));
 }
 // FAST_ALWAYS = true: one steady quality, no sharpen-after-you-stop pass, so no wait. false = rough while dragging, sharp ~FAST_DELAY ms after you stop.
 const FAST_ALWAYS = true, FAST_DELAY = 180;
 const FAST_STEP = 1.25;            // resolution while dragging = 1 / FAST_STEP: 1 = 100% (sharpest, slowest), 1.25 = 80%, 1.5 = 67%, 2 = 50%
-function render() {
-  fast = true;
+function render(sim) {
+  sim.fast = true;
   if (!FAST_ALWAYS) {
-    clearTimeout(fastTimer);
-    fastTimer = setTimeout(() => { fast = false; schedule(); }, FAST_DELAY);
+    clearTimeout(sim.fastTimer);
+    sim.fastTimer = setTimeout(() => { sim.fast = false; schedule(sim); }, FAST_DELAY);
   }
-  schedule();
+  schedule(sim);
 }
 
 function renderView(v) {
@@ -1782,117 +1843,50 @@ side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.mi
   drawLensGuides();
 }
 
-function doRender() {
-  renderPending = false;
+function doRender(sim) {
+  sim.renderPending = false;
+  useView(sim);
   controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });
   controlDefs.forEach(d => {
     const full = d.corr ? corrLabel(d) : d.f(Number(el[d.id].value));
-    const vEl = document.getElementById(d.id + "Value");
+    const vEl = sim.r(d.id + "Value");
     if (vEl.textContent !== full) vEl.textContent = full;
-    const cEl = document.getElementById(d.id + "Chip");
+    const cEl = sim.r(d.id + "Chip");
     if (cEl) {                                                    // compact value on the chip
       const pr = full.split(" · "), c = (d.axisCorr ? pr[0] : d.corr || d.id === "accommodation" ? pr[pr.length - 1] : pr[0]).replace(" D", "");
       if (cEl.textContent !== c) cEl.textContent = c;
     }
   });
-  const list = dual ? views : [views[0]];
-  list.forEach(v => { useView(v); renderView(v); });
-  const html = list.map((v, i) =>
-    `<div><div class="result-main">${dual ? "AB"[i] + " · " : ""}${v.title}</div><div class="result-sub">${v.detail}</div></div>`).join("");
-  if (html !== doRender.last) { resultBox.innerHTML = html; doRender.last = html; }
+  renderView(sim);
+  const html = `<div><div class="result-main">${dual ? "AB"[sim.i] + " · " : ""}${sim.title}</div><div class="result-sub">${sim.detail}</div></div>`;
+  if (html !== sim.lastHtml) { sim.r("resultBox").innerHTML = html; sim.lastHtml = html; }
 }
 
 /* ---------- VIEW POSITION (the lens stays in the middle, the scene moves) ---------- */
-function updateLensPosition() {
-  const h = Number(el.lensPosition.value);
-  const v = Number(el.lensVerticalPosition.value);
-  panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
-  panY = Math.round(-(v - 50) / 100 * (H - 2 * lens.ry));
-  FAN.cx = FAN_CX + panX; FAN.cy = FAN_CY + panY;
-  FAN.x0 = Math.max(0, Math.min(W - FAN.size, FAN_CX - (FAN_R + 120) + panX));
-  FAN.y0 = Math.max(0, Math.min(H - FAN.size, FAN_CY - (FAN_R + 120) + panY));
-  views.forEach(vw => { vw.bgKey = ""; vw.lvKey = ""; panView(vw); });
-  render();
+function updateLensPosition(sim) {
+  const h = Number(sim.el.lensPosition.value);
+  const v = Number(sim.el.lensVerticalPosition.value);
+  sim.panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
+  sim.panY = Math.round(-(v - 50) / 100 * (H - 2 * lens.ry));
+  const F = sim.FAN;
+  F.cx = FAN_CX + sim.panX; F.cy = FAN_CY + sim.panY;
+  F.x0 = Math.max(0, Math.min(W - F.size, FAN_CX - (FAN_R + 120) + sim.panX));
+  F.y0 = Math.max(0, Math.min(H - F.size, FAN_CY - (FAN_R + 120) + sim.panY));
+  sim.bgKey = ""; sim.lvKey = "";
+  panView(sim);
+  render(sim);
 }
 
 /* ---------- EVENTS + INIT ---------- */
-const $ = id => document.getElementById(id);
-
-sliders.forEach((sl, i) => sl.addEventListener("input", () => setScene(i)));
-
-$("dualToggle").addEventListener("click", e => {
-  dual = !dual;
-  e.currentTarget.classList.toggle("active", dual);
-  ["cvB", "blockB", "tagA"].forEach(id => $(id).hidden = !dual);
-  $("sceneBlocks").classList.toggle("dual", dual);
-  document.querySelector(".viewer").classList.toggle("dual", dual);
-  setScene(0);
-  if (dual) setScene(1);
-});
-
-// Details panel: hidden by default, arrow toggles it open / closed
-$("detailToggle").addEventListener("click", e => {
-  const open = resultBox.hidden;
-  resultBox.hidden = !open;
-  $("resultPanel").classList.toggle("open", open);
-  e.currentTarget.setAttribute("aria-expanded", open);
-});
-
 // Tap / click anywhere outside a chip or its slider popup closes the open popup
 document.addEventListener("pointerdown", e => {
   if (!e.target.closest(".chip-wrap")) closePops();
 });
 
-const updateBoundaryControls = () => { $("boundaryControls").style.visibility = ZONES[lensType] && lensOn ? "visible" : "hidden"; };
-document.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
-  const k = b.dataset.boundary;
-  boundaryVisibility[k] = !boundaryVisibility[k];
-  b.classList.toggle("active", boundaryVisibility[k]);
-  render();
-}));
-
-const lensButtons = document.querySelectorAll("#lensSwitch button");
-lensButtons.forEach(b => b.addEventListener("click", () => {
-  const t = b.dataset.type;
-  if (lensOn && lensType === t) lensOn = false;            // tap the chosen lens again = take the glasses off
-  else { lensOn = true; lensType = t; }
-  lensButtons.forEach(x => x.classList.toggle("active", lensOn && x === b));
-  updateBoundaryControls();
-  render();
-}));
-
-let canvasZoom = 1;                       // shown as 100% = real 150%
-const ZOOM_BASE = 1.5;
-const updateZoom = () => {
-  views.forEach(v => v.cv.style.transform = `scale(${canvasZoom * ZOOM_BASE})`);
-  $("zoomValue").textContent = Math.round(canvasZoom * 100) + "%";
-};
-$("zoomIn").addEventListener("click", () => { canvasZoom = Math.min(1.5, canvasZoom + 0.25); updateZoom(); });
-$("zoomOut").addEventListener("click", () => { canvasZoom = Math.max(0.5, canvasZoom - 0.25); updateZoom(); });
-$("zoomReset").addEventListener("click", () => { canvasZoom = 1; updateZoom(); });
-
-$("shapeToggle").addEventListener("click", e => {
-  lensCircle = !lensCircle;
-  e.currentTarget.classList.toggle("active", lensCircle);
-  render();
-});
-
-// Reset All: sliders, scenes, dual mode, lens type and zoom back to defaults
-$("resetAll").addEventListener("click", () => {
-  if (lensCircle) $("shapeToggle").click();
-  controlDefs.forEach(d => $(d.id + "Reset").click());
-  sliders[0].value = 0; sliders[1].value = 6;
-  if (dual) $("dualToggle").click();
-  lensOn = false; document.querySelector('#lensSwitch [data-type="far"]').click();
-  closePops();
-  canvasZoom = 1; updateZoom();
-  setScene(0);
-});
-
-setScene(0);
-updateLensPosition();
-updateBoundaryControls();
-updateZoom();
+createSim(0);
+createSim(1);                      // hidden until "Dual" is pressed; drawn the first time it is shown
+setScene(sims[0]);
+updateLensPosition(sims[0]);
 </script>
 </body>
 </html>
