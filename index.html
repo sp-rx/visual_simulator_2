@@ -102,6 +102,7 @@ input[type=range]::-webkit-slider-thumb{box-shadow:0 1px 5px rgba(0,0,0,.35),0 0
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chipgrid{display:grid;grid-template-columns:repeat(4,max-content);gap:8px;justify-content:start}
 .chipgrid .chip{width:100%;justify-content:space-between}
+.chipgrid .copy-btn{justify-content:center}
 .chipgrid .reset-all{grid-row:3;grid-column:4;width:100%;height:36px;padding:0 15px;border-radius:999px;font-size:12px;white-space:nowrap}
 .chip-wrap{position:static}
 .chip{display:flex;align-items:center;gap:6px;height:36px;padding:0 15px;border:1px solid #C9D1C9;border-radius:999px;background:#fff;color:var(--green-dark);font-family:inherit;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap}
@@ -136,18 +137,96 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .result-main{font-size:10px}
 .result-sub{font-size:9px;line-height:1.35;margin-top:2px}
 .result{grid-column:1/-1}
-/* Two simulators side by side */
-.sims{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
-.sims.dual{grid-template-columns:repeat(2,minmax(0,1fr))}
-.sims.dual .pos-pair{grid-template-columns:minmax(0,1fr);gap:6px}
-.sims.dual .pos-pair .pos-row strong{min-width:62px}
+/* Compact sizing for a portrait iPad. Single and dual panels are the same size (single sits in the left half). */
+body{padding:4px}
+.panel{padding:8px;border-radius:10px}
+.layout,.side{gap:8px}
+.group{padding:0 8px}
+.control{padding:3px 0}
+.control-heading strong,.value{font-size:9px}
+.reset-button{font-size:8px;height:16px;padding:0 6px;border-radius:6px}
+.scale,.control.corr .scale{font-size:8px}
+.chipgrid{gap:5px}
+.chip{height:26px;padding:0 9px;font-size:10px;gap:4px}
+.chip .value{font-size:9px}
+.pop{padding:4px 9px 6px}
+.chipgrid .reset-all{height:26px;padding:0 9px;font-size:10px}
+input[type=range]{--th:22px;height:24px}
+input[type=range]::-webkit-slider-thumb{width:22px;height:22px;margin-top:-8px;border-width:2px}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-width:2px}
+.detail-toggle{width:24px;height:24px;font-size:12px}
+.result{height:64px;margin-top:4px;padding:4px 8px}
+.result-main{font-size:9px}
+.result-sub{font-size:8px}
+.pos-row{gap:6px}
+.pos-row strong,.tick{font-size:8px}
+.pos-pair{grid-template-columns:minmax(0,1fr);gap:2px}
+.pos-pair .pos-row strong{min-width:52px}
+.viewpanel{padding:6px 8px}
+.toolbar{gap:5px;margin-top:6px}
+.lens-switch,.boundary-controls{height:28px;padding:3px;gap:3px}
+.lens-switch button{font-size:9px;height:22px;padding:0 9px}
+.boundary-controls button{height:22px;padding:0 8px;font-size:8px}
+.zoom-controls{padding:3px;gap:4px}
+.zoom-controls button{height:22px;min-width:22px;font-size:11px}
+.zoom-controls .zreset{font-size:8px;padding:0 6px}
+.zval{min-width:30px;font-size:8px}
+.cv-tag{font-size:8px;padding:2px 6px}
+/* One shared scene / position / details area; the two eyes (A, B) only differ in their own chips + lens row */
+.sims{display:flex;flex-direction:column;gap:6px;width:100%}
+/* the two eyes: centred and half width when single, full width when dual */
+.pair{display:flex;flex-direction:column;gap:6px;width:50%;margin:0 auto}
+.sims.dual .pair{width:100%}
+.row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-items:start}
+.sims.dual .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ctrlcol{display:flex;flex-direction:column;gap:6px;min-width:0;padding:6px 8px;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF}
+.ctrlcol .toolbar{margin-top:0;justify-content:flex-start}
+.sims .result-panel{align-self:flex-start}
+.sims .result-panel.open{align-self:stretch}
+.sims .pos-pair{grid-template-columns:1fr 1fr auto;gap:16px;align-items:center}
+.viewpanel .scene-row{margin-bottom:4px}
 </style>
 </head>
 <body>
 
 <div class="scale-wrapper">
 <div class="container">
-  <div class="sims" id="sims"></div>
+<div class="sims panel" id="sims">
+
+  <div class="pair">
+    <div class="row" id="rowViews"></div>
+    <div class="row" id="rowCtrls"></div>
+  </div>
+
+  <!-- shared by A and B, always full width -->
+  <div class="viewpanel">
+    <div class="scene-row">
+      <div class="scene-blocks"><div class="control">
+        <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
+        <input type="range" data-r="scene" min="0" max="7" step="1" value="0">
+        <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
+      </div></div>
+      <button class="reset-button dual-btn" data-r="dual" type="button">Dual</button>
+    </div>
+    <div class="pos-pair">
+      <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
+        <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
+        <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
+      <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
+        <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
+        <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
+      <div class="zoom-controls">
+        <button type="button" id="zoomOut">&minus;</button><span class="zval" id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" class="zreset" id="zoomReset">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-panel" id="resultPanel">
+    <button class="detail-toggle" id="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
+    <div class="result" id="resultBox" hidden><div id="result0"></div><div id="result1" hidden></div></div>
+  </div>
+
+</div>
 </div>
 </div>
 
@@ -302,6 +381,7 @@ const SCENE_SHORT = ["City", "Escalator", "Aisle", "Night", "Meeting", "Computer
 const sceneName = k => SCENES.find(x => x[0] === k)[1];
 const sims = [];
 let dual = false;
+const visible = sim => sim.i === 0 || dual;      // B only exists while Dual is on
 const newFan = () => ({ cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) });
 
 // Make one simulator the "active" one: every drawing / vision function reads these globals.
@@ -324,63 +404,34 @@ function panView(v) {
 }
 
 function setScene(sim) {
-  const idx = Number(sim.r("scene").value), tagLetter = "AB"[sim.i];
+  const idx = Number(sim.r("scene").value);          // the scene slider is shared by A and B
   sim.scene = SCENES[idx][0];
-  sim.r("sceneValue").textContent = (dual ? tagLetter + ": " : "") + SCENES[idx][1];
-  sim.r("tag").textContent = tagLetter + " · " + SCENES[idx][1];
+  sim.r("sceneValue").textContent = SCENES[idx][1];
+  sim.r("tag").textContent = "AB"[sim.i];
   useView(sim); drawScene(); panView(sim); sim.bgKey = ""; sim.lvKey = ""; render(sim);
 }
 
-// The whole panel (picture + every control). The same template is used for A and B.
-const panelHTML = i => `
-<div class="stage"><div class="view-row"><div class="viewer"><div class="cv">
+// Per-eye parts. The scene slider, Horizontal / Vertical sliders and the details box are shared (they live in the page itself).
+const viewHTML = () => `<div class="viewer"><div class="cv">
   <canvas data-r="canvas" width="1200" height="800"></canvas><span class="cv-tag" data-r="tag" hidden></span>
-</div></div></div></div>
-<div class="side">
-  <div class="group"><div class="scene-row">
-    <div class="scene-blocks"><div class="control">
-      <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
-      <input type="range" data-r="scene" min="0" max="7" step="1" value="${i ? 6 : 0}">
-      <div class="scale">${SCENE_SHORT.map(t => `<span>${t}</span>`).join("")}</div>
-    </div></div>
-    ${i ? "" : '<button class="reset-button dual-btn" data-r="dual" type="button">Dual</button>'}
-  </div></div>
+</div></div>`;
 
-  <div class="controls"><div class="chipgrid" data-r="grid"><button class="reset-all" data-r="resetAll" type="button">Reset All</button></div></div>
-
-  <div class="result-panel" data-r="resultPanel">
-    <button class="detail-toggle" data-r="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
-    <div class="result" data-r="resultBox" hidden></div>
+const ctrlHTML = () => `
+<div class="controls"><div class="chipgrid" data-r="grid"><button class="reset-all" data-r="resetAll" type="button">Reset All</button></div></div>
+<div class="toolbar">
+  <div class="lens-switch" data-r="lensSwitch">
+    <button type="button" data-type="far" class="active">Far Lens</button>
+    <button type="button" data-type="near">Near Lens</button>
+    <button type="button" data-type="multi">Multifocal Lens</button>
+    <button type="button" data-type="office">Office Lens</button>
   </div>
-
-  <div class="viewpanel">
-    <div class="pos-pair">
-      <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
-        <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
-        <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
-      <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
-        <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
-        <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
-    </div>
-    <div class="toolbar">
-      <div class="lens-switch" data-r="lensSwitch">
-        <button type="button" data-type="far" class="active">Far Lens</button>
-        <button type="button" data-type="near">Near Lens</button>
-        <button type="button" data-type="multi">Multifocal Lens</button>
-        <button type="button" data-type="office">Office Lens</button>
-      </div>
-      <div class="boundary-controls" data-r="boundaryControls">
-        <button type="button" data-boundary="far">Far</button>
-        <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
-        <button type="button" data-boundary="near">Near</button>
-        <button type="button" data-boundary="distortion">Distortion</button>
-      </div>
-      <div class="lens-switch"><button type="button" data-r="shapeToggle">Circle</button></div>
-      <div class="zoom-controls">
-        <button type="button" data-r="zoomOut">&minus;</button><span class="zval" data-r="zoomValue">100%</span><button type="button" data-r="zoomIn">+</button><button type="button" class="zreset" data-r="zoomReset">Reset</button>
-      </div>
-    </div>
+  <div class="boundary-controls" data-r="boundaryControls">
+    <button type="button" data-boundary="far">Far</button>
+    <button style="display:none" type="button" data-boundary="intermediate">Intermediate</button>
+    <button type="button" data-boundary="near">Near</button>
+    <button type="button" data-boundary="distortion">Distortion</button>
   </div>
+  <div class="lens-switch"><button type="button" data-r="shapeToggle">Circle</button></div>
 </div>`;
 
 // Chips + their floating sliders for ONE simulator
@@ -441,9 +492,10 @@ function buildControls(sim) {
 }
 
 const ZOOM_BASE = 1.5;                    // shown as 100% = real 150%
-const updateZoom = sim => {
-  sim.cv.style.transform = `scale(${sim.zoom * ZOOM_BASE})`;
-  sim.r("zoomValue").textContent = Math.round(sim.zoom * 100) + "%";
+let zoomLevel = 1;                         // one zoom for both pictures
+const applyZoom = () => {
+  sims.forEach(s => s.cv.style.transform = `scale(${zoomLevel * ZOOM_BASE})`);
+  $("zoomValue").textContent = Math.round(zoomLevel * 100) + "%";
 };
 const updateBoundaryControls = sim => { sim.r("boundaryControls").style.visibility = ZONES[sim.lensType] && sim.lensOn ? "visible" : "hidden"; };
 
@@ -451,45 +503,54 @@ function toggleDual() {
   dual = !dual;
   sims[0].r("dual").classList.toggle("active", dual);
   $("sims").classList.toggle("dual", dual);
-  sims[1].root.hidden = !dual;
+  sims[1].view.hidden = sims[1].ctrl.hidden = !dual;
+  $("result1").hidden = !dual;
   sims.forEach(s => s.r("tag").hidden = !dual);
   setScene(sims[0]);
-  if (dual) setScene(sims[1]);
+  if (dual) { setScene(sims[1]); updateLensPosition(sims[1]); }
 }
 
 function createSim(i) {
-  const root = document.createElement("div");
-  root.className = "panel layout";
-  root.innerHTML = panelHTML(i);
-  $("sims").appendChild(root);
-  const r = n => root.querySelector('[data-r="' + n + '"]');
+  const view = document.createElement("div");
+  view.innerHTML = viewHTML();
+  const ctrl = document.createElement("div");
+  ctrl.className = "ctrlcol";
+  ctrl.innerHTML = ctrlHTML();
+  $("rowViews").appendChild(view);
+  $("rowCtrls").appendChild(ctrl);
+  if (i === 1) view.hidden = ctrl.hidden = true;     // B stays hidden until "Dual" is pressed
+  // own parts first, then the shared elements (scene / position sliders)
+  const r = n => { const q = '[data-r="' + n + '"]'; return view.querySelector(q) || ctrl.querySelector(q) || document.querySelector(q); };
   const cv = r("canvas"), [sc, sctx] = makeCanvas(), [rawC, rawS] = makeCanvas(), [bgCanvas, bgCtx] = makeCanvas();
   const sim = {
-    i, root, r, cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS,
+    i, view, ctrl, r, cv, ctx: cv.getContext("2d", { willReadFrequently: true }), sc, sctx, raw: rawC, rawS,
     scene: "city", title: "", detail: "", lastHtml: "",
-    // render caches (per simulator)
+    // render caches (per eye)
     bgCanvas, bgCtx, bgKey: "", lvKey: "", lvPool: [], lvPool2: [], smearPool: [], ghostPool: null, regPool: [],
-    // this simulator's own settings
+    // this eye's own settings
     el: {}, userSet: {}, lensOn: true, lensType: "far", lensCircle: false,
     boundary: { far: false, intermediate: false, near: false, distortion: false },
-    panX: 0, panY: 0, FAN: newFan(), zoom: 1,
+    panX: 0, panY: 0, FAN: newFan(),
     fast: false, fastTimer: 0, renderPending: false
   };
   sims.push(sim);
   buildControls(sim);
 
-  r("scene").addEventListener("input", () => setScene(sim));
-  if (i === 0) r("dual").addEventListener("click", toggleDual);
+  if (i === 0) {                                      // "Copy to B": only on A, sits to the right of Add
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "chip copy-btn"; btn.dataset.r = "copyB"; btn.textContent = "Copy to B";
+    btn.style.gridRow = 1; btn.style.gridColumn = 5;
+    r("grid").appendChild(btn);
+    btn.addEventListener("click", () => {
+      const B = sims[1];
+      ["power", "cylinder", "axis", "nearAdd", "accommodation"].forEach(id => { B.el[id].value = sim.el[id].value; });   // Far RX, Cyl Rx, Axis, Add, AA Age
+      B.bgKey = ""; B.lvKey = "";
+      render(B);
+      btn.textContent = "Copied ✓"; setTimeout(() => { btn.textContent = "Copy to B"; }, 900);
+    });
+  }
 
-  // Details panel: hidden by default, arrow toggles it open / closed
-  r("detailToggle").addEventListener("click", e => {
-    const box = r("resultBox"), open = box.hidden;
-    box.hidden = !open;
-    r("resultPanel").classList.toggle("open", open);
-    e.currentTarget.setAttribute("aria-expanded", open);
-  });
-
-  root.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
+  ctrl.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.boundary;
     sim.boundary[k] = !sim.boundary[k];
     b.classList.toggle("active", sim.boundary[k]);
@@ -506,9 +567,6 @@ function createSim(i) {
     render(sim);
   }));
 
-  r("zoomIn").addEventListener("click", () => { sim.zoom = Math.min(1.5, sim.zoom + 0.25); updateZoom(sim); });
-  r("zoomOut").addEventListener("click", () => { sim.zoom = Math.max(0.5, sim.zoom - 0.25); updateZoom(sim); });
-  r("zoomReset").addEventListener("click", () => { sim.zoom = 1; updateZoom(sim); });
 
   r("shapeToggle").addEventListener("click", e => {
     sim.lensCircle = !sim.lensCircle;
@@ -516,19 +574,16 @@ function createSim(i) {
     render(sim);
   });
 
-  // Reset All: this simulator only (its sliders, scene, lens type and zoom). Dual mode is left as it is.
+  // Reset All: this eye only (its chips, lens type, circle). The shared scene / position sliders have their own Reset buttons.
   r("resetAll").addEventListener("click", () => {
     if (sim.lensCircle) r("shapeToggle").click();
-    controlDefs.forEach(d => r(d.id + "Reset").click());
-    r("scene").value = i ? 6 : 0;
+    controlDefs.forEach(d => { if (!d.pos) r(d.id + "Reset").click(); });
     sim.lensOn = false; r("lensSwitch").querySelector('[data-type="far"]').click();
     closePops();
-    sim.zoom = 1; updateZoom(sim);
-    setScene(sim);
+    render(sim);
   });
 
   updateBoundaryControls(sim);
-  updateZoom(sim);
   return sim;
 }
 
@@ -1566,6 +1621,7 @@ function schedule(sim) {
 const FAST_ALWAYS = true, FAST_DELAY = 180;
 const FAST_STEP = 1.25;            // resolution while dragging = 1 / FAST_STEP: 1 = 100% (sharpest, slowest), 1.25 = 80%, 1.5 = 67%, 2 = 50%
 function render(sim) {
+  if (!visible(sim)) return;
   sim.fast = true;
   if (!FAST_ALWAYS) {
     clearTimeout(sim.fastTimer);
@@ -1858,12 +1914,13 @@ function doRender(sim) {
     }
   });
   renderView(sim);
-  const html = `<div><div class="result-main">${dual ? "AB"[sim.i] + " · " : ""}${sim.title}</div><div class="result-sub">${sim.detail}</div></div>`;
-  if (html !== sim.lastHtml) { sim.r("resultBox").innerHTML = html; sim.lastHtml = html; }
+  const html = `<div class="result-main">${dual ? "AB"[sim.i] + " · " : ""}${sim.title}</div><div class="result-sub">${sim.detail}</div>`;
+  if (html !== sim.lastHtml) { $("result" + sim.i).innerHTML = html; sim.lastHtml = html; }
 }
 
 /* ---------- VIEW POSITION (the lens stays in the middle, the scene moves) ---------- */
 function updateLensPosition(sim) {
+  if (!visible(sim)) return;
   const h = Number(sim.el.lensPosition.value);
   const v = Number(sim.el.lensVerticalPosition.value);
   sim.panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
@@ -1883,8 +1940,22 @@ document.addEventListener("pointerdown", e => {
   if (!e.target.closest(".chip-wrap")) closePops();
 });
 
+// Details box (shared, at the very bottom): arrow toggles it open / closed
+$("detailToggle").addEventListener("click", e => {
+  const box = $("resultBox"), open = box.hidden;
+  box.hidden = !open;
+  $("resultPanel").classList.toggle("open", open);
+  e.currentTarget.setAttribute("aria-expanded", open);
+});
+
 createSim(0);
 createSim(1);                      // hidden until "Dual" is pressed; drawn the first time it is shown
+$("zoomIn").addEventListener("click", () => { zoomLevel = Math.min(1.5, zoomLevel + 0.25); applyZoom(); });
+$("zoomOut").addEventListener("click", () => { zoomLevel = Math.max(0.5, zoomLevel - 0.25); applyZoom(); });
+$("zoomReset").addEventListener("click", () => { zoomLevel = 1; applyZoom(); });
+applyZoom();
+sims[0].r("scene").addEventListener("input", () => sims.forEach(s => { if (visible(s)) setScene(s); }));   // ONE scene slider moves both
+sims[0].r("dual").addEventListener("click", toggleDual);
 setScene(sims[0]);
 updateLensPosition(sims[0]);
 </script>
