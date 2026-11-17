@@ -180,7 +180,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-width:2px}
 .row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-items:start}
 .sims.dual .row{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ctrlcol{display:flex;flex-direction:column;gap:6px;min-width:0;padding:6px 8px;border:1px solid #E5E0D5;border-radius:10px;background:#FBF8EF}
-.ctrlcol .toolbar{margin-top:0;justify-content:flex-start}
+.ctrlcol .toolbar{margin-top:8px;justify-content:flex-start}
 .sims .result-panel{align-self:flex-start}
 .sims .result-panel.open{align-self:stretch}
 .sims .pos-pair{grid-template-columns:1fr 1fr auto;gap:16px;align-items:center}
@@ -536,10 +536,10 @@ function createSim(i) {
   sims.push(sim);
   buildControls(sim);
 
-  if (i === 0) {                                      // "Copy to B": only on A, sits to the right of Add
+  if (i === 0) {                                      // "Copy to B": only on A, row 4 under Reset All
     const btn = document.createElement("button");
     btn.type = "button"; btn.className = "chip copy-btn"; btn.dataset.r = "copyB"; btn.textContent = "Copy to B";
-    btn.style.gridRow = 1; btn.style.gridColumn = 5;
+    btn.style.gridRow = 4; btn.style.gridColumn = 4;
     r("grid").appendChild(btn);
     btn.addEventListener("click", () => {
       const B = sims[1];
@@ -548,6 +548,12 @@ function createSim(i) {
       render(B);
       btn.textContent = "Copied ✓"; setTimeout(() => { btn.textContent = "Copy to B"; }, 900);
     });
+  } else {                                            // invisible twin on B so A and B keep the same height and the lens rows line up
+    const ph = document.createElement("button");
+    ph.type = "button"; ph.className = "chip copy-btn"; ph.textContent = "Copy to B"; ph.tabIndex = -1;
+    ph.setAttribute("aria-hidden", "true"); ph.style.visibility = "hidden";
+    ph.style.gridRow = 4; ph.style.gridColumn = 4;
+    r("grid").appendChild(ph);
   }
 
   ctrl.querySelectorAll("[data-boundary]").forEach(b => b.addEventListener("click", () => {
