@@ -185,6 +185,38 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-width:2px}
 .sims .result-panel.open{align-self:stretch}
 .sims .pos-pair{grid-template-columns:1fr 1fr auto;gap:16px;align-items:center}
 .viewpanel .scene-row{margin-bottom:4px}
+/* ===== Full-screen scenes. Controls and details are pop-up sheets. ===== */
+html,body{height:100%}
+body{padding:0;overflow:hidden}
+.scale-wrapper,.container{height:100%}
+.container{zoom:1;max-width:none;margin:0}
+.sims.panel{height:100vh;height:100dvh;padding:4px;border-radius:0;border:0;box-shadow:none;gap:4px}
+.ui{zoom:0.72}                                   /* the small-UI scale now only applies to the bar and the sheets, not to the scenes */
+
+/* the scenes take every pixel that is left above the bar; 3:2 pictures sized from the free space (container query units) */
+.views{flex:1;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;gap:4px}
+.views > div{display:flex}
+.viewer{flex:none;width:min(100cqw,150cqh);aspect-ratio:3/2}
+.sims.dual .viewer{width:min(calc(50cqw - 2px),150cqh)}                     /* landscape: side by side */
+@media (orientation:portrait){
+  .sims.dual .views{flex-direction:column}                                  /* portrait: A above B, each as big as fits */
+  .sims.dual .viewer{width:min(100cqw,calc(75cqh - 3px))}
+}
+
+.bar{flex:none}
+.bar .viewpanel{border-radius:10px}
+.scene-btns{display:flex;gap:6px;flex:none;margin-top:8px}
+.scene-btns .dual-btn{margin-top:0}
+.tbtn{height:22px;padding:0 10px;font-size:9px;font-weight:bold;border-radius:999px}
+.tbtn.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* pop-up sheets sit just above the bar, so the scenes and the sliders stay visible */
+.sheet{display:none;position:fixed;left:0;right:0;bottom:var(--barH,120px);z-index:100;background:var(--panel);border-top:1px solid #D8D2C4;box-shadow:0 -6px 20px rgba(41,45,42,.25);padding:4px 8px 6px}
+.sheet.open{display:block}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sheet-head strong{font-size:10px;color:var(--green-dark)}
+.sheet-close{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);border-radius:999px;height:22px;width:26px;font-size:11px;font-weight:bold;cursor:pointer}
+.sheet .result{height:auto;min-height:48px;margin:0;background:none;border:0}
 </style>
 </head>
 <body>
@@ -193,38 +225,48 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-width:2px}
 <div class="container">
 <div class="sims panel" id="sims">
 
-  <div class="pair">
-    <div class="row" id="rowViews"></div>
-    <div class="row" id="rowCtrls"></div>
-  </div>
+  <div class="views" id="rowViews"></div>
 
-  <!-- shared by A and B, always full width -->
-  <div class="viewpanel">
-    <div class="scene-row">
-      <div class="scene-blocks"><div class="control">
-        <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
-        <input type="range" data-r="scene" min="0" max="7" step="1" value="0">
-        <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
-      </div></div>
-      <button class="reset-button dual-btn" data-r="dual" type="button">Dual</button>
-    </div>
-    <div class="pos-pair">
-      <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
-        <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
-        <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
-      <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
-        <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
-        <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
-      <div class="zoom-controls">
-        <button type="button" id="zoomOut">&minus;</button><span class="zval" id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" class="zreset" id="zoomReset">Reset</button>
+  <!-- shared by A and B -->
+  <div class="bar" id="bar"><div class="ui">
+    <div class="viewpanel">
+      <div class="scene-row">
+        <div class="scene-blocks"><div class="control">
+          <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
+          <input type="range" data-r="scene" min="0" max="7" step="1" value="0">
+          <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
+        </div></div>
+        <div class="scene-btns">
+          <button class="reset-button tbtn" id="btnControls" type="button">Controls</button>
+          <button class="reset-button tbtn" id="btnDetails" type="button">Details</button>
+          <button class="reset-button tbtn dual-btn" data-r="dual" type="button">Dual</button>
+        </div>
+      </div>
+      <div class="pos-pair">
+        <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
+          <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
+          <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
+        <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
+          <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
+          <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
+        <div class="zoom-controls">
+          <button type="button" id="zoomOut">&minus;</button><span class="zval" id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" class="zreset" id="zoomReset">Reset</button>
+        </div>
       </div>
     </div>
-  </div>
+  </div></div>
 
-  <div class="result-panel" id="resultPanel">
-    <button class="detail-toggle" id="detailToggle" type="button" aria-expanded="false" aria-label="Toggle details"><span class="arrow">▸</span></button>
-    <div class="result" id="resultBox" hidden><div id="result0"></div><div id="result1" hidden></div></div>
-  </div>
+  <!-- pop-up: every eye's chips + lens buttons -->
+  <div class="sheet" id="ctrlSheet"><div class="ui">
+    <div class="sheet-head"><strong>Controls</strong><button class="sheet-close" data-close="ctrlSheet" type="button">&times;</button></div>
+    <div class="row" id="rowCtrls"></div>
+  </div></div>
+
+  <!-- pop-up: details -->
+  <div class="sheet" id="detailSheet"><div class="ui">
+    <div class="sheet-head"><strong>Details</strong><button class="sheet-close" data-close="detailSheet" type="button">&times;</button></div>
+    <div class="result" id="resultBox"><div id="result0"></div><div id="result1" hidden></div></div>
+  </div></div>
 
 </div>
 </div>
@@ -1946,13 +1988,21 @@ document.addEventListener("pointerdown", e => {
   if (!e.target.closest(".chip-wrap")) closePops();
 });
 
-// Details box (shared, at the very bottom): arrow toggles it open / closed
-$("detailToggle").addEventListener("click", e => {
-  const box = $("resultBox"), open = box.hidden;
-  box.hidden = !open;
-  $("resultPanel").classList.toggle("open", open);
-  e.currentTarget.setAttribute("aria-expanded", open);
-});
+// Pop-up sheets: Controls and Details (one open at a time; they sit above the bar so the sliders stay reachable)
+const sheetBtn = { ctrlSheet: $("btnControls"), detailSheet: $("btnDetails") };
+function openSheet(id) {
+  const open = !$(id).classList.contains("open");
+  Object.keys(sheetBtn).forEach(k => { $(k).classList.toggle("open", k === id && open); sheetBtn[k].classList.toggle("active", k === id && open); });
+  closePops();
+}
+$("btnControls").addEventListener("click", () => openSheet("ctrlSheet"));
+$("btnDetails").addEventListener("click", () => openSheet("detailSheet"));
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => openSheet(b.dataset.close)));
+
+// the sheets sit right above the bar, whatever height the bar has
+const setBarH = () => document.documentElement.style.setProperty("--barH", $("bar").offsetHeight + 4 + "px");
+new ResizeObserver(setBarH).observe($("bar"));
+setBarH();
 
 createSim(0);
 createSim(1);                      // hidden until "Dual" is pressed; drawn the first time it is shown
