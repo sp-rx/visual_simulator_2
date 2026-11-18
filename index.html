@@ -217,6 +217,25 @@ body{padding:0;overflow:hidden}
 .sheet-head strong{font-size:10px;color:var(--green-dark)}
 .sheet-close{border:1px solid #C9D1C9;background:transparent;color:var(--green-dark);border-radius:999px;height:22px;width:26px;font-size:11px;font-weight:bold;cursor:pointer}
 .sheet .result{height:auto;min-height:48px;margin:0;background:none;border:0}
+/* breathing room around everything, so edge buttons are easy to hit on the iPad */
+.sims.panel{padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px)) 16px;gap:10px}
+.bar .viewpanel{padding:10px 14px}
+.sheet{left:10px;right:10px;border:1px solid #D8D2C4;border-radius:12px;padding:6px 12px 10px}
+/* ===== Bigger slider handles / buttons for the iPad ===== */
+input[type=range]{--th:44px;height:48px}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px}
+input[type=range]::-webkit-slider-thumb{width:35px;height:28px;margin-top:-11px;border-width:3px}
+input[type=range]::-moz-range-thumb{width:34px;height:34px;border-width:3px}
+.reset-button{height:28px;padding:0 10px;font-size:9px;border-radius:8px}
+.tbtn{height:30px;padding:0 12px;font-size:10px}
+.zoom-controls button{height:30px;min-width:30px;font-size:13px}
+.zoom-controls .zreset{font-size:9px;padding:0 9px}
+
+/* ===== Taller pictures: the scene is cropped at the sides and scaled up to fill the height ===== */
+.viewer{aspect-ratio:auto}                         /* width + height are set from the free space by layoutViewers() */
+.cv{container-type:inline-size}
+canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens fills the width; the part that overflows is cropped */
 </style>
 </head>
 <body>
@@ -533,10 +552,21 @@ function buildControls(sim) {
   });
 }
 
-const ZOOM_BASE = 1.5;                    // shown as 100% = real 150%
+// Size the pictures: as big as the free space allows. Never taller than square (so the whole lens stays visible), never wider than 3:2.
+// A tall free area (portrait single, landscape dual) therefore gets a taller picture, with the sides of the scene cropped.
+const VIEW_MIN_ASPECT = 1;          // 1 = never taller than square, whole lens always visible. Lower (e.g. 0.85) = taller picture, but the left/right ends of the lens get cropped
+function layoutViewers() {
+  const box = $("rowViews"), gap = 4, cw = box.clientWidth, ch = box.clientHeight;
+  if (!cw || !ch) return;
+  const portrait = innerHeight > innerWidth;
+  const cell = !dual ? [cw, ch] : portrait ? [cw, (ch - gap) / 2] : [(cw - gap) / 2, ch];
+  const A = Math.min(1.5, Math.max(VIEW_MIN_ASPECT, cell[0] / cell[1]));      // picture width / height
+  const w = Math.min(cell[0], cell[1] * A), h = w / A;
+  sims.forEach(s => { const v = s.cv.closest(".viewer"); v.style.width = Math.floor(w) + "px"; v.style.height = Math.floor(h) + "px"; });
+}
 let zoomLevel = 1;                         // one zoom for both pictures
 const applyZoom = () => {
-  sims.forEach(s => s.cv.style.transform = `scale(${zoomLevel * ZOOM_BASE})`);
+  sims.forEach(s => s.cv.style.transform = `translate(-50%, -50%) scale(${zoomLevel})`);
   $("zoomValue").textContent = Math.round(zoomLevel * 100) + "%";
 };
 const updateBoundaryControls = sim => { sim.r("boundaryControls").style.visibility = ZONES[sim.lensType] && sim.lensOn ? "visible" : "hidden"; };
@@ -548,6 +578,7 @@ function toggleDual() {
   sims[1].view.hidden = sims[1].ctrl.hidden = !dual;
   $("result1").hidden = !dual;
   sims.forEach(s => s.r("tag").hidden = !dual);
+  layoutViewers();
   setScene(sims[0]);
   if (dual) { setScene(sims[1]); updateLensPosition(sims[1]); }
 }
@@ -2000,8 +2031,9 @@ $("btnDetails").addEventListener("click", () => openSheet("detailSheet"));
 document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => openSheet(b.dataset.close)));
 
 // the sheets sit right above the bar, whatever height the bar has
-const setBarH = () => document.documentElement.style.setProperty("--barH", $("bar").offsetHeight + 4 + "px");
+const setBarH = () => document.documentElement.style.setProperty("--barH", (innerHeight - $("bar").getBoundingClientRect().top + 6) + "px");   // distance from the screen bottom to just above the bar
 new ResizeObserver(setBarH).observe($("bar"));
+addEventListener("resize", setBarH); addEventListener("orientationchange", () => setTimeout(setBarH, 200));
 setBarH();
 
 createSim(0);
@@ -2010,6 +2042,9 @@ $("zoomIn").addEventListener("click", () => { zoomLevel = Math.min(1.5, zoomLeve
 $("zoomOut").addEventListener("click", () => { zoomLevel = Math.max(0.5, zoomLevel - 0.25); applyZoom(); });
 $("zoomReset").addEventListener("click", () => { zoomLevel = 1; applyZoom(); });
 applyZoom();
+new ResizeObserver(layoutViewers).observe($("rowViews"));
+addEventListener("orientationchange", () => setTimeout(layoutViewers, 200));
+layoutViewers();
 sims[0].r("scene").addEventListener("input", () => sims.forEach(s => { if (visible(s)) setScene(s); }));   // ONE scene slider moves both
 sims[0].r("dual").addEventListener("click", toggleDual);
 setScene(sims[0]);
