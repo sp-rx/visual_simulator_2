@@ -222,11 +222,11 @@ body{padding:0;overflow:hidden}
 .bar .viewpanel{padding:10px 14px}
 .sheet{left:10px;right:10px;border:1px solid #D8D2C4;border-radius:12px;padding:6px 12px 10px}
 /* ===== Bigger slider handles / buttons for the iPad ===== */
-input[type=range]{--th:44px;height:48px}
+input[type=range]{--th:33px;height:48px}
 input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px}
 input[type=range]::-moz-range-track{height:8px;border-radius:4px}
-input[type=range]::-webkit-slider-thumb{width:35px;height:28px;margin-top:-11px;border-width:3px}
-input[type=range]::-moz-range-thumb{width:34px;height:34px;border-width:3px}
+input[type=range]::-webkit-slider-thumb{width:33px;height:22px;margin-top:-7px;border-radius:11px;border-width:3px}
+input[type=range]::-moz-range-thumb{width:27px;height:16px;border-radius:8px;border-width:3px}
 .reset-button{height:28px;padding:0 10px;font-size:9px;border-radius:8px}
 .tbtn{height:30px;padding:0 12px;font-size:10px}
 .zoom-controls button{height:30px;min-width:30px;font-size:13px}
@@ -236,6 +236,8 @@ input[type=range]::-moz-range-thumb{width:34px;height:34px;border-width:3px}
 .viewer{aspect-ratio:auto}                         /* width + height are set from the free space by layoutViewers() */
 .cv{container-type:inline-size}
 canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens fills the width; the part that overflows is cropped */
+.control-heading.scene-head{justify-content:flex-start;gap:6px}
+.chip:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body>
@@ -251,7 +253,7 @@ canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens
     <div class="viewpanel">
       <div class="scene-row">
         <div class="scene-blocks"><div class="control">
-          <div class="control-heading"><strong>Viewing Scene</strong><span class="value" data-r="sceneValue"></span></div>
+          <div class="control-heading scene-head"><strong>Viewing Scene :</strong><span class="value" data-r="sceneValue"></span></div>
           <input type="range" data-r="scene" min="0" max="7" step="1" value="0">
           <div class="scale"><span>City</span><span>Escalator</span><span>Aisle</span><span>Night</span><span>Meeting</span><span>Computer</span><span>Phone</span><span>Duo + Fan</span></div>
         </div></div>
@@ -321,8 +323,8 @@ function lensPath(c) {
 /* ---------- AGE <-> ACCOMMODATION (estimate) ---------- */
 const AGE_TABLE = [[0.25, 58], [0.5, 53], [1, 49], [2, 43], [3, 38], [4, 33], [5, 27]];   // [diopters, age]
 function ageLabel(acc) {
-  if (acc <= AGE_TABLE[0][0]) return AGE_TABLE[0][1] + "+ yrs";
-  if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs & below";
+  if (acc <= AGE_TABLE[0][0]) return ">" + AGE_TABLE[0][1] + " yrs";
+  if (acc >= AGE_TABLE[AGE_TABLE.length - 1][0]) return "<" + AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs";
   for (let i = 1; i < AGE_TABLE.length; i++) {
     const [a0, y0] = AGE_TABLE[i - 1], [a1, y1] = AGE_TABLE[i];
     if (acc <= a1) return "~" + Math.round(y0 + (acc - a0) / (a1 - a0) * (y1 - y0)) + " yrs";
@@ -334,7 +336,7 @@ const controlDefs = [
   { rx: true, id: "power", label: "Far Lens Power", min: -10, max: 10, step: 0.25, v: 0,
     f: v => (v > 0 ? "+" : "") + v.toFixed(2) + " D", s: ["-10.00 D Myopia", "0.00 D", "+10.00 D Hyperopia"] },
   { rx: true, id: "accommodation", label: "Accommodation (Age)", min: 0.25, max: 5, step: 0.25, v: 3,
-    f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: [AGE_TABLE[0][1] + "+ yrs", AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs & below"] },
+    f: v => "+" + v.toFixed(2) + " D · " + ageLabel(v), s: [">" + AGE_TABLE[0][1] + " yrs", "&lt;" + AGE_TABLE[AGE_TABLE.length - 1][1] + " yrs"] },
   { rx: true, id: "cylinder", label: "Cylinder", min: 0, max: 4, step: 0.25, v: 0,
     f: v => v.toFixed(2), s: ["0", "4.00"] },
   { rx: true, id: "axis", label: "Axis", min: 0, max: 180, step: 5, v: 0,
@@ -363,10 +365,18 @@ controlDefs.forEach(d => { defById[d.id] = d; });
 const q25 = x => Math.round(x / 0.25) * 0.25;
 
 // A correction slider is the lens actually worn, in 0.25 D steps: from 50% of its base up to 0.50 D (2 steps) over-corrected.
+// When the base Rx is 0.00 the slider still works: it is then a plain lens power on an eye with no error
+// (far: -1.50 .. +1.50 D, signed; cylinder and add: 0 .. +1.50 D). Default is 0.00 (no lens power).
+const CORR_ZERO_SPAN = 1.5;
 function corrRange(d) {
   const base = Number(el[d.base].value), B = Math.abs(base);
-  if (B === 0) return { base, B, lo: 0, hi: 0 };
+  if (B === 0) return { base, B, zero: true, lo: d.base === "power" ? -CORR_ZERO_SPAN : 0, hi: CORR_ZERO_SPAN };
   return { base, B, lo: Math.max(0.25, q25(0.5 * B)), hi: B + 1.5 };
+}
+// The lens value in D, with its sign (for the far lens at 0 Rx the slider is already signed)
+function corrLens(d) {
+  const r = corrRange(d), m = Number(el[d.id].value);
+  return r.zero ? m : (r.base < 0 ? -1 : 1) * m;
 }
 // Axis tolerance (deg, each way) shrinks exponentially as the eye's cylinder grows:
 // AXIS_TOL_LOW at AXIS_TOL_CYL_LOW (0.25 D)  ->  AXIS_TOL_MIN at AXIS_TOL_CYL_HIGH (2.75 D) and above.
@@ -402,7 +412,19 @@ function syncCorrection(d) {
     return;
   }
   const r = corrRange(d), sg = r.base < 0 ? "-" : "+";
-  if (r.B === 0) { slider.min = 0; slider.max = 0; slider.value = 0; ["Lo", "Mid", "Hi"].forEach(k => lab(k).textContent = "-"); return; }
+  if (r.zero) {                                      // base Rx is 0.00: the slider is a free lens power (0.00 D = no lens)
+    const prev = Number(slider.value);
+    slider.min = r.lo; slider.max = r.hi; slider.step = 0.25;
+    slider.value = userSet[d.id] ? Math.min(r.hi, Math.max(r.lo, prev)) : 0;
+    const f = v => Math.min(1, Math.max(0, (v - r.lo) / (r.hi - r.lo)));
+    const p = v => `calc(var(--th,28px)/2 + (100% - var(--th,28px)) * ${f(v).toFixed(4)})`;
+    slider.style.setProperty("--tg", `linear-gradient(to right,#E7A9A2 0 ${p(-0.125)},#CBD6CD ${p(-0.125)} ${p(0.125)},#E7A9A2 ${p(0.125)} 100%)`);   // green only at 0.00 D, anything else is a lens the eye doesn't need
+    lab("Lo").textContent = r.lo < 0 ? "-" + (-r.lo).toFixed(2) + " D" : "0.00 D";
+    lab("Mid").textContent = r.lo < 0 ? "0.00 D" : "";
+    lab("Hi").textContent = "+" + r.hi.toFixed(2) + " D";
+    return;
+  }
+  slider.style.removeProperty("--tg");
   const clamp = v => Math.min(r.hi, Math.max(r.lo, v)), prev = Number(slider.value);
   slider.min = r.lo; slider.max = r.hi; slider.step = 0.25;
   slider.value = userSet[d.id] ? clamp(prev) : clamp(r.B);
@@ -422,7 +444,8 @@ function corrLabel(d) {
     return m + "° · " + (df === 0 ? "exact" : (df > 0 ? "+" : "") + df + "°");
   }
   const r = corrRange(d), m = Number(el[d.id].value);
-  return r.B === 0 ? "0.00 D" : (r.base < 0 ? "-" : "+") + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
+  if (r.zero) return (m > 0 ? "+" : "") + m.toFixed(2) + " D";
+  return (r.base < 0 ? "-" : "+") + m.toFixed(2) + " D · " + Math.round(m / r.B * 100) + "%";
 }
 
 // Slider chips: one floating slider open at a time
@@ -443,6 +466,40 @@ const sceneName = k => SCENES.find(x => x[0] === k)[1];
 const sims = [];
 let dual = false;
 const visible = sim => sim.i === 0 || dual;      // B only exists while Dual is on
+
+/* ---------- CONTACTS LENS ---------- */
+// Simultaneous-vision contact lens: three adds only, a little haze everywhere (depth of focus), no multifocal / barrel / pincushion distortion,
+// and only a quarter of the usual magnification / minification.
+const CONTACT_ADDS = [["No", 0, 0, 0], ["Low", 0.5, 0.05, 0.1], ["Med", 1, 0.1, 0.2], ["High", 1.5, 0.15, 0.3]];     // [name, add in D, haze strength in D, spherical shift in D]. "No" = a plain contact lens (no add, no haze, no shift)
+// The haze is drawn as a halo: a faint, wide, blurred copy sitting behind the real image, as if the bright parts "bleed" outward.
+const HALO_WEIGHT = 5.00;        // halo opacity per 1 D of haze (low 34%, med 67%, high 100% -> capped at HALO_MAX). Was 0.67
+const HALO_MAX = 30;
+const HALO_RADIUS_BASE = 1, HALO_RADIUS_PER_D = 50;     // halo blur radius in px = base + per_D * haze  (low 10, med 15, high 20). Was 10 per D
+const HALO_SHIFT = 2;            // px; set e.g. 3 to push the halo slightly sideways for more of a ghost / double-image look
+const CONTACT_MAG = 0.25;        // fraction of the normal magnification / minification that remains (set 0 for none at all)
+// The add also works like a spherical shift in the eye's vision (4th number in CONTACT_ADDS): Low +0.25 D, Med +0.50 D, High +0.75 D of extra plus.
+// Far gets blurrier (it is now seen as if the eye were that much more myopic), near gets easier (less accommodation needed). Not used on the duo + fan scene.
+const contactIndex = D => { let best = 0; CONTACT_ADDS.forEach(([n, a], i) => { if (Math.abs(a - D) <= Math.abs(CONTACT_ADDS[best][1] - D)) best = i; }); return best; };   // nearest add (ties go higher)
+const contactLabel = i => { const [n, a] = CONTACT_ADDS[i]; return a ? n + " +" + a.toFixed(2) : n; };
+// The Add slider holds the real add in D normally; while Contacts is on it holds 0..3 = No / Low / Med / High.
+const getAdd = sim => { const v = Number(sim.el.nearAdd.value); return sim.contactMode ? CONTACT_ADDS[Math.round(v)][1] : v; };
+const setAdd = (sim, D) => { sim.el.nearAdd.value = sim.contactMode ? contactIndex(D) : D; };
+// While the Contacts lens is on, the Add chip offers only No / Low / Med / High; the Near RX % chip is not used (the add IS the lens).
+function syncContacts(sim) {
+  const on = sim.lensOn && sim.lensType === "contacts";
+  if (on === sim.contactMode) return;
+  const D = getAdd(sim);                              // current add in D, read in the old mode
+  sim.contactMode = on;
+  const d = defById.nearAdd, sl = sim.r("nearAdd"), sc = sim.r("nearAddScale");
+  if (on) {
+    sl.min = 0; sl.max = 3; sl.step = 1; sl.value = contactIndex(D);
+    sc.innerHTML = CONTACT_ADDS.map((_, i) => `<span>${contactLabel(i)}</span>`).join("");
+  } else {
+    sl.min = d.min; sl.max = d.max; sl.step = d.step; sl.value = D;
+    sc.innerHTML = d.s.map(t => `<span>${t}</span>`).join("");
+  }
+  sim.r("nearCorrectionChip").closest(".chip-wrap").querySelector(".chip").disabled = on;
+}
 const newFan = () => ({ cx: FAN_CX, cy: FAN_CY, x0: FAN_CX - (FAN_R + 120), y0: FAN_CY - (FAN_R + 120), size: 2 * (FAN_R + 120) });
 
 // Make one simulator the "active" one: every drawing / vision function reads these globals.
@@ -485,6 +542,7 @@ const ctrlHTML = () => `
     <button type="button" data-type="near">Near Lens</button>
     <button type="button" data-type="multi">Multifocal Lens</button>
     <button type="button" data-type="office">Office Lens</button>
+    <button type="button" data-type="contacts">Contacts</button>
   </div>
   <div class="boundary-controls" data-r="boundaryControls">
     <button type="button" data-boundary="far">Far</button>
@@ -509,7 +567,7 @@ function buildControls(sim) {
          <input type="range" data-r="${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${d.v}">
          ${d.corr
            ? `<div class="scale"><span data-r="${d.id}Lo"></span><span data-r="${d.id}Mid"></span><span data-r="${d.id}Hi"></span></div>`
-           : `<div class="scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
+           : `<div class="scale" data-r="${d.id}Scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
 
       const wrap = document.createElement("div");
       wrap.className = "chip-wrap";
@@ -604,7 +662,7 @@ function createSim(i) {
     el: {}, userSet: {}, lensOn: true, lensType: "far", lensCircle: false,
     boundary: { far: false, intermediate: false, near: false, distortion: false },
     panX: 0, panY: 0, FAN: newFan(),
-    fast: false, fastTimer: 0, renderPending: false
+    fast: false, fastTimer: 0, renderPending: false, contactMode: false
   };
   sims.push(sim);
   buildControls(sim);
@@ -616,7 +674,8 @@ function createSim(i) {
     r("grid").appendChild(btn);
     btn.addEventListener("click", () => {
       const B = sims[1];
-      ["power", "cylinder", "axis", "nearAdd", "accommodation"].forEach(id => { B.el[id].value = sim.el[id].value; });   // Far RX, Cyl Rx, Axis, Add, AA Age
+      ["power", "cylinder", "axis", "accommodation"].forEach(id => { B.el[id].value = sim.el[id].value; });   // Far RX, Cyl Rx, Axis, AA Age
+      setAdd(B, getAdd(sim));                                                                                 // Add (converted if B is on Contacts)
       B.bgKey = ""; B.lvKey = "";
       render(B);
       btn.textContent = "Copied ✓"; setTimeout(() => { btn.textContent = "Copy to B"; }, 900);
@@ -642,6 +701,7 @@ function createSim(i) {
     if (sim.lensOn && sim.lensType === t) sim.lensOn = false;       // tap the chosen lens again = take the glasses off
     else { sim.lensOn = true; sim.lensType = t; }
     lensButtons.forEach(x => x.classList.toggle("active", sim.lensOn && x === b));
+    syncContacts(sim);
     updateBoundaryControls(sim);
     render(sim);
   }));
@@ -656,8 +716,9 @@ function createSim(i) {
   // Reset All: this eye only (its chips, lens type, circle). The shared scene / position sliders have their own Reset buttons.
   r("resetAll").addEventListener("click", () => {
     if (sim.lensCircle) r("shapeToggle").click();
-    controlDefs.forEach(d => { if (!d.pos) r(d.id + "Reset").click(); });
     sim.lensOn = false; r("lensSwitch").querySelector('[data-type="far"]').click();
+    syncContacts(sim);
+    controlDefs.forEach(d => { if (!d.pos) r(d.id + "Reset").click(); });
     closePops();
     render(sim);
   });
@@ -960,7 +1021,7 @@ function drawNightScene() {
     R("rgba(255,255,255," + (0.35 + r2() * 0.5).toFixed(2) + ")", -400 + r2() * 2000, -260 + r2() * 480, sz, sz);
   }
   // moon (seen through the right side window)
-  S.globalCompositeOperation = "lighter"; glow(1330, 130, 110, "190,205,255", 0.35); S.globalCompositeOperation = "source-over";
+  S.globalCompositeOperation = "lighter"; glow(1330, 130, 55, "190,205,255", 0.18); S.globalCompositeOperation = "source-over";
   C("#E8EEF8", 1330, 130, 34); C("#D3DBEA", 1318, 120, 8); C("#D3DBEA", 1342, 142, 6); C("#D3DBEA", 1339, 114, 4);
 
   let seed = 11;
@@ -990,7 +1051,7 @@ function drawNightScene() {
       const ex = 600 + sd * (55 + 545 * u), top = y - (30 + 220 * u), lx = ex - sd * (10 + 30 * u);
       R("#222", ex - 1 - 2 * u, top, 2 + 4 * u, y - top);
       S.globalCompositeOperation = "lighter";
-      glow(lx, top, 30 + 90 * u, "255,200,110", 0.45);
+      glow(lx, top, 10 + 30 * u, "255,200,110", 0.22);
       S.globalCompositeOperation = "source-over";
       C("#FFE9B0", lx, top, 2 + 5 * u);
     });
@@ -1017,11 +1078,11 @@ function drawNightScene() {
       const lx = cx + sd * cw * 0.32, ly = yB - ch * 0.4;
       S.globalCompositeOperation = "lighter";
       if (oncoming) {
-        glow(lx, ly, cw * 0.55, "255,235,190", 0.4);
-        glow(lx, yB + ch * 0.15, cw * 0.35, "255,235,190", 0.15);
+        glow(lx, ly, cw * 0.25, "255,235,190", 0.22);
+        glow(lx, yB + ch * 0.15, cw * 0.18, "255,235,190", 0.08);
       } else {
-        glow(lx, ly, cw * 0.5, "255,40,30", 0.45);
-        glow(lx, yB + ch * 0.15, cw * 0.3, "255,40,30", 0.15);
+        glow(lx, ly, cw * 0.22, "255,40,30", 0.25);
+        glow(lx, yB + ch * 0.15, cw * 0.15, "255,40,30", 0.08);
       }
       S.globalCompositeOperation = "source-over";
       oval(oncoming ? "#FFF1C9" : "#FF4036", lx, ly, cw * 0.09, cw * 0.045);
@@ -1047,14 +1108,14 @@ function drawNightScene() {
     POLY("#08090C", [[0, 30], [130, 30], [100, 660], [0, 660]]);   // A-pillar
     POLY("#14161A", [[-172, 470], [0, 500], [0, 525], [-172, 495]]);   // mirror arm
     RR("#14161A", -300, 410, 130, 80, 16); RR("#232B3B", -292, 418, 114, 64, 12);   // side mirror
-    S.globalCompositeOperation = "lighter"; glow(-250, 455, 32, "255,40,30", 0.3); S.globalCompositeOperation = "source-over";
+    S.globalCompositeOperation = "lighter"; glow(-250, 455, 14, "255,40,30", 0.15); S.globalCompositeOperation = "source-over";
     S.restore();
   });
 
   // rear-view mirror
   R("#14161A", 596, 66, 8, 20);
   RR("#14161A", 500, 80, 200, 58, 14); RR("#232B3B", 507, 87, 186, 44, 10);
-  S.globalCompositeOperation = "lighter"; glow(600, 112, 40, "255,40,30", 0.25); S.globalCompositeOperation = "source-over";
+  S.globalCompositeOperation = "lighter"; glow(600, 112, 18, "255,40,30", 0.12); S.globalCompositeOperation = "source-over";
 
   // dashboard (wider, so it meets both doors)
   POLY("#0D0E12", [[-340, 720], [0, 690], [260, 660], [940, 660], [W, 690], [W + 340, 720], [W + 340, 1500], [-340, 1500]]);
@@ -1448,17 +1509,30 @@ function getSceneDemand() {
 
 /* Eye with far point `power` and `accommodation` sees clearly when the demand reaching it lies in [power - accommodation, power].
    Signed result: + = focus falls in front (myopic type), - = focus falls behind (accommodation / hyperopic type), 0 = clear. */
-function signedDefocus(power, accommodation, demand) {
+// Accommodation shortfall (the "AA" blur) starts late and grows gently:
+const AA_DELAY = 0.5;     // D of shortfall the eye tolerates before any blur shows (depth of focus)
+const AA_SLOPE = 0.7;     // how fast the blur grows after that (1 = as fast as a refractive error)
+function rawSignedDefocus(power, accommodation, demand) {         // the true optical need (used for the "Presbyopia Rx" numbers)
   const high = power, low = power - accommodation;
   return demand > high ? demand - high : demand < low ? demand - low : 0;
 }
-const getResidualDefocus = (power, accommodation, demand) => Math.abs(signedDefocus(power, accommodation, demand));
+function signedDefocus(power, accommodation, demand) {            // what is drawn: the shortfall is softened. With no accommodation (duochrome test) it is exact.
+  const high = power, low = power - accommodation;
+  if (demand > high) return demand - high;
+  if (demand < low) return accommodation > 0 ? -Math.max(0, low - demand - AA_DELAY) * AA_SLOPE : demand - low;
+  return 0;
+}
+const getResidualDefocus = (power, accommodation, demand) => Math.abs(rawSignedDefocus(power, accommodation, demand));
 
 // Duochrome: red focuses further back than blue. Myopic defocus -> red side clearer; hyperopic -> blue side clearer.
+// The red/blue split fades in gradually: 0 at balance, reaching the full 0.5 D split at 1.0 D of defocus
+// (it used to jump straight to the full split at the first 0.25 D step).
+const DUO_SPLIT = 1, DUO_SPLIT_RAMP = 1;
 function duoDef(sd, side) {
   const m = Math.abs(sd);
   if (m === 0) return 0;
-  return side === (sd > 0 ? "red" : "blue") ? Math.max(0, m - 0.5) : m + 0.5;
+  const off = DUO_SPLIT * Math.min(1, m / DUO_SPLIT_RAMP);
+  return side === (sd > 0 ? "red" : "blue") ? Math.max(0, m - off) : m + off;
 }
 
 /* ---------- BLUR (works on Safari / iPad, which ignores ctx.filter) ---------- */
@@ -1474,6 +1548,7 @@ const nativeBlur = (() => {
   } catch (e) { return false; }
 })();
 
+const SMALL_BLUR = 2;                          // below this radius (px) the blur is a smooth fade between sharp and blur(2px)
 const tmpCanvases = [];
 function tmpCanvas(i, w, h) {
   let c = tmpCanvases[i];
@@ -1491,6 +1566,14 @@ function blurInto(dst, src, r) {
   if (r <= 0) { dst.drawImage(src, 0, 0); return; }
 
   if (nativeBlur) {
+    if (r < SMALL_BLUR) {                       // the browser's blur treats small radii in coarse steps (0.9 and 1.3 px look the same):
+      dst.drawImage(src, 0, 0);                 // so fade smoothly from sharp to blur(SMALL_BLUR) instead
+      dst.globalAlpha = r / SMALL_BLUR;
+      dst.filter = `blur(${SMALL_BLUR}px)`;
+      dst.drawImage(src, 0, 0);
+      dst.filter = "none"; dst.globalAlpha = 1;
+      return;
+    }
     dst.filter = `blur(${r}px)`;
     dst.drawImage(src, 0, 0);
     dst.filter = "none";
@@ -1717,10 +1800,11 @@ function renderView(v) {
   const cylinder = val("cylinder");
   const axis = val("axis");
   const accommodation = val("accommodation");
-  const nearAdd = val("nearAdd");
-  const farCorr = corrFraction(defById.farCorrection);
-  const cylCorr = corrFraction(defById.cylCorrection);
-  const nearCorr = corrFraction(defById.nearCorrection);
+  const nearAdd = getAdd(v);                                           // real add in D (contacts: No / Low / Med / High)
+  const farLens = corrLens(defById.farCorrection);                     // the lenses actually worn, in D (signed)
+  const cylLens = corrLens(defById.cylCorrection);
+  const nearLens = corrLens(defById.nearCorrection);
+  const farCorr = power !== 0 ? farLens / power : 1;                   // far lens as a fraction of the eye's Rx (1 when the eye has none)
   const axisCorr = val("axisCorrection");                              // axis of the correcting cylinder lens
 
   /* Original (uncorrected) vision */
@@ -1731,7 +1815,7 @@ function renderView(v) {
   const sideDef = sd => isDuo ? [duoDef(sd, "red"), duoDef(sd, "blue"), Math.abs(sd)] : [Math.abs(sd), Math.abs(sd), Math.abs(sd)];
   const zx0 = DUO_X0 + panX, zc = DUO_XC + panX;                                           // duochrome zone start / red-blue seam on screen
   const accom = curScene === "duo" ? 0 : accommodation;
-  const regRad = rg => Math.min(30, getResidualDefocus(power, accom, rg[4]) * 5);
+  const regRad = rg => Math.min(30, Math.abs(signedDefocus(power, accom, rg[4])) * 5);
   const [bgL, bgR, bgN] = sideDef(signedDefocus(power, accom, demand));
   const bgKey = [curScene, regs ? regs.map(rg => regRad(rg).toFixed(2)).join(",") : "", bgL.toFixed(3), bgR.toFixed(3), bgN.toFixed(3), cylinder, axis, fast ? 1 : 0].join("|");
   if (v.bgKey === bgKey) { ctx.clearRect(0, 0, W, H); ctx.drawImage(v.bgCanvas, 0, 0); }
@@ -1743,18 +1827,37 @@ function renderView(v) {
   }
 
   /* Through the lens */
-  const addTotal = nearAdd * nearCorr;
+  const isContact = lensType === "contacts";
+  const addTotal = isContact ? nearAdd : nearLens;               // contacts: the chosen add is the lens add
   const intPart = addTotal / 2;
   const isMulti = !!ZONES[lensType];
   const lensAdd = lensType === "far" ? 0 : addTotal;
-  const lensCylinder = cylinder * (1 - cylCorr);
+  const lensCylinder = cylinder - cylLens;
 
   // The eye sees the scene through lens power L = far correction + local ADD; accommodation only works when L is not enough
-  const defsAt = (a, dm = demand) => sideDef(signedDefocus(power, accom, dm + power * farCorr + a));
+  // Contacts: the eye uses whichever zone (distance or add) is sharper for each distance, and everything carries a little depth-of-focus haze.
+  // Duochrome: the add makes the eye read half the add "more plus", so red looks clearer until the lens is half the add more minus.
+  // Contacts also carry a spherical shift (+0.25 / +0.50 / +0.75 D): it is added to the demand everywhere except the duo + fan scene.
+  // The fan chart stays neutral (equal all around).
+  const cInfo = isContact ? (CONTACT_ADDS.find(x => x[1] === addTotal) || [0, 0, 0, 0]) : [0, 0, 0, 0];
+  const hazeD = cInfo[2], contactShift = isDuo ? 0 : cInfo[3];     // haze strength: drawn as a halo (below), not as extra blur
+  const haloW = Math.min(HALO_MAX, hazeD * HALO_WEIGHT), haloR = hazeD ? HALO_RADIUS_BASE + hazeD * HALO_RADIUS_PER_D : 0;
+const defsAt = (a, dm = demand) => {
+  if (!isContact) return sideDef(signedDefocus(power, accom, dm + farLens + a));
+  const base = dm + farLens + contactShift;   // spherical shift (0 on the duo + fan scene)
+  const farSd = signedDefocus(power, accom, base), nearSd = signedDefocus(power, accom, base + addTotal);
+  if (isDuo) {
+    const sd = signedDefocus(power, accom, base + addTotal / 2);
+    return [duoDef(sd, "red"), duoDef(sd, "blue"), Math.abs(sd)];   // <-- changed: was Math.abs(farSd)
+  }
+  const d = Math.min(Math.abs(farSd), Math.abs(nearSd));
+  return [d, d, d];
+};
 
   const addAt = t => {
     if (lensType === "far") return 0;
     if (lensType === "near") return addTotal;
+    if (lensType === "contacts") return 0;                         // no add zone distortion (the add is handled in defsAt)
     const stops = lensType === "office"
       ? [[0, 0], [0.05, 0], [0.2, intPart], [0.6, intPart], [0.7, addTotal], [1, addTotal]]
       : [[0, 0], [0.5, 0], [0.65, intPart], [0.8, addTotal], [1, addTotal]];
@@ -1768,8 +1871,8 @@ function renderView(v) {
   };
 
   /* Title + details */
-  const effectivePower = power * farCorr;
-  const effectiveCylinder = cylinder * cylCorr;
+  const effectivePower = farLens;
+  const effectiveCylinder = cylLens;
   const presbyopiaRx = Math.max(...(regs || [[0, 0, 0, 0, demand]]).map(rg => getResidualDefocus(0, accommodation, rg[4])));
   const rxText = v => (v > 0 ? "+" : "") + v.toFixed(2) + " D";
   if (!lensOn) {                                                  // glasses off: just the eye, no frame
@@ -1779,6 +1882,7 @@ function renderView(v) {
   }
 
   const effects = [];
+  if (isContact) effects.push("Contact Lens");
   if (effectivePower < 0) effects.push("Myopic Lens");
   else if (effectivePower > 0) effects.push("Hyperopic Lens");
   if (effectiveCylinder > 0) effects.push("Cylinder Lens");
@@ -1789,7 +1893,9 @@ function renderView(v) {
     " | Near Lens Rx: " + rxText(lensAdd) + " | Presbyopia Rx: " + rxText(presbyopiaRx);
 
   // Vision stress: over-correcting the far lens (> 100%) forces extra accommodation.
-  const stress = Math.round(Math.max(0, farCorr - 1) * Math.abs(power) / (0.5 * accommodation) * 100);
+  // (With a 0.00 D eye, any far lens power is an over-correction.)
+  const overD = power === 0 ? Math.abs(farLens) : Math.max(0, farLens * Math.sign(power) - Math.abs(power));
+  const stress = Math.round(overD / (0.5 * accommodation) * 100);
   const stressColor = stress <= 50 ? "#2E9B5F" : stress <= 75 ? "#E0A800" : "#C0392B";
   v.detail += '\n<span class="stress-dot" style="background:' + stressColor + '"></span>Vision Stress: ' + stress + "%";
 
@@ -1797,11 +1903,11 @@ function renderView(v) {
 
   /* Lens distortion parameters */
   const effectiveAspheric = aspheric * Math.min(farCorr, 1);
-  const magFactor = 1 + effectivePower / 25;
-  const radialStrength = effectivePower * 0.085 * (1 - effectiveAspheric / 100);
+  const magFactor = isContact ? 1 + effectivePower / 25 * CONTACT_MAG : 1 + effectivePower / 25;
+  const radialStrength = isContact ? 0 : effectivePower * 0.085 * (1 - effectiveAspheric / 100);      // contacts: no barrel / pincushion
   const ADD_STRENGTH = 1;
-  const addRadK = ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
-  const cylMag = 1 + effectiveCylinder / 40;
+  const addRadK = isContact ? 0 : ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
+  const cylMag = isContact ? 1 + effectiveCylinder / 40 * CONTACT_MAG : 1 + effectiveCylinder / 40;
   const mAngle = (axisCorr + 90) * Math.PI / 180;
   const mCos = Math.cos(mAngle), mSin = Math.sin(mAngle);
 
@@ -1829,7 +1935,7 @@ function renderView(v) {
   const rMax = Math.min(30, maxDef * 5 + (isMulti ? SIDE_BLUR : 0) + (isFan ? cylBlur(cylAmt) * 5 : 0));
   const nLev = perPixel ? 5 : 1;                     // fewer blur levels while dragging
 
-  const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), fast ? 1 : 0].join("|");
+  const lvKey = [curScene, nLev, rMax.toFixed(2), cylAmt.toFixed(2), cylAxis, isFan ? 1 : 0, isMulti ? 1 : 0, maxDef.toFixed(2), haloW.toFixed(3), fast ? 1 : 0].join("|");
   if (v.lvKey !== lvKey) {
     for (let i = 0; i < nLev; i++) {
       const lv = v.lvPool[i] || (v.lvPool[i] = makeCanvas());
@@ -1859,6 +1965,7 @@ function renderView(v) {
         d2.globalAlpha = 1;
       });
     }
+    if (haloW > 0) { v.haloPool = v.haloPool || makeCanvas(); blurInto(v.haloPool[1], sourceCanvas, haloR); }      // contacts: the halo layer
     v.lvKey = lvKey; v.lvData = null;
   }
   const readRegion = c => c[1].getImageData(gx, gy, gw, gh).data;
@@ -1866,8 +1973,9 @@ function renderView(v) {
     levels: v.lvPool.slice(0, nLev).map(readRegion),
     levels2: (isFan && cylAmt > 0) ? v.lvPool2.slice(0, nLev).map(readRegion) : null,
     ghost: (isFan && cylAmt > 0) ? readRegion(v.ghostPool) : null,
+    halo: haloW > 0 ? readRegion(v.haloPool) : null,
     smear: isMulti ? v.smearPool.map(readRegion) : [] });
-  const levelData = LD.levels, levels2Data = LD.levels2, fanGhostData = LD.ghost, smearData = LD.smear;
+  const levelData = LD.levels, levels2Data = LD.levels2, fanGhostData = LD.ghost, smearData = LD.smear, haloData = LD.halo;
 
   const rowCache = [];                                           // ADD + defocus per lens height and focal region
   const rowInfo = (t, ri) => {
@@ -1964,6 +2072,11 @@ side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.mi
         samp(fanGhostData, spx, spy);
         R0 = R0 * 0.4 + s3[0] * 0.6; G0 = G0 * 0.4 + s3[1] * 0.6; B0 = B0 * 0.4 + s3[2] * 0.6;
       }
+      if (haloData) {                                                        // contacts halo: the object bleeds into its surroundings
+        samp(haloData, spx + HALO_SHIFT, spy + HALO_SHIFT);
+        // lighten-only: light bleeds outward into darker neighbours, but a pixel is never made darker (a plain blend of a blurred copy dulls the contrast)
+        R0 += Math.max(0, s3[0] - R0) * haloW; G0 += Math.max(0, s3[1] - G0) * haloW; B0 += Math.max(0, s3[2] - B0) * haloW;
+      }
       const o = (j * sw + i) * 4;
       out[o] = R0; out[o + 1] = G0; out[o + 2] = B0; out[o + 3] = 255;
     }
@@ -1981,9 +2094,10 @@ side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.mi
 function doRender(sim) {
   sim.renderPending = false;
   useView(sim);
+  syncContacts(sim);
   controlDefs.forEach(d => { if (d.corr) syncCorrection(d); });
   controlDefs.forEach(d => {
-    const full = d.corr ? corrLabel(d) : d.f(Number(el[d.id].value));
+    const full = d.corr ? corrLabel(d) : (d.id === "nearAdd" && sim.contactMode ? contactLabel(Math.round(Number(el[d.id].value))) : d.f(Number(el[d.id].value)));
     const vEl = sim.r(d.id + "Value");
     if (vEl.textContent !== full) vEl.textContent = full;
     const cEl = sim.r(d.id + "Chip");
