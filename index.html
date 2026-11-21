@@ -261,6 +261,7 @@ canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens
           <button class="reset-button tbtn" id="btnControls" type="button">Controls</button>
           <button class="reset-button tbtn" id="btnDetails" type="button">Details</button>
           <button class="reset-button tbtn dual-btn" data-r="dual" type="button">Dual</button>
+  <button class="reset-button tbtn" id="btnSweep" type="button">Sweep</button>
         </div>
       </div>
       <div class="pos-pair">
@@ -2116,8 +2117,8 @@ function updateLensPosition(sim) {
   if (!visible(sim)) return;
   const h = Number(sim.el.lensPosition.value);
   const v = Number(sim.el.lensVerticalPosition.value);
-  sim.panX = Math.round(-(h - 50) / 100 * (W - 2 * lens.rx));
-  sim.panY = Math.round(-(v - 50) / 100 * (H - 2 * lens.ry));
+sim.panX = -(h - 50) / 100 * (W - 2 * lens.rx);
+sim.panY = -(v - 50) / 100 * (H - 2 * lens.ry);
   const F = sim.FAN;
   F.cx = FAN_CX + sim.panX; F.cy = FAN_CY + sim.panY;
   F.x0 = Math.max(0, Math.min(W - F.size, FAN_CX - (FAN_R + 120) + sim.panX));
@@ -2163,6 +2164,44 @@ sims[0].r("scene").addEventListener("input", () => sims.forEach(s => { if (visib
 sims[0].r("dual").addEventListener("click", toggleDual);
 setScene(sims[0]);
 updateLensPosition(sims[0]);
+
+/* ---------- SWEEP: slow, smooth left-right ---------- */
+const SWEEP_PERIOD = 20000;   // ms for one full left -> right -> left trip (bigger = slower)
+const SWEEP_AMP = 30;         // 30 = full slider range (20..80)
+let sweepOn = false, sweepRAF = 0, sweepT0 = 0, sweepFromH = 50;
+
+function sweepFrame(now) {
+  if (!sweepOn) return;
+  const e0 = sims[0].el, el = now - sweepT0;
+  const t = el / SWEEP_PERIOD * 2 * Math.PI;
+  const k = Math.min(1, el / 3000), e = k * k * (3 - 2 * k);          // 3 s ease-in from wherever the slider was
+  const tx = 50 + SWEEP_AMP * Math.sin(t);
+  e0.lensPosition.value = (sweepFromH + (tx - sweepFromH) * e).toFixed(3);
+  sims.forEach(s => { if (visible(s)) updateLensPosition(s); });
+  sweepRAF = requestAnimationFrame(sweepFrame);
+}
+
+function setSweep(on) {
+  const e = sims[0].el;
+  sweepOn = on;
+  $("btnSweep").classList.toggle("active", on);
+  $("btnSweep").textContent = on ? "Stop" : "Sweep";
+  cancelAnimationFrame(sweepRAF);
+  if (on) {
+    e.lensPosition.step = "0.001";                                    // very fine steps so nothing snaps
+    sweepFromH = Number(e.lensPosition.value);
+    sweepT0 = performance.now();
+    sweepRAF = requestAnimationFrame(sweepFrame);
+  } else {
+    e.lensPosition.step = "1";
+    sims.forEach(s => { if (visible(s)) updateLensPosition(s); });
+  }
+}
+$("btnSweep").addEventListener("click", () => setSweep(!sweepOn));
+// touching the Horizontal slider (or its Reset) by hand stops the sweep
+sims[0].el.lensPosition.addEventListener("pointerdown", () => { if (sweepOn) setSweep(false); });
+sims[0].r("lensPositionReset").addEventListener("pointerdown", () => { if (sweepOn) setSweep(false); });
+
 </script>
 </body>
 </html>
