@@ -673,10 +673,34 @@ function createSim(i) {
     btn.type = "button"; btn.className = "chip copy-btn"; btn.dataset.r = "copyB"; btn.textContent = "Copy to B";
     btn.style.gridRow = 4; btn.style.gridColumn = 4;
     r("grid").appendChild(btn);
+
     btn.addEventListener("click", () => {
       const B = sims[1];
-      ["power", "cylinder", "axis", "accommodation"].forEach(id => { B.el[id].value = sim.el[id].value; });   // Far RX, Cyl Rx, Axis, AA Age
-      setAdd(B, getAdd(sim));                                                                                 // Add (converted if B is on Contacts)
+
+      controlDefs.forEach(d => {
+        if (d.pos) return;
+        if (d.id !== "nearAdd") B.el[d.id].value = sim.el[d.id].value;
+        if (d.corr) B.userSet[d.id] = sim.userSet[d.id];
+      });
+
+      B.lensType = sim.lensType;
+      B.lensOn = sim.lensOn;
+      B.r("lensSwitch").querySelectorAll("button").forEach(b => {
+        b.classList.toggle("active", B.lensOn && b.dataset.type === B.lensType);
+      });
+
+      B.lensCircle = sim.lensCircle;
+      B.r("shapeToggle").classList.toggle("active", B.lensCircle);
+
+      B.boundary = { ...sim.boundary };
+      B.r("boundaryControls").querySelectorAll("[data-boundary]").forEach(b => {
+        b.classList.toggle("active", !!B.boundary[b.dataset.boundary]);
+      });
+
+      syncContacts(B);
+      setAdd(B, getAdd(sim));
+      updateBoundaryControls(B);
+
       B.bgKey = ""; B.lvKey = "";
       render(B);
       btn.textContent = "Copied ✓"; setTimeout(() => { btn.textContent = "Copy to B"; }, 900);
@@ -1795,7 +1819,7 @@ function render(sim) {
 
 function renderView(v) {
   const val = id => Number(el[id].value);
-  enhFrac = val("enhance") / 400;
+  enhFrac = val("enhance") / 200;
   const power = val("power");
   const aspheric = val("aspheric");
   const cylinder = val("cylinder");
@@ -1904,8 +1928,8 @@ const defsAt = (a, dm = demand) => {
 
   /* Lens distortion parameters */
   const effectiveAspheric = aspheric * Math.min(farCorr, 1);
-  const magFactor = isContact ? 1 + effectivePower / 25 * CONTACT_MAG : 1 + effectivePower / 25;
-  const radialStrength = isContact ? 0 : effectivePower * 0.085 * (1 - effectiveAspheric / 100);      // contacts: no barrel / pincushion
+  const magFactor = isContact ? 1 + effectivePower / 100 * CONTACT_MAG : 1 + effectivePower / 100;
+  const radialStrength = isContact ? 0 : effectivePower * 0.05 * (1 - effectiveAspheric / 100);      // contacts: no barrel / pincushion
   const ADD_STRENGTH = 1;
   const addRadK = isContact ? 0 : ADD_STRENGTH * 0.085 * (1 - aspheric / 100);
   const cylMag = isContact ? 1 + effectiveCylinder / 40 * CONTACT_MAG : 1 + effectiveCylinder / 40;
@@ -2044,7 +2068,7 @@ const defsAt = (a, dm = demand) => {
       // Multifocal side aberration
       let side = 0;
       if (isMulti) {
-const DIST_EXTRA = 0.15;   // how far the distortion starts inside the marker (0 = same as marker)
+const DIST_EXTRA = 1;   // how far the distortion starts inside the marker (0 = same as marker)
 side = sstep(Math.max(0, sideEdge(t) - DIST_EXTRA), 1.0, Math.abs(dx)) * Math.min(1, a) * (1 - 0.85 * enhFrac);
         spy += Math.abs(dx) * 80 * side;
         spx -= dx * 60 * side;
