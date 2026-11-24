@@ -266,10 +266,10 @@ canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens
       </div>
       <div class="pos-pair">
         <div class="pos-row"><strong>Horizontal</strong><span class="tick">Left</span>
-          <input type="range" data-r="lensPosition" min="20" max="80" step="1" value="50"><span class="tick">Right</span>
+          <input type="range" data-r="lensPosition" min="-20" max="120" step="1" value="50"><span class="tick">Right</span>
           <span class="value" data-r="lensPositionValue"></span><button class="reset-button" data-r="lensPositionReset" type="button">Reset</button></div>
         <div class="pos-row"><strong>Vertical</strong><span class="tick">Top</span>
-          <input type="range" data-r="lensVerticalPosition" min="20" max="80" step="1" value="50"><span class="tick">Bottom</span>
+          <input type="range" data-r="lensVerticalPosition" min="0" max="100" step="1" value="50"><span class="tick">Bottom</span>
           <span class="value" data-r="lensVerticalPositionValue"></span><button class="reset-button" data-r="lensVerticalPositionReset" type="button">Reset</button></div>
         <div class="zoom-controls">
           <button type="button" id="zoomOut">&minus;</button><span class="zval" id="zoomValue">100%</span><button type="button" id="zoomIn">+</button><button type="button" class="zreset" id="zoomReset">Reset</button>
@@ -2189,19 +2189,74 @@ sims[0].r("dual").addEventListener("click", toggleDual);
 setScene(sims[0]);
 updateLensPosition(sims[0]);
 
-/* ---------- SWEEP: slow, smooth left-right ---------- */
-const SWEEP_PERIOD = 20000;   // ms for one full left -> right -> left trip (bigger = slower)
-const SWEEP_AMP = 30;         // 30 = full slider range (20..80)
-let sweepOn = false, sweepRAF = 0, sweepT0 = 0, sweepFromH = 50;
+/* ---------- SWEEP: human-like gaze (fast jumps, stares, slow drifts) ---------- */
+const rand = (a, b) => a + Math.random() * (b - a);
+const clampPos = x => Math.max(20, Math.min(80, x));       // slider limits
+
+// Near object per scene, in scene coordinates [x, y]
+const NEAR_TARGET = {
+  city: [750, 550], escalator: [750, 550], market: [750, 550],   // the small phone
+  phone: [600, 380], computer: [580, 300], meeting: [605, 587],
+  night: [600, 730], duo: [700, 400]
+};
+// Where the near object sits inside the lens: 0 = lens centre, 1 = very bottom edge of the lens.
+// 0.5 = midway between the centre and the bottom.
+const NEAR_LENS_LOWER = 0.5;
+
+// Slider position that puts a scene point at that spot in the lens (same maths as updateLensPosition, incl. scene zoom-out)
+function nearPos() {
+  const key = SCENES[Number(sims[0].r("scene").value)][0];
+  const [x, y] = NEAR_TARGET[key] || [750, 550], zk = ZK[key] || 1;
+  const h = 50 + (x - 600) * zk * 100 / (W - 2 * lens.rx);
+  const v = 50 + ((y - 400) * zk - lens.ry * NEAR_LENS_LOWER) * 100 / (H - 2 * lens.ry);
+  return [Math.max(-20, Math.min(120, h)), Math.max(0, Math.min(100, v))];   // full slider ranges
+}
+
+// move: "s" = saccade (fast jump, ~100-250 ms), "d" = slow drift. hold = how long the eye stares there (ms)
+function buildPlan() {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  return [
+    { h: 50 + side * rand(15, 28), v: rand(38, 50), move: "s", hold: rand(1200, 1800) },   // quick look at something
+    { h: 50 - side * rand(12, 25), v: rand(42, 55), move: "s", hold: rand(900, 1400) },    // quick look the other way
+    { h: 50 + side * rand(5, 15),  v: rand(74, 80), move: "d", hold: rand(2500, 3500) },   // slow diagonal down to the floor, stare
+    { near: true,                                    move: "s", hold: rand(3000, 4000) },  // jump to the phone / near object, stare
+    { h: 50 + rand(-10, 10), v: rand(25, 32), move: "s", hold: rand(700, 1000) },          // look up
+    { h: 50, v: 50, move: "d", dur: rand(1200, 1800), hold: 1500 }                         // slowly back to centre
+  ];
+}
+
+let sweepOn = false, sweepRAF = 0, sweepT0 = 0, sweepPlan = [], sweepI = 0, sweepPhase = "move", sweepFrom = { h: 50, v: 50 }, sweepTo = null, sweepDur = 0;
+
+function sweepSetPos(h, v) {
+  const e = sims[0].el;
+  const nh = h.toFixed(3), nv = v.toFixed(3);
+  if (e.lensPosition.value === nh && e.lensVerticalPosition.value === nv) return;   // nothing moved: skip the heavy redraw
+  e.lensPosition.value = nh; e.lensVerticalPosition.value = nv;
+  sims.forEach(s => { if (visible(s)) updateLensPosition(s); });
+}
+
+function sweepBeginStep(now) {
+  if (sweepI >= sweepPlan.length) { sweepPlan = buildPlan(); sweepI = 0; }
+  const st = sweepPlan[sweepI], e = sims[0].el;
+  sweepFrom = { h: Number(e.lensPosition.value), v: Number(e.lensVerticalPosition.value) };
+  const [th, tv] = st.near ? nearPos() : [clampPos(st.h), clampPos(st.v)];
+  sweepTo = { h: th, v: tv };
+  const dist = Math.hypot(th - sweepFrom.h, tv - sweepFrom.v);
+  sweepDur = st.dur || (st.move === "s" ? 1000 + dist * 3 : rand(2800, 4200));   // jumps are fast, drifts are slow
+  sweepPhase = "move"; sweepT0 = now;
+}
 
 function sweepFrame(now) {
   if (!sweepOn) return;
-  const e0 = sims[0].el, el = now - sweepT0;
-  const t = el / SWEEP_PERIOD * 2 * Math.PI;
-  const k = Math.min(1, el / 3000), e = k * k * (3 - 2 * k);          // 3 s ease-in from wherever the slider was
-  const tx = 50 + SWEEP_AMP * Math.sin(t);
-  e0.lensPosition.value = (sweepFromH + (tx - sweepFromH) * e).toFixed(3);
-  sims.forEach(s => { if (visible(s)) updateLensPosition(s); });
+  const st = sweepPlan[sweepI];
+  if (sweepPhase === "move") {
+    const k = Math.min(1, (now - sweepT0) / sweepDur);
+    const ease = st.move === "s" ? 1 - Math.pow(1 - k, 3) : k * k * (3 - 2 * k);   // jump: fast start, sudden stop. drift: gentle in/out
+    sweepSetPos(sweepFrom.h + (sweepTo.h - sweepFrom.h) * ease, sweepFrom.v + (sweepTo.v - sweepFrom.v) * ease);
+    if (k >= 1) { sweepPhase = "hold"; sweepT0 = now; }
+  } else if (now - sweepT0 >= st.hold) {
+    sweepI++; sweepBeginStep(now);
+  }
   sweepRAF = requestAnimationFrame(sweepFrame);
 }
 
@@ -2212,19 +2267,21 @@ function setSweep(on) {
   $("btnSweep").textContent = on ? "Stop" : "Sweep";
   cancelAnimationFrame(sweepRAF);
   if (on) {
-    e.lensPosition.step = "0.001";                                    // very fine steps so nothing snaps
-    sweepFromH = Number(e.lensPosition.value);
-    sweepT0 = performance.now();
+    e.lensPosition.step = "0.001"; e.lensVerticalPosition.step = "0.001";   // very fine steps so nothing snaps
+    sweepPlan = buildPlan(); sweepI = 0;
+    sweepBeginStep(performance.now());
     sweepRAF = requestAnimationFrame(sweepFrame);
   } else {
-    e.lensPosition.step = "1";
+    e.lensPosition.step = "1"; e.lensVerticalPosition.step = "1";
     sims.forEach(s => { if (visible(s)) updateLensPosition(s); });
   }
 }
 $("btnSweep").addEventListener("click", () => setSweep(!sweepOn));
-// touching the Horizontal slider (or its Reset) by hand stops the sweep
-sims[0].el.lensPosition.addEventListener("pointerdown", () => { if (sweepOn) setSweep(false); });
-sims[0].r("lensPositionReset").addEventListener("pointerdown", () => { if (sweepOn) setSweep(false); });
+// touching either position slider (or its Reset) by hand stops the sweep
+[sims[0].el.lensPosition, sims[0].el.lensVerticalPosition,
+ sims[0].r("lensPositionReset"), sims[0].r("lensVerticalPositionReset")]
+  .forEach(x => x.addEventListener("pointerdown", () => { if (sweepOn) setSweep(false); }));
+
 
 </script>
 </body>
