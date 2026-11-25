@@ -238,6 +238,15 @@ input[type=range]::-moz-range-thumb{width:27px;height:16px;border-radius:8px;bor
 canvas{width:150cqw;height:100cqw;left:50%;top:50%}  /* scene scaled so the lens fills the width; the part that overflows is cropped */
 .control-heading.scene-head{justify-content:flex-start;gap:6px}
 .chip:disabled{opacity:.4;cursor:default}
+/* ===== Aspheric + MF Enhance sliders, inside the scene ===== */
+.cv-tools{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;display:flex;gap:14px;padding:2px 12px;border-radius:12px;background:rgba(255,253,247,.82);border:1px solid #D8D2C4;box-shadow:0 2px 10px rgba(41,45,42,.2);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.cv-tools .control{flex:1;min-width:0;padding:0;border:0}
+.cv-tools .control-heading{margin-bottom:0}
+.cv-tools .control-heading strong{font-size:11px;flex:1}
+.cv-tools .value{font-size:11px}
+.cv-tools .scale,.cv-tools .reset-button{display:none}   /* Reset All still clicks the hidden Reset buttons */
+.cv-tools input[type=range]{height:38px}
+
 </style>
 </head>
 <body>
@@ -533,7 +542,7 @@ function setScene(sim) {
 // Per-eye parts. The scene slider, Horizontal / Vertical sliders and the details box are shared (they live in the page itself).
 const viewHTML = () => `<div class="viewer"><div class="cv">
   <canvas data-r="canvas" width="1200" height="800"></canvas><span class="cv-tag" data-r="tag" hidden></span>
-</div></div>`;
+</div><div class="cv-tools" data-r="tools"></div></div>`;
 
 const ctrlHTML = () => `
 <div class="controls"><div class="chipgrid" data-r="grid"><button class="reset-all" data-r="resetAll" type="button">Reset All</button></div></div>
@@ -554,6 +563,9 @@ const ctrlHTML = () => `
   <div class="lens-switch"><button type="button" data-r="shapeToggle">Circle</button></div>
 </div>`;
 
+// These two live inside the scene instead of the Controls sheet
+const OVERLAY_IDS = ["aspheric", "enhance"];
+
 // Chips + their floating sliders for ONE simulator
 function buildControls(sim) {
   const r = sim.r;
@@ -570,29 +582,34 @@ function buildControls(sim) {
            ? `<div class="scale"><span data-r="${d.id}Lo"></span><span data-r="${d.id}Mid"></span><span data-r="${d.id}Hi"></span></div>`
            : `<div class="scale" data-r="${d.id}Scale">${d.s.map(t => `<span>${t}</span>`).join("")}</div>`}`;
 
-      const wrap = document.createElement("div");
-      wrap.className = "chip-wrap";
-      wrap.innerHTML = `<button type="button" class="chip"><span>${SHORT[d.id]}</span><span class="value" data-r="${d.id}Chip"></span></button>`;
-      const pop = document.createElement("div");
-      pop.className = "pop"; pop.hidden = true;
-      pop.appendChild(div);
-      wrap.appendChild(pop);
-      const GRID = {                                                     // [row, column]: each correction sits under its Rx chip
-        power: [1, 1], cylinder: [1, 2], axis: [1, 3],
-        farCorrection: [2, 1], cylCorrection: [2, 2], axisCorrection: [2, 3],
-        nearAdd: [1, 4], nearCorrection: [2, 4],
-        accommodation: [3, 1], aspheric: [3, 2], enhance: [3, 3] }[d.id];
-      wrap.style.gridRow = GRID[0]; wrap.style.gridColumn = GRID[1];
-      r("grid").appendChild(wrap);
+      if (OVERLAY_IDS.includes(d.id)) {                                  // straight into the scene, no chip
+        div.querySelector("strong").textContent = SHORT[d.id];
+        r("tools").appendChild(div);
+      } else {
+        const wrap = document.createElement("div");
+        wrap.className = "chip-wrap";
+        wrap.innerHTML = `<button type="button" class="chip"><span>${SHORT[d.id]}</span><span class="value" data-r="${d.id}Chip"></span></button>`;
+        const pop = document.createElement("div");
+        pop.className = "pop"; pop.hidden = true;
+        pop.appendChild(div);
+        wrap.appendChild(pop);
+        const GRID = {                                                   // [row, column]: each correction sits under its Rx chip
+          power: [1, 1], cylinder: [1, 2], axis: [1, 3],
+          farCorrection: [2, 1], cylCorrection: [2, 2], axisCorrection: [2, 3],
+          nearAdd: [1, 4], nearCorrection: [2, 4],
+          accommodation: [3, 1] }[d.id];
+        wrap.style.gridRow = GRID[0]; wrap.style.gridColumn = GRID[1];
+        r("grid").appendChild(wrap);
 
-      const chip = wrap.querySelector(".chip");
-      chip.addEventListener("click", () => {
-        const open = pop.hidden;
-        closePops(wrap);
-        pop.hidden = !open;
-        chip.classList.toggle("open", open);
-        if (open) pop.style.top = (wrap.offsetTop + wrap.offsetHeight + 6) + "px";   // just under the chip
-      });
+        const chip = wrap.querySelector(".chip");
+        chip.addEventListener("click", () => {
+          const open = pop.hidden;
+          closePops(wrap);
+          pop.hidden = !open;
+          chip.classList.toggle("open", open);
+          if (open) pop.style.top = (wrap.offsetTop + wrap.offsetHeight + 6) + "px";   // just under the chip
+        });
+      }
     }
     const slider = r(d.id);
     sim.el[d.id] = slider;
@@ -793,55 +810,145 @@ function drawSmallPhone() {
   S.restore();
 }
 
-/* ---------- SCENE 1: CITY ---------- */
+/* ---------- SCENE 1: CITY (standing on the right sidewalk, tall buildings both sides, cars at eye level) ---------- */
 function drawCityScene() {
-  const sky = S.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, "#A8D0E5");
-  sky.addColorStop(0.55, "#D9E6E8");
-  sky.addColorStop(1, "#B7C4B8");
-  S.fillStyle = sky; S.fillRect(0, 0, W, H);
+  // One-point perspective: x = VX + (X - CAMX)*f/z, y = VY + (h - Y)*f/z. Eye height 1.6 m, so car roofs sit just below eye level.
+  const f = 600, h = 1.6, VX = 600, VY = 330, ZE = 40;   // ZE = far end of the street
+  const FACE = 7.0;                                       // distance from the road centre to the building faces
+  const CAMX = 5.6;                                       // where you stand: right sidewalk (4.9 = at the curb, 0 = middle of the road)
+  const P = (X, Y, z) => [VX + (X - CAMX) * f / z, VY + (h - Y) * f / z];
+  const Q = (c, pts) => POLY(c, pts.map(p => P(p[0], p[1], p[2])));
 
-  const cloud = (x, y, s) => {
-    S.fillStyle = "rgba(255,255,255,0.65)";
-    S.beginPath();
-    S.arc(x, y, 35 * s, 0, 7);
-    S.arc(x + 35 * s, y - 15 * s, 40 * s, 0, 7);
-    S.arc(x + 75 * s, y, 32 * s, 0, 7);
-    S.fill();
-  };
-  cloud(150, 120, 1); cloud(650, 100, 0.8); cloud(900, 180, 1.1);
+  // colour helpers (always return hex): haze toward the sky colour with distance, shade toward black
+  const rgb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+  const mixC = (a, b, t) => { const A = rgb(a), B = rgb(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
+  const hz = (c, z) => mixC(c, "#D3E0E3", Math.min(0.7, Math.max(0, (z - 8) / 60)));
+  const shade = (c, k) => mixC(c, "#000000", k);
 
-  [[30, 300, 130, 180], [180, 260, 110, 220], [340, 210, 165, 470],
-   [520, 130, 165, 510], [720, 270, 140, 210], [900, 300, 300, 180]].forEach(b => {
-    R("#84969A", b[0], b[1], b[2], b[3]);
-    for (let x = b[0] + 15; x < b[0] + b[2] - 10; x += 30)
-      for (let y = b[1] + 20; y < b[1] + b[3] - 10; y += 35)
-        R("#D5D8D2", x, y, 12, 15);
+  // ---- Sky + ground
+  const sky = S.createLinearGradient(0, 0, 0, VY);
+  sky.addColorStop(0, "#9CCBE3"); sky.addColorStop(1, "#DCE8EA");
+  S.fillStyle = sky; S.fillRect(0, 0, W, VY + 2);
+  R("#8D928F", 0, VY, W, H - VY);
+
+  // ---- Far end of the street: a distant tower and a skyline of blocks
+  Q(hz("#8FA3A8", 120), [[4.0, 0, 110], [4.0, 62, 110], [6.4, 62, 110], [6.4, 0, 110]]);
+  [[-7.0, -3.6, 16, "#7D8F94"], [-3.6, -1.4, 22, "#9AA39A"], [-1.4, 0.6, 12, "#86989C"],
+   [0.6, 2.6, 19, "#A39A8C"], [2.6, 4.4, 14, "#7F9296"], [4.4, 7.0, 18, "#98A59E"]].forEach(([x0, x1, Hh, c]) =>
+    Q(hz(c, ZE), [[x0, 0, ZE], [x0, Hh, ZE], [x1, Hh, ZE], [x1, 0, ZE]]));
+
+  // ---- Road, sidewalks, curbs, markings
+  Q("#4B5052", [[-4.5, 0, 1], [-4.5, 0, ZE], [4.5, 0, ZE], [4.5, 0, 1]]);
+  [-1, 1].forEach(sd => {
+    Q("#B9B5AA", [[sd * 4.5, 0, 1], [sd * 4.5, 0, ZE], [sd * FACE, 0, ZE], [sd * FACE, 0, 1]]);          // sidewalk
+    Q("#D5D1C6", [[sd * 4.4, 0, 1], [sd * 4.4, 0, ZE], [sd * 4.5, 0, ZE], [sd * 4.5, 0, 1]]);            // curb
+    Q("#E8E3D6", [[sd * 4.2, 0, 1], [sd * 4.2, 0, ZE], [sd * 4.3, 0, ZE], [sd * 4.3, 0, 1]]);            // edge line
   });
+  for (let z = 2; z < ZE; z += 4) Q("#E8E3D6", [[-0.09, 0, z], [0.09, 0, z], [0.09, 0, z + 2], [-0.09, 0, z + 2]]);   // centre dashes
+  for (let X = -4.0; X <= 4.0; X += 0.9) Q("#E8E3D6", [[X, 0, 9], [X + 0.45, 0, 9], [X + 0.45, 0, 10.6], [X, 0, 10.6]]);   // crosswalk
 
-  const tree = (x, y, s) => {
-    R("#665B45", x - 8 * s, y, 16 * s, 100 * s);
-    C("#426C50", x, y, 55 * s);
-    C("#57835C", x - 10 * s, y - 20 * s, 35 * s);
+  // ---- Tall buildings on both sides: [z start, z end, height m, colour, awning colour]
+  const LEFT  = [[2, 13, 40, "#8D9C9C", "#B94A3A"], [13, 22, 55, "#A39A8C", "#3A6656"], [22, 29, 30, "#7E8F96", "#E2B84B"],
+                 [29, 36, 44, "#9AA39A", "#D77C55"], [36, ZE, 24, "#8A8F96", "#527A64"]];
+  const RIGHT = [[2, 9, 48, "#9AA39A", "#E2B84B"], [9, 17, 36, "#84969A", "#B94A3A"], [17, 25, 52, "#A59B8E", "#3A6656"],
+                 [25, 32, 28, "#8D9C9C", "#D77C55"], [32, ZE, 34, "#7E8F96", "#527A64"]];
+  const WIN = ["#BFD7DD", "#9CB9C2", "#E6DDA6", "#8FB0BA", "#C9DDE3", "#7E9CA6"];
+  const building = (sd, list) => list.forEach(([z0, z1, Hh, base, awn], bi) => {
+    const X = sd * FACE, zm = (z0 + z1) / 2, wall = sd < 0 ? shade(base, 0.14) : base;
+    Q(hz(wall, zm), [[X, 0, z0], [X, Hh, z0], [X, Hh, z1], [X, 0, z1]]);                       // facade
+    Q(hz(shade(base, 0.38), zm), [[X, 0, z0], [X, 3.7, z0], [X, 3.7, z1], [X, 0, z1]]);          // ground floor
+    for (let z = z0 + 0.5, k = 0; z + 3.6 <= z1; z += 4.2, k++) {                                // shop windows + awnings
+      Q(hz("#7F9AA0", z), [[X, 0.4, z], [X, 2.9, z], [X, 2.9, z + 3.6], [X, 0.4, z + 3.6]]);
+      Q(hz("#B8D2D6", z), [[X, 1.6, z + 0.3], [X, 2.8, z + 0.3], [X, 2.8, z + 1.6], [X, 1.6, z + 1.6]]);   // reflection
+      Q(hz(k % 2 ? shade(awn, 0.15) : awn, z), [[X, 3.1, z - 0.1], [X, 3.1, z + 3.7], [X - sd * 1.1, 2.55, z + 3.7], [X - sd * 1.1, 2.55, z - 0.1]]);
+    }
+    for (let fl = 0; ; fl++) {                                                                  // upper floors of windows
+      const Ys = 4.2 + fl * 3.4;
+      if (Ys + 2.6 > Hh - 0.5) break;
+      if (P(X, Ys + 2.6, z0)[1] < -40 && P(X, Ys + 2.6, z1)[1] < -40) break;                    // above the picture: stop
+      if (fl % 4 === 3) Q(hz(shade(base, 0.2), zm), [[X, Ys - 0.35, z0], [X, Ys - 0.05, z0], [X, Ys - 0.05, z1], [X, Ys - 0.35, z1]]);
+      for (let z = z0 + 0.6, col = 0; z + 1.5 < z1; z += 2.4, col++)
+        Q(hz(WIN[(bi * 5 + fl * 3 + col * 7) % 6], z), [[X, Ys + 0.7, z], [X, Ys + 2.6, z], [X, Ys + 2.6, z + 1.5], [X, Ys + 0.7, z + 1.5]]);
+    }
+  });
+  building(-1, LEFT); building(1, RIGHT);
+
+  // ---- Everything on the street, sorted far to near
+  const objs = [];
+  const wheel = (c, X, Y, zc, r) => {                      // wheel on a car's side (strongly foreshortened)
+    const a = P(X, Y, zc - r), b = P(X, Y, zc + r), m = P(X, Y, zc);
+    S.fillStyle = c; S.beginPath(); S.ellipse(m[0], m[1], Math.max(1, Math.abs(a[0] - b[0]) / 2), r * f / zc, 0, 0, Math.PI * 2); S.fill();
   };
-  tree(100, 370, 1.1); tree(250, 380, 0.9); tree(850, 380, 1.0); tree(1050, 350, 1.2);
 
-  R("#89947D", 0, 470, W, H - 470);
-  POLY("#555B5B", [[280, 470], [820, 470], [1100, 700], [0, 700]]);
+  // Parked cars along both curbs. You see the rear, the top and the side that faces you.
+  const parked = (sd, z0, col) => objs.push({ z: z0, draw() {
+    const L = 4.4, xi = sd * 2.7, xo = sd * 4.5, vis = sd > 0 ? xo : xi, ri = xi + sd * 0.15, ro = xo - sd * 0.15, c = x => hz(x, z0 + 2);
+    Q(c("#2B2F30"), [[xi, 0.02, z0], [xo, 0.02, z0], [xo, 0.02, z0 + L], [xi, 0.02, z0 + L]]);                    // shadow
+    Q(c(col), [[xi, 0.95, z0], [xo, 0.95, z0], [xo, 0.95, z0 + 1.0], [xi, 0.95, z0 + 1.0]]);                      // boot top
+    Q(c(col), [[xi, 0.95, z0 + L - 0.9], [xo, 0.95, z0 + L - 0.9], [xo, 0.95, z0 + L], [xi, 0.95, z0 + L]]);      // bonnet top
+    Q(c(shade(col, 0.28)), [[vis, 0.3, z0], [vis, 0.95, z0], [vis, 0.95, z0 + L], [vis, 0.3, z0 + L]]);           // body side
+    Q(c("#2F3C42"), [[vis, 0.98, z0 + 1.0], [vis, 1.43, z0 + 1.3], [vis, 1.43, z0 + L - 1.5], [vis, 0.98, z0 + L - 0.9]]);   // side windows
+    Q(c(shade(col, 0.12)), [[ri, 1.45, z0 + 1.3], [ro, 1.45, z0 + 1.3], [ro, 1.45, z0 + L - 1.5], [ri, 1.45, z0 + L - 1.5]]);   // roof
+    Q(c(col), [[xi, 0.3, z0], [xi, 0.95, z0], [xo, 0.95, z0], [xo, 0.3, z0]]);                                    // rear face
+    Q(c("#2F3C42"), [[xi + sd * 0.12, 0.98, z0 + 1.0], [xi + sd * 0.2, 1.43, z0 + 1.3], [xo - sd * 0.2, 1.43, z0 + 1.3], [xo - sd * 0.12, 0.98, z0 + 1.0]]);   // rear window
+    [[0.1, 0.45], [1.35, 1.7]].forEach(([a, b]) => Q(c("#D9382C"), [[xi + sd * a, 0.62, z0], [xi + sd * a, 0.82, z0], [xi + sd * b, 0.82, z0], [xi + sd * b, 0.62, z0]]));   // tail lights
+    wheel(c("#15181A"), vis, 0.33, z0 + 0.95, 0.33); wheel(c("#15181A"), vis, 0.33, z0 + L - 0.95, 0.33);
+  }});
+  [[2.5, "#4A6FA5"], [9, "#B94A3A"], [15.5, "#E3E0D4"], [22, "#3A6656"], [29, "#C9B36A"], [35, "#8A8F96"]].forEach(([z, c]) => parked(1, z, c));
+  [[7, "#E3E0D4"], [13.5, "#354E49"], [20, "#B94A3A"], [27.5, "#8A8F96"], [34, "#D77C55"]].forEach(([z, c]) => parked(-1, z, c));
 
-  S.strokeStyle = "#F5F1E8"; S.lineWidth = 7; S.setLineDash([35, 35]);
-  S.beginPath(); S.moveTo(550, 490); S.lineTo(550, 700); S.stroke();
-  S.setLineDash([]);
+  // Moving cars: right lane goes away from you (rear view), left lane comes toward you (front view)
+  const moving = (X, z, col, front) => objs.push({ z, draw() {
+    const xi = X - 0.9, xo = X + 0.9, L = 4.2, c = x => hz(x, z + 1), g = "#2F3C42";
+    Q(c("#2B2F30"), [[xi, 0.02, z], [xo, 0.02, z], [xo, 0.02, z + L], [xi, 0.02, z + L]]);                        // shadow
+    Q(c(col), [[xi, 0.95, z], [xo, 0.95, z], [xo, 0.95, z + L], [xi, 0.95, z + L]]);                              // top
+    Q(c(shade(col, 0.25)), [[xo, 0.3, z], [xo, 0.95, z], [xo, 0.95, z + L], [xo, 0.3, z + L]]);                   // side facing you
+    Q(c(g), [[xo - 0.05, 0.98, z + 0.9], [xo - 0.15, 1.43, z + 1.3], [xo - 0.15, 1.43, z + L - 1.4], [xo - 0.05, 0.98, z + L - 0.9]]);   // side glass
+    Q(c(shade(col, 0.12)), [[xi + 0.15, 1.43, z + 1.3], [xo - 0.15, 1.43, z + 1.3], [xo - 0.15, 1.43, z + L - 1.4], [xi + 0.15, 1.43, z + L - 1.4]]);   // roof
+    Q(c(g), [[xi + 0.1, 0.98, z + 0.9], [xi + 0.2, 1.43, z + 1.3], [xo - 0.2, 1.43, z + 1.3], [xo - 0.1, 0.98, z + 0.9]]);                  // rear / front glass
+    Q(c(col), [[xi, 0.3, z], [xi, 0.95, z], [xo, 0.95, z], [xo, 0.3, z]]);                                        // the face you see
+    if (front) {
+      Q(c("#15181A"), [[X - 0.45, 0.4, z], [X - 0.45, 0.7, z], [X + 0.45, 0.7, z], [X + 0.45, 0.4, z]]);          // grille
+      [-1, 1].forEach(s => Q(c("#FFF1C9"), [[X + s * 0.55, 0.62, z], [X + s * 0.55, 0.82, z], [X + s * 0.85, 0.82, z], [X + s * 0.85, 0.62, z]]));   // headlights
+    } else {
+      [-1, 1].forEach(s => Q(c("#D9382C"), [[X + s * 0.55, 0.62, z], [X + s * 0.55, 0.82, z], [X + s * 0.85, 0.82, z], [X + s * 0.85, 0.62, z]]));   // tail lights
+      Q(c("#E8E3D6"), [[X - 0.25, 0.5, z], [X - 0.25, 0.62, z], [X + 0.25, 0.62, z], [X + 0.25, 0.5, z]]);        // plate
+    }
+    [-1, 1].forEach(s => Q(c("#15181A"), [[X + s * 0.65, 0.0, z], [X + s * 0.65, 0.3, z], [X + s * 0.88, 0.3, z], [X + s * 0.88, 0.0, z]]));    // wheels at the face
+    wheel(c("#15181A"), xo, 0.33, z + 0.95, 0.33); wheel(c("#15181A"), xo, 0.33, z + L - 0.95, 0.33);              // wheels on the side
+  }});
+  moving(1.35, 6, "#B94A3A", false); moving(1.35, 18, "#E3E0D4", false); moving(1.35, 31, "#3A6656", false);
+  moving(-1.35, 12, "#354E49", true); moving(-1.35, 24, "#E2B84B", true); moving(-1.35, 37, "#8A8F96", true);
 
-  const car = (x, y, s, color) => {
-    R(color, x, y, 100 * s, 35 * s);
-    POLY("#343D40", [[x + 20 * s, y], [x + 35 * s, y - 25 * s], [x + 75 * s, y - 25 * s], [x + 90 * s, y]]);
-    C("#222", x + 22 * s, y + 35 * s, 10 * s);
-    C("#222", x + 78 * s, y + 35 * s, 10 * s);
-  };
-  car(420, 550, 1.0, "#B94A3A"); car(680, 610, 0.65, "#E3E0D4"); car(580, 510, 0.65, "#E3E0D4");
+  // Street lamps and trees on the sidewalks (right side stands at the curb, so nothing is in your face)
+  const lamp = (sd, z) => objs.push({ z, draw() {
+    const lx = sd > 0 ? 4.8 : -5.3, a = P(lx, 0, z), b = P(lx, 6.5, z), t = P(lx - sd * 1.0, 6.8, z);
+    S.strokeStyle = hz("#2B3330", z); S.lineCap = "round";
+    S.lineWidth = Math.max(1, 0.15 * f / z); S.beginPath(); S.moveTo(a[0], a[1]); S.lineTo(b[0], b[1]); S.lineTo(t[0], t[1]); S.stroke();
+    C(hz("#FFF1C9", z), t[0], t[1] + 0.1 * f / z, Math.max(1.5, 0.25 * f / z)); S.lineCap = "butt";
+  }});
+  const tree = (sd, z) => objs.push({ z, draw() {
+    const tx = sd > 0 ? 4.9 : -5.5, a = P(tx, 0, z), b = P(tx, 3.3, z), c = P(tx - sd * 0.1, 4.8, z), r = 2.0 * f / z;
+    S.strokeStyle = hz("#665B45", z); S.lineWidth = Math.max(1, 0.35 * f / z);
+    S.beginPath(); S.moveTo(a[0], a[1]); S.lineTo(b[0], b[1]); S.stroke();
+    C(hz("#426C50", z), c[0], c[1], r); C(hz("#57835C", z), c[0] - r * 0.25, c[1] - r * 0.3, r * 0.6);
+  }});
+  [10, 21, 32].forEach(z => { lamp(1, z); lamp(-1, z + 5); });
+  [12.5, 25, 36].forEach(z => { tree(1, z); tree(-1, z - 4); });
 
-  drawSmallPhone();
+  // People walking on the sidewalks
+  const ped = (X, z, shirt, pants) => objs.push({ z, draw() {
+    const p = P(X, 0, z), s = f / z;
+    R(hz(pants, z), p[0] - 0.18 * s, p[1] - 0.95 * s, 0.36 * s, 0.95 * s);
+    R(hz(shirt, z), p[0] - 0.22 * s, p[1] - 1.5 * s, 0.44 * s, 0.6 * s);
+    C(hz("#D6A17E", z), p[0], p[1] - 1.63 * s, 0.13 * s);
+  }});
+  ped(5.0, 14, "#B94A3A", "#2B3330"); ped(6.1, 22, "#E2B84B", "#2B3330"); ped(5.2, 30, "#D77C55", "#354E49");
+  ped(-5.0, 9.5, "#3A6656", "#354E49"); ped(-5.3, 18, "#527A64", "#4A4F50");
+
+  objs.sort((a, b) => b.z - a.z).forEach(o => o.draw());
+
+  drawSmallPhone();                                                // same phone, same place as before
 }
 
 /* ---------- SCENE 2: COMPUTER ---------- */
@@ -2213,16 +2320,29 @@ function nearPos() {
 }
 
 // move: "s" = saccade (fast jump, ~100-250 ms), "d" = slow drift. hold = how long the eye stares there (ms)
+const GLANCE_MS = 300;   // how long the quick glances take (ms). Smaller = snappier
+const clampFull = (h, v) => [Math.max(-20, Math.min(120, h)), Math.max(0, Math.min(100, v))];   // real slider ranges
+
+// move: "s" = saccade (fast jump), "d" = slow drift. hold = how long the eye stares there (ms)
 function buildPlan() {
   const side = Math.random() < 0.5 ? -1 : 1;
-  return [
+  const plan = [
     { h: 50 + side * rand(15, 28), v: rand(38, 50), move: "s", hold: rand(1200, 1800) },   // quick look at something
     { h: 50 - side * rand(12, 25), v: rand(42, 55), move: "s", hold: rand(900, 1400) },    // quick look the other way
     { h: 50 + side * rand(5, 15),  v: rand(74, 80), move: "d", hold: rand(2500, 3500) },   // slow diagonal down to the floor, stare
-    { near: true,                                    move: "s", hold: rand(3000, 4000) },  // jump to the phone / near object, stare
+    { near: true,                                    move: "s", hold: rand(3000, 4000) }   // jump to the phone / near object, stare
+  ];
+  if (Math.random() < 0.5) plan.push(                                                      // A) distracted: quick glance left, quick back
+    { nearOff: [-rand(18, 28), -rand(4, 10)], move: "s", dur: GLANCE_MS, hold: rand(300, 700) },
+    { near: true,                              move: "s", dur: GLANCE_MS, hold: rand(2500, 3500) });
+  else plan.push(                                                                          // B) quick look to the centre, pause, quick back
+    { h: 50, v: 50,                            move: "s", dur: GLANCE_MS, hold: rand(1500, 2500) },
+    { near: true,                              move: "s", dur: GLANCE_MS, hold: rand(2500, 3500) });
+  plan.push(
     { h: 50 + rand(-10, 10), v: rand(25, 32), move: "s", hold: rand(700, 1000) },          // look up
     { h: 50, v: 50, move: "d", dur: rand(1200, 1800), hold: 1500 }                         // slowly back to centre
-  ];
+  );
+  return plan;
 }
 
 let sweepOn = false, sweepRAF = 0, sweepT0 = 0, sweepPlan = [], sweepI = 0, sweepPhase = "move", sweepFrom = { h: 50, v: 50 }, sweepTo = null, sweepDur = 0;
@@ -2239,7 +2359,10 @@ function sweepBeginStep(now) {
   if (sweepI >= sweepPlan.length) { sweepPlan = buildPlan(); sweepI = 0; }
   const st = sweepPlan[sweepI], e = sims[0].el;
   sweepFrom = { h: Number(e.lensPosition.value), v: Number(e.lensVerticalPosition.value) };
-  const [th, tv] = st.near ? nearPos() : [clampPos(st.h), clampPos(st.v)];
+  let th, tv;
+if (st.near) [th, tv] = nearPos();
+else if (st.nearOff) { const [nh, nv] = nearPos(); [th, tv] = clampFull(nh + st.nearOff[0], nv + st.nearOff[1]); }   // relative to the phone
+else [th, tv] = [clampPos(st.h), clampPos(st.v)];
   sweepTo = { h: th, v: tv };
   const dist = Math.hypot(th - sweepFrom.h, tv - sweepFrom.v);
   sweepDur = st.dur || (st.move === "s" ? 1000 + dist * 3 : rand(2800, 4200));   // jumps are fast, drifts are slow
